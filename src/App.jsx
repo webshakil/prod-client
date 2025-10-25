@@ -1,0 +1,190 @@
+
+
+
+
+
+
+
+
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from './redux/hooks';
+
+// Route Components
+import ProtectedRoute from './components/routes/ProtectedRoute';
+import AdminRoute from './components/routes/AdminRoute';
+
+// Route Configuration - Import from correct path
+import { PUBLIC_ROUTES, PROTECTED_ROUTES, ADMIN_ROUTES } from './components/routes/config';
+
+// Hooks
+import { useUserData } from './hooks/useUserData';
+import LandingPage from './pages/public/LandingPage';
+import PricingPage from './pages/public/PricingPage';
+import AboutPage from './pages/public/AboutPage';
+import StripePaymentPage from './pages/payment/StripePaymentPage';
+import PaymentCallback from './pages/payment/PaymentCallback';
+
+export default function App() {
+  const auth = useAuth();
+  useUserData();
+
+  return (
+    <Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/payment/stripe" element={<StripePaymentPage />} />
+        <Route path="/payment/callback" element={<PaymentCallback />} />
+     
+        {/* PUBLIC ROUTES */}
+        {PUBLIC_ROUTES.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={route.element}
+          />
+        ))}
+
+        {/* PROTECTED ROUTES */}
+        {PROTECTED_ROUTES.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <ProtectedRoute>
+                {route.element}
+              </ProtectedRoute>
+            }
+          />
+        ))}
+
+        {/* ADMIN ROUTES */}
+        {ADMIN_ROUTES.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <AdminRoute requiredRole={route.requiredRole}>
+                {route.element}
+              </AdminRoute>
+            }
+          />
+        ))}
+
+        {/* CATCH ALL */}
+        <Route
+          path="*"
+          element={
+            auth.isAuthenticated
+              ? <Navigate to="/dashboard" replace />
+              : <Navigate to="/" replace />
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+
+
+
+
+// import React from 'react';
+// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// import { ToastContainer } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
+// import { useAuth } from './redux/hooks';
+
+// // Route Components
+// import ProtectedRoute from './components/routes/ProtectedRoute';
+// import AdminRoute from './components/routes/AdminRoute';
+
+// // Route Configuration - Import from correct path
+// import { PUBLIC_ROUTES, PROTECTED_ROUTES, ADMIN_ROUTES } from './components/routes/config';
+
+// // Hooks
+// import { useUserData } from './hooks/useUserData';
+
+// export default function App() {
+//   const auth = useAuth();
+//   useUserData();
+
+//   return (
+//     <Router>
+//       <ToastContainer
+//         position="top-right"
+//         autoClose={3000}
+//         hideProgressBar={false}
+//         newestOnTop={false}
+//         closeOnClick
+//         rtl={false}
+//         pauseOnFocusLoss
+//         draggable
+//         pauseOnHover
+//         theme="colored"
+//       />
+//       <Routes>
+//         {/* PUBLIC ROUTES */}
+//         {PUBLIC_ROUTES.map((route) => (
+//           <Route
+//             key={route.path}
+//             path={route.path}
+//             element={route.element}
+//           />
+//         ))}
+
+//         {/* PROTECTED ROUTES */}
+//         {PROTECTED_ROUTES.map((route) => (
+//           <Route
+//             key={route.path}
+//             path={route.path}
+//             element={
+//               <ProtectedRoute>
+//                 {route.element}
+//               </ProtectedRoute>
+//             }
+//           />
+//         ))}
+
+//         {/* ADMIN ROUTES */}
+//         {ADMIN_ROUTES.map((route) => (
+//           <Route
+//             key={route.path}
+//             path={route.path}
+//             element={
+//               <AdminRoute requiredRole={route.requiredRole}>
+//                 {route.element}
+//               </AdminRoute>
+//             }
+//           />
+//         ))}
+
+//         {/* CATCH ALL */}
+//         <Route
+//           path="*"
+//           element={
+//             auth.isAuthenticated
+//               ? <Navigate to="/dashboard" replace />
+//               : <Navigate to="/" replace />
+//           }
+//         />
+//       </Routes>
+//     </Router>
+//   );
+// }
