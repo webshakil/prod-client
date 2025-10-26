@@ -5,7 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Loader, CreditCard, Lock, ExternalLink } from 'lucide-react';
-import { useCreatePaymentMutation } from '../../services/subscriptionApi';
+import { useCreatePaymentMutation } from '../../redux/api/subscription/subscriptionApi';
+//import { useCreatePaymentMutation } from '../../services/subscriptionApi';
 
 const PaddlePaymentPage = () => {
   const [searchParams] = useSearchParams();
