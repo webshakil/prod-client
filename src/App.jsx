@@ -27,6 +27,7 @@ import PricingPage from './pages/public/PricingPage';
 import AboutPage from './pages/public/AboutPage';
 import StripePaymentPage from './pages/payment/StripePaymentPage';
 import PaymentCallback from './pages/payment/PaymentCallback';
+import PaddlePaymentPage from './pages/payment/PaddlePaymentPage';
 
 export default function App() {
   const auth = useAuth();
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/payment/stripe" element={<StripePaymentPage />} />
         <Route path="/payment/callback" element={<PaymentCallback />} />
+         <Route path="/payment/paddle" element={<PaddlePaymentPage />} />
      
         {/* PUBLIC ROUTES */}
         {PUBLIC_ROUTES.map((route) => (
