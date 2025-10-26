@@ -1,7 +1,9 @@
+// src/components/Dashboard/Tabs/Subscription.jsx
 import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 import { useGetAllPlansQuery, useGetUserCurrentSubscriptionQuery } from '../../../redux/api/subscription/subscriptionApi';
 import { setPlans, setUserSubscription } from '../../../redux/slices/subscriptionSlice';
+import SubscriptionInfo from './subscription/SubscriptionInfo';
 import SubscriptionPlans from './subscription/SubscriptionPlans';
 import SubscriptionCheckout from './subscription/SubscriptionCheckout';
 import SubscriptionSuccess from './subscription/SubscriptionSuccess';
@@ -34,17 +36,6 @@ export default function Subscription() {
 
   const loading = plansLoading || subLoading;
 
-  // Step 1: Show Plans
-  if (checkoutStep === 'plan-selection') {
-    return (
-      <SubscriptionPlans 
-        loading={loading}
-        subscription={subscription}
-        subscriptionStatus={subscriptionStatus}
-      />
-    );
-  }
-
   // Step 2: Show Gateway Selection & Payment
   if (checkoutStep === 'gateway-selection' || checkoutStep === 'payment') {
     return <SubscriptionCheckout />;
@@ -55,26 +46,129 @@ export default function Subscription() {
     return <SubscriptionSuccess />;
   }
 
-  // Default: Show Plans + History
+  // Step 1: Show Plans (when explicitly requested)
+  if (checkoutStep === 'plan-selection') {
+    return (
+      <SubscriptionPlans 
+        loading={loading}
+        subscription={subscription}
+        subscriptionStatus={subscriptionStatus}
+      />
+    );
+  }
+
+  // Default: Show Current Subscription Info + Available Plans + History
   return (
     <div className="space-y-8">
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader className="animate-spin text-blue-600" size={40} />
+          <span className="ml-3 text-gray-600">Loading subscription details...</span>
         </div>
       ) : (
         <>
-          <SubscriptionPlans 
-            loading={false}
-            subscription={subscription}
-            subscriptionStatus={subscriptionStatus}
-          />
+          {/* Current Subscription Info */}
+          <SubscriptionInfo />
+
+          {/* Available Plans */}
+          <div>
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Available Plans</h2>
+              <p className="text-gray-600">Upgrade or change your subscription</p>
+            </div>
+            <SubscriptionPlans 
+              loading={false}
+              subscription={subscription}
+              subscriptionStatus={subscriptionStatus}
+            />
+          </div>
+
+          {/* Payment History */}
           <SubscriptionHistory />
         </>
       )}
     </div>
   );
 }
+
+//last workable codes
+// import React, { useEffect } from 'react';
+// import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
+// import { useGetAllPlansQuery, useGetUserCurrentSubscriptionQuery } from '../../../redux/api/subscription/subscriptionApi';
+// import { setPlans, setUserSubscription } from '../../../redux/slices/subscriptionSlice';
+// import SubscriptionPlans from './subscription/SubscriptionPlans';
+// import SubscriptionCheckout from './subscription/SubscriptionCheckout';
+// import SubscriptionSuccess from './subscription/SubscriptionSuccess';
+// import SubscriptionHistory from './subscription/SubscriptionHistory';
+// import { Loader } from 'lucide-react';
+
+// export default function Subscription() {
+//   const dispatch = useAppDispatch();
+//   const checkoutStep = useAppSelector((state) => state.subscription.checkoutStep);
+//   const subscription = useAppSelector((state) => state.auth.currentSubscription);
+//   const subscriptionStatus = useAppSelector((state) => state.auth.subscriptionStatus);
+
+//   // Fetch plans
+//   const { data: plansData, isLoading: plansLoading } = useGetAllPlansQuery();
+  
+//   // Fetch user's current subscription
+//   const { data: subData, isLoading: subLoading } = useGetUserCurrentSubscriptionQuery();
+
+//   useEffect(() => {
+//     if (plansData?.plans) {
+//       dispatch(setPlans(plansData.plans));
+//     }
+//   }, [plansData, dispatch]);
+
+//   useEffect(() => {
+//     if (subData?.subscription) {
+//       dispatch(setUserSubscription(subData.subscription));
+//     }
+//   }, [subData, dispatch]);
+
+//   const loading = plansLoading || subLoading;
+
+//   // Step 1: Show Plans
+//   if (checkoutStep === 'plan-selection') {
+//     return (
+//       <SubscriptionPlans 
+//         loading={loading}
+//         subscription={subscription}
+//         subscriptionStatus={subscriptionStatus}
+//       />
+//     );
+//   }
+
+//   // Step 2: Show Gateway Selection & Payment
+//   if (checkoutStep === 'gateway-selection' || checkoutStep === 'payment') {
+//     return <SubscriptionCheckout />;
+//   }
+
+//   // Step 3: Show Success
+//   if (checkoutStep === 'confirmation') {
+//     return <SubscriptionSuccess />;
+//   }
+
+//   // Default: Show Plans + History
+//   return (
+//     <div className="space-y-8">
+//       {loading ? (
+//         <div className="flex items-center justify-center py-12">
+//           <Loader className="animate-spin text-blue-600" size={40} />
+//         </div>
+//       ) : (
+//         <>
+//           <SubscriptionPlans 
+//             loading={false}
+//             subscription={subscription}
+//             subscriptionStatus={subscriptionStatus}
+//           />
+//           <SubscriptionHistory />
+//         </>
+//       )}
+//     </div>
+//   );
+// }
 // import React, { useEffect } from 'react';
 // //import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
 // import { useGetAllPlansQuery, useGetUserCurrentSubscriptionQuery } from '../../../redux/api/subscription/subscriptionApi';
