@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
 
 // Create axios instance
 const electionAPI = axios.create({
