@@ -77,7 +77,7 @@ const handleProceedToPayment = async () => {
 
   try {
     const paymentData = {
-      planId: selectedPlan.id,
+      plan_id: selectedPlan.id,
       country_code: countryCode,
       payment_method: paymentMethod,
       amount: totalAmount,
