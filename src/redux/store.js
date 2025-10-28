@@ -1,16 +1,20 @@
+// ✅ COMPATIBLE STORE.JS - NO CHANGES TO YOUR EXISTING CODE
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice.js';
 import userReducer from './slices/userSlice.js';
 import subscriptionReducer from './slices/subscriptionSlice.js';
+import electionReducer from './slices/electionSlice.js'; // 🆕 ADD THIS
 import { authApi } from './api/auth/authApi.js';
 import { userApi } from './api/user/userApi.js';
 import { subscriptionApi } from './api/subscription/subscriptionApi.js';
 
 export const store = configureStore({
   reducer: {
+    // ✅ YOUR EXISTING REDUCERS - NOT CHANGED
     auth: authReducer,
     user: userReducer,
     subscription: subscriptionReducer,
+    election: electionReducer, // 🆕 ADD THIS LINE ONLY
     [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [subscriptionApi.reducerPath]: subscriptionApi.reducer,
@@ -18,23 +22,37 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
+        // ✅ YOUR EXISTING IGNORED ACTIONS - NOT CHANGED
         ignoredActions: [
           'auth/setAuthenticationComplete',
           'auth/restoreAuthFromStorage',
+          // 🆕 ADD THESE FOR ELECTION FILE UPLOADS
+          'election/updateDraftElection',
+          'election/updateDraftField',
         ],
-        ignoredPaths: ['auth.tokenExpiresAt'],
+        // ✅ YOUR EXISTING IGNORED PATHS - NOT CHANGED
+        ignoredPaths: [
+          'auth.tokenExpiresAt',
+          // 🆕 ADD THESE FOR ELECTION FILE UPLOADS
+          'election.draftElection.topic_image',
+          'election.draftElection.topic_video',
+          'election.draftElection.logo',
+          'election.draftElection.questions',
+        ],
       },
     })
+      // ✅ YOUR EXISTING MIDDLEWARE - NOT CHANGED
       .concat(authApi.middleware)
       .concat(userApi.middleware)
       .concat(subscriptionApi.middleware),
 });
 
 export default store;
+//last workable file
 // import { configureStore } from '@reduxjs/toolkit';
 // import authReducer from './slices/authSlice.js';
 // import userReducer from './slices/userSlice.js';
-// import subscriptionReducer from './slices/subscriptionSlice.js'; // ADD THIS
+// import subscriptionReducer from './slices/subscriptionSlice.js';
 // import { authApi } from './api/auth/authApi.js';
 // import { userApi } from './api/user/userApi.js';
 // import { subscriptionApi } from './api/subscription/subscriptionApi.js';
@@ -43,7 +61,7 @@ export default store;
 //   reducer: {
 //     auth: authReducer,
 //     user: userReducer,
-//     subscription: subscriptionReducer, // ADD THIS
+//     subscription: subscriptionReducer,
 //     [authApi.reducerPath]: authApi.reducer,
 //     [userApi.reducerPath]: userApi.reducer,
 //     [subscriptionApi.reducerPath]: subscriptionApi.reducer,
@@ -51,102 +69,16 @@ export default store;
 //   middleware: (getDefaultMiddleware) =>
 //     getDefaultMiddleware({
 //       serializableCheck: {
-//         ignoredActions: ['auth/setAuthenticationComplete'],
+//         ignoredActions: [
+//           'auth/setAuthenticationComplete',
+//           'auth/restoreAuthFromStorage',
+//         ],
 //         ignoredPaths: ['auth.tokenExpiresAt'],
 //       },
 //     })
 //       .concat(authApi.middleware)
 //       .concat(userApi.middleware)
 //       .concat(subscriptionApi.middleware),
-// });
-
-// export default store;
-// // redux/store.js
-
-// import { configureStore } from '@reduxjs/toolkit';
-// import authReducer from './slices/authSlice.js';
-// import userReducer from './slices/userSlice.js';
-// import { authApi } from './api/auth/authApi.js';
-// import { userApi } from './api/user/userApi.js';
-// import { subscriptionApi } from './api/subscription/subscriptionApi.js';
-
-// export const store = configureStore({
-//   reducer: {
-//     auth: authReducer,
-//     user: userReducer,
-//     [authApi.reducerPath]: authApi.reducer,
-//     [userApi.reducerPath]: userApi.reducer,
-//     [subscriptionApi.reducerPath]: subscriptionApi.reducer,
-//   },
-//   middleware: (getDefaultMiddleware) =>
-//     getDefaultMiddleware({
-//       serializableCheck: {
-//         ignoredActions: ['auth/setAuthenticationComplete'],
-//         ignoredPaths: ['auth.tokenExpiresAt'],
-//       },
-//     })
-//       .concat(authApi.middleware)
-//       .concat(userApi.middleware)
-//       .concat(subscriptionApi.middleware),
-// });
-
-// export default store;
-// // redux/store.js (Update to include subscriptionSlice)
-
-// import { configureStore } from '@reduxjs/toolkit';
-// import authReducer from './slices/authSlice.js';
-// import userReducer from './slices/userSlice.js';
-// import { authApi } from './api/auth/authApi.js';
-// import { userApi } from './api/user/userApi.js';
-
-// export const store = configureStore({
-//   reducer: {
-//     auth: authReducer,
-//     user: userReducer,
-//     [authApi.reducerPath]: authApi.reducer,
-//     [userApi.reducerPath]: userApi.reducer,
-//   },
-//   middleware: (getDefaultMiddleware) =>
-//     getDefaultMiddleware()
-//       .concat(authApi.middleware)
-//       .concat(userApi.middleware),
-// });
-
-// export default store;
-
-// import { configureStore } from '@reduxjs/toolkit';
-// import authReducer from './slices/authSlice';
-// import uiReducer from './slices/uiSlice';
-// import subscriptionReducer from './slices/subscriptionSlice';
-// import { indexApi } from './api/indexApi';
-
-// export const store = configureStore({
-//   reducer: {
-//     auth: authReducer,
-//     ui: uiReducer,
-//     subscription: subscriptionReducer,
-//     [indexApi.reducerPath]: indexApi.reducer,
-//   },
-//   middleware: (getDefaultMiddleware) =>
-//     getDefaultMiddleware().concat(indexApi.middleware),
-// });
-
-// export default store;
-// import { configureStore } from '@reduxjs/toolkit';
-// import authReducer from './slices/authSlice';
-// import uiReducer from './slices/uiSlice';
-// import subscriptionReducer from './slices/subscriptionSlice';
-// import { indexApi } from './api/indexApi';
-
-// export const store = configureStore({
-//   reducer: {
-//     auth: authReducer,
-//     ui: uiReducer,
-//     subscription: subscriptionReducer,
-//     [indexApi.reducerPath]: indexApi.reducer,
-//   },
-//   middleware: (getDefaultMiddleware) =>
-//     getDefaultMiddleware().concat(indexApi.middleware),
 // });
 
 // export default store;

@@ -28,6 +28,7 @@ import AboutPage from './pages/public/AboutPage';
 import StripePaymentPage from './pages/payment/StripePaymentPage';
 import PaymentCallback from './pages/payment/PaymentCallback';
 import PaddlePaymentPage from './pages/payment/PaddlePaymentPage';
+import SubscriptionSync from './components/Dashboard/Tabs/subscription/SubscriptionSync';
 
 export default function App() {
   const auth = useAuth();
@@ -47,7 +48,9 @@ export default function App() {
         pauseOnHover
         theme="colored"
       />
+      <SubscriptionSync />
       <Routes>
+        
         <Route path="/" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />

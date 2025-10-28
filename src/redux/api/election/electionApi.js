@@ -1,0 +1,341 @@
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
+
+// Create axios instance
+const electionAPI = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Request interceptor to add user data
+electionAPI.interceptors.request.use(
+  (config) => {
+    // Get user data from localStorage
+    const userDataStr = localStorage.getItem('userData');
+    
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        
+        // Add x-user-data header
+        config.headers['x-user-data'] = JSON.stringify({
+          userId: userData.userId,
+          email: userData.email,
+          phone: userData.phone || null,
+          username: userData.username || null,
+          roles: userData.roles || ['Voter'],
+          subscriptionType: userData.subscriptionType || 'Free',
+          isSubscribed: userData.isSubscribed || false
+        });
+      } catch (error) {
+        console.error('Error parsing userData:', error);
+      }
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+electionAPI.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized
+      localStorage.clear();
+      window.location.href = '/auth';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ============================================
+// ELIGIBILITY & SUBSCRIPTION
+// ============================================
+
+export const checkEligibility = async () => {
+  const response = await electionAPI.get('/elections/check-eligibility');
+  return response.data;
+};
+
+// ============================================
+// DRAFT OPERATIONS
+// ============================================
+
+export const createDraft = async (draftData) => {
+  const response = await electionAPI.post('/elections/drafts', draftData);
+  return response.data;
+};
+
+export const getMyDrafts = async () => {
+  const response = await electionAPI.get('/elections/drafts');
+  return response.data;
+};
+
+export const getDraft = async (draftId) => {
+  const response = await electionAPI.get(`/elections/drafts/${draftId}`);
+  return response.data;
+};
+
+export const updateDraft = async (draftId, updateData, files = {}) => {
+  const formData = new FormData();
+  
+  // Add files if present
+  if (files.topic_image) {
+    formData.append('topic_image', files.topic_image);
+  }
+  if (files.topic_video) {
+    formData.append('topic_video', files.topic_video);
+  }
+  if (files.logo) {
+    formData.append('logo', files.logo);
+  }
+  
+  // Add other data
+  Object.keys(updateData).forEach(key => {
+    if (typeof updateData[key] === 'object' && updateData[key] !== null) {
+      formData.append(key, JSON.stringify(updateData[key]));
+    } else {
+      formData.append(key, updateData[key]);
+    }
+  });
+  
+  const response = await electionAPI.patch(`/elections/drafts/${draftId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const deleteDraft = async (draftId) => {
+  const response = await electionAPI.delete(`/elections/drafts/${draftId}`);
+  return response.data;
+};
+
+export const publishElection = async (draftId, publishData) => {
+  const response = await electionAPI.post(`/elections/drafts/${draftId}/publish`, publishData);
+  return response.data;
+};
+
+// ============================================
+// ELECTION OPERATIONS
+// ============================================
+
+export const createElection = async (electionData, files = {}) => {
+  const formData = new FormData();
+  
+  // Add files
+  if (files.topic_image) {
+    formData.append('topic_image', files.topic_image);
+  }
+  if (files.topic_video) {
+    formData.append('topic_video', files.topic_video);
+  }
+  if (files.logo) {
+    formData.append('logo', files.logo);
+  }
+  
+  // Add election data
+  Object.keys(electionData).forEach(key => {
+    if (typeof electionData[key] === 'object' && electionData[key] !== null) {
+      formData.append(key, JSON.stringify(electionData[key]));
+    } else if (electionData[key] !== null && electionData[key] !== undefined) {
+      formData.append(key, electionData[key]);
+    }
+  });
+  
+  const response = await electionAPI.post('/elections', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const getMyElections = async (page = 1, limit = 10) => {
+  const response = await electionAPI.get('/elections/my-elections', {
+    params: { page, limit }
+  });
+  return response.data;
+};
+
+export const getPublicElections = async (page = 1, limit = 10) => {
+  const response = await electionAPI.get('/elections/public', {
+    params: { page, limit }
+  });
+  return response.data;
+};
+
+export const getElection = async (electionId) => {
+  const response = await electionAPI.get(`/elections/${electionId}`);
+  return response.data;
+};
+
+export const getElectionBySlug = async (slug) => {
+  const response = await electionAPI.get(`/elections/slug/${slug}`);
+  return response.data;
+};
+
+export const updateElection = async (electionId, updateData, files = {}) => {
+  const formData = new FormData();
+  
+  // Add files
+  if (files.topic_image) {
+    formData.append('topic_image', files.topic_image);
+  }
+  if (files.topic_video) {
+    formData.append('topic_video', files.topic_video);
+  }
+  if (files.logo) {
+    formData.append('logo', files.logo);
+  }
+  
+  // Add update data
+  Object.keys(updateData).forEach(key => {
+    if (typeof updateData[key] === 'object' && updateData[key] !== null) {
+      formData.append(key, JSON.stringify(updateData[key]));
+    } else if (updateData[key] !== null) {
+      formData.append(key, updateData[key]);
+    }
+  });
+  
+  const response = await electionAPI.put(`/elections/${electionId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const deleteElection = async (electionId) => {
+  const response = await electionAPI.delete(`/elections/${electionId}`);
+  return response.data;
+};
+
+export const cloneElection = async (electionId, newTitle) => {
+  const response = await electionAPI.post(`/elections/${electionId}/clone`, {
+    new_title: newTitle
+  });
+  return response.data;
+};
+
+export const exportElection = async (electionId, format = 'json') => {
+  const endpoint = format === 'csv' 
+    ? `/elections/${electionId}/export/csv`
+    : `/elections/${electionId}/export`;
+    
+  const response = await electionAPI.get(endpoint);
+  return response.data;
+};
+
+// ============================================
+// QUESTIONS & OPTIONS
+// ============================================
+
+export const addQuestion = async (electionId, questionData, questionImage = null) => {
+  const formData = new FormData();
+  
+  if (questionImage) {
+    formData.append('question_image', questionImage);
+  }
+  
+  Object.keys(questionData).forEach(key => {
+    if (typeof questionData[key] === 'object' && questionData[key] !== null) {
+      formData.append(key, JSON.stringify(questionData[key]));
+    } else {
+      formData.append(key, questionData[key]);
+    }
+  });
+  
+  const response = await electionAPI.post(`/elections/${electionId}/questions`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const getElectionQuestions = async (electionId) => {
+  const response = await electionAPI.get(`/elections/${electionId}/questions`);
+  return response.data;
+};
+
+export const updateQuestion = async (questionId, updateData, questionImage = null) => {
+  const formData = new FormData();
+  
+  if (questionImage) {
+    formData.append('question_image', questionImage);
+  }
+  
+  Object.keys(updateData).forEach(key => {
+    if (typeof updateData[key] === 'object' && updateData[key] !== null) {
+      formData.append(key, JSON.stringify(updateData[key]));
+    } else {
+      formData.append(key, updateData[key]);
+    }
+  });
+  
+  const response = await electionAPI.put(`/elections/questions/${questionId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const deleteQuestion = async (questionId) => {
+  const response = await electionAPI.delete(`/elections/questions/${questionId}`);
+  return response.data;
+};
+
+export const addOption = async (questionId, optionData, optionImage = null) => {
+  const formData = new FormData();
+  
+  if (optionImage) {
+    formData.append('option_image', optionImage);
+  }
+  
+  Object.keys(optionData).forEach(key => {
+    formData.append(key, optionData[key]);
+  });
+  
+  const response = await electionAPI.post(`/elections/questions/${questionId}/options`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const updateOption = async (optionId, updateData, optionImage = null) => {
+  const formData = new FormData();
+  
+  if (optionImage) {
+    formData.append('option_image', optionImage);
+  }
+  
+  Object.keys(updateData).forEach(key => {
+    formData.append(key, updateData[key]);
+  });
+  
+  const response = await electionAPI.put(`/elections/options/${optionId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const deleteOption = async (optionId) => {
+  const response = await electionAPI.delete(`/elections/options/${optionId}`);
+  return response.data;
+};
+
+export default electionAPI;
