@@ -1,3 +1,4 @@
+//last workable code
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
@@ -172,10 +173,15 @@ export const createElection = async (electionData, files = {}) => {
   return response.data;
 };
 
-export const getMyElections = async (page = 1, limit = 10) => {
-  const response = await electionAPI.get('/elections/my-elections', {
-    params: { page, limit }
-  });
+export const getMyElections = async (page = 1, limit = 10, status = null) => {
+  const params = { page, limit };
+  
+  // Add status filter if provided and not 'all'
+  if (status && status !== 'all') {
+    params.status = status;
+  }
+  
+  const response = await electionAPI.get('/elections/my-elections', { params });
   return response.data;
 };
 
@@ -195,6 +201,7 @@ export const getElectionBySlug = async (slug) => {
   const response = await electionAPI.get(`/elections/slug/${slug}`);
   return response.data;
 };
+
 
 export const updateElection = async (electionId, updateData, files = {}) => {
   const formData = new FormData();
@@ -352,6 +359,7 @@ export const deleteOption = async (optionId) => {
 };
 
 export default electionAPI;
+// //last workable code
 // import axios from 'axios';
 
 // const API_BASE_URL = import.meta.env.VITE_REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
@@ -476,6 +484,17 @@ export default electionAPI;
 // };
 
 // export const publishElection = async (draftId, publishData) => {
+//   // Check if publishData is FormData (with files)
+//   if (publishData instanceof FormData) {
+//     const response = await electionAPI.post(`/elections/drafts/${draftId}/publish`, publishData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data'
+//       }
+//     });
+//     return response.data;
+//   }
+  
+//   // Otherwise send as JSON (backward compatibility)
 //   const response = await electionAPI.post(`/elections/drafts/${draftId}/publish`, publishData);
 //   return response.data;
 // };
@@ -695,3 +714,19 @@ export default electionAPI;
 // };
 
 // export default electionAPI;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
