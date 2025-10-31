@@ -19,38 +19,38 @@ import {
 // Main loader function - loads all election data globally
 export const loadElectionData = async (dispatch) => {
   try {
-    console.log('🔄 Loading election data globally...');
+    console.log('🔄 [loadElectionData] Loading election data globally...');
     dispatch(setLoading(true));
 
     // 1. Load my elections
     try {
-      const myElectionsResponse = await getMyElections(1, 100, 'all'); // Load first 100 elections, all statuses
+      const myElectionsResponse = await getMyElections(1, 100, 'all');
       
       if (myElectionsResponse.success && myElectionsResponse.data) {
         const elections = myElectionsResponse.data.elections || myElectionsResponse.data;
         dispatch(setMyElections(Array.isArray(elections) ? elections : []));
-        console.log('✅ My elections loaded:', elections.length);
+        console.log('✅ [loadElectionData] My elections loaded:', elections.length);
       } else {
         dispatch(setMyElections([]));
       }
     } catch (error) {
-      console.log('⚠️ Could not load my elections:', error.message);
+      console.log('⚠️ [loadElectionData] Could not load my elections:', error.message);
       dispatch(setMyElections([]));
     }
 
     // 2. Load public elections
     try {
-      const publicElectionsResponse = await getPublicElections(1, 50); // Load first 50 public elections
+      const publicElectionsResponse = await getPublicElections(1, 50);
       
       if (publicElectionsResponse.success && publicElectionsResponse.data) {
         const elections = publicElectionsResponse.data.elections || publicElectionsResponse.data;
         dispatch(setPublicElections(Array.isArray(elections) ? elections : []));
-        console.log('✅ Public elections loaded:', elections.length);
+        console.log('✅ [loadElectionData] Public elections loaded:', elections.length);
       } else {
         dispatch(setPublicElections([]));
       }
     } catch (error) {
-      console.log('⚠️ Could not load public elections:', error.message);
+      console.log('⚠️ [loadElectionData] Could not load public elections:', error.message);
       dispatch(setPublicElections([]));
     }
 
@@ -61,20 +61,20 @@ export const loadElectionData = async (dispatch) => {
       if (draftsResponse.success && draftsResponse.data) {
         const drafts = draftsResponse.data.drafts || draftsResponse.data;
         dispatch(setDrafts(Array.isArray(drafts) ? drafts : []));
-        console.log('✅ Drafts loaded:', drafts.length);
+        console.log('✅ [loadElectionData] Drafts loaded:', drafts.length);
       } else {
         dispatch(setDrafts([]));
       }
     } catch (error) {
-      console.log('⚠️ Could not load drafts:', error.message);
+      console.log('⚠️ [loadElectionData] Could not load drafts:', error.message);
       dispatch(setDrafts([]));
     }
 
     dispatch(setLoading(false));
-    console.log('✅ Election data loaded successfully');
+    console.log('✅ [loadElectionData] Election data loaded successfully');
     return true;
   } catch (error) {
-    console.error('❌ Error loading election data globally:', error);
+    console.error('❌ [loadElectionData] Error loading election data globally:', error);
     dispatch(setError(error.message));
     dispatch(setLoading(false));
     return false;
@@ -84,7 +84,7 @@ export const loadElectionData = async (dispatch) => {
 // Load single election by ID and set as currentElection
 export const loadSingleElection = async (dispatch, electionId) => {
   try {
-    console.log('🔄 Loading single election:', electionId);
+    console.log('🔄 [loadSingleElection] Loading election:', electionId);
     dispatch(setLoading(true));
 
     const response = await getElection(electionId);
@@ -171,15 +171,15 @@ export const loadSingleElection = async (dispatch, electionId) => {
       dispatch(setCurrentElection(currentElectionData));
       dispatch(setLoading(false));
       
-      console.log('✅ Single election loaded into currentElection:', electionData.title);
+      console.log('✅ [loadSingleElection] Election loaded:', electionData.title);
       return currentElectionData;
     } else {
       dispatch(setLoading(false));
-      console.log('⚠️ No election data found');
+      console.log('⚠️ [loadSingleElection] No election data found');
       return null;
     }
   } catch (error) {
-    console.error('❌ Error loading single election:', error);
+    console.error('❌ [loadSingleElection] Error loading election:', error);
     dispatch(setError(error.message));
     dispatch(setLoading(false));
     return null;
@@ -189,21 +189,21 @@ export const loadSingleElection = async (dispatch, electionId) => {
 // Optional: Load only user's elections (lightweight version)
 export const loadMyElectionsOnly = async (dispatch) => {
   try {
-    console.log('🔄 Loading my elections only...');
+    console.log('🔄 [loadMyElectionsOnly] Loading my elections...');
     
     const myElectionsResponse = await getMyElections(1, 100, 'all');
     
     if (myElectionsResponse.success && myElectionsResponse.data) {
       const elections = myElectionsResponse.data.elections || myElectionsResponse.data;
       dispatch(setMyElections(Array.isArray(elections) ? elections : []));
-      console.log('✅ My elections loaded:', elections.length);
+      console.log('✅ [loadMyElectionsOnly] My elections loaded:', elections.length);
       return elections;
     } else {
       dispatch(setMyElections([]));
       return [];
     }
   } catch (error) {
-    console.error('❌ Error loading my elections:', error);
+    console.error('❌ [loadMyElectionsOnly] Error:', error);
     dispatch(setMyElections([]));
     return [];
   }
@@ -212,21 +212,21 @@ export const loadMyElectionsOnly = async (dispatch) => {
 // Optional: Load only public elections (lightweight version)
 export const loadPublicElectionsOnly = async (dispatch) => {
   try {
-    console.log('🔄 Loading public elections only...');
+    console.log('🔄 [loadPublicElectionsOnly] Loading public elections...');
     
     const publicElectionsResponse = await getPublicElections(1, 50);
     
     if (publicElectionsResponse.success && publicElectionsResponse.data) {
       const elections = publicElectionsResponse.data.elections || publicElectionsResponse.data;
       dispatch(setPublicElections(Array.isArray(elections) ? elections : []));
-      console.log('✅ Public elections loaded:', elections.length);
+      console.log('✅ [loadPublicElectionsOnly] Public elections loaded:', elections.length);
       return elections;
     } else {
       dispatch(setPublicElections([]));
       return [];
     }
   } catch (error) {
-    console.error('❌ Error loading public elections:', error);
+    console.error('❌ [loadPublicElectionsOnly] Error:', error);
     dispatch(setPublicElections([]));
     return [];
   }
@@ -235,21 +235,21 @@ export const loadPublicElectionsOnly = async (dispatch) => {
 // Optional: Load only drafts (lightweight version)
 export const loadDraftsOnly = async (dispatch) => {
   try {
-    console.log('🔄 Loading drafts only...');
+    console.log('🔄 [loadDraftsOnly] Loading drafts...');
     
     const draftsResponse = await getMyDrafts();
     
     if (draftsResponse.success && draftsResponse.data) {
       const drafts = draftsResponse.data.drafts || draftsResponse.data;
       dispatch(setDrafts(Array.isArray(drafts) ? drafts : []));
-      console.log('✅ Drafts loaded:', drafts.length);
+      console.log('✅ [loadDraftsOnly] Drafts loaded:', drafts.length);
       return drafts;
     } else {
       dispatch(setDrafts([]));
       return [];
     }
   } catch (error) {
-    console.error('❌ Error loading drafts:', error);
+    console.error('❌ [loadDraftsOnly] Error:', error);
     dispatch(setDrafts([]));
     return [];
   }
