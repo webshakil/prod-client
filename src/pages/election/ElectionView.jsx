@@ -33,6 +33,7 @@ import { deleteElection, getElection, getElectionQuestions } from '../../redux/a
 import { setCurrentElection } from '../../redux/slices/electionSlice';
 
 export default function ElectionView() {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
