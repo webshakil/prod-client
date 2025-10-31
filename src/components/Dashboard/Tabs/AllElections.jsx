@@ -110,12 +110,21 @@ export default function AllElections() {
       toast.error(errorMessage);
     }
   };
+//this code succssul share election
+  // const handleShare = (election) => {
+  //   const shareUrl = `https://prod-client-omega.vercel.app/vote/${election.slug}`;
+  //   navigator.clipboard.writeText(shareUrl);
+  //   toast.success('Link copied to clipboard!');
+  // };
 
-  const handleShare = (election) => {
-    const shareUrl = `https://prod-client-omega.vercel.app/vote/${election.slug}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
-  };
+  // In AllElections.jsx - Replace handleShare function
+
+const handleShare = (election) => {
+  // ✅ Use election ID (not slug)
+  const shareUrl = `${window.location.origin}/vote/${election.id}`;
+  navigator.clipboard.writeText(shareUrl);
+  toast.success('Link copied to clipboard!');
+};
 
   const handleView = (election) => {
     navigate(`/election/${election.id}`);
@@ -158,7 +167,7 @@ export default function AllElections() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-800">All Elections</h2>
+          <h2 className="text-3xl font-bold text-gray-800">All Elections shakil</h2>
           <p className="text-gray-600 mt-1">{totalElections} total elections</p>
         </div>
         <button
