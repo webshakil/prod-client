@@ -112,12 +112,18 @@ export default function AllElections() {
     }
   };
 
+  // const handleShare = (election) => {
+  //   // ✅ Use election ID (not slug)
+  //   const shareUrl = `${window.location.origin}/vote/${election.id}`;
+  //   navigator.clipboard.writeText(shareUrl);
+  //   toast.success('Link copied to clipboard!');
+  // };
   const handleShare = (election) => {
-    // ✅ Use election ID (not slug)
-    const shareUrl = `${window.location.origin}/vote/${election.id}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
-  };
+  // ✅ Use election SLUG (not ID) for the public voting page
+  const shareUrl = `${window.location.origin}/vote/${election.slug}`;
+  navigator.clipboard.writeText(shareUrl);
+  toast.success('Link copied to clipboard!');
+};
 
   const handleView = (election) => {
     navigate(`/election/${election.id}`);
