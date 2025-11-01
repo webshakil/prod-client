@@ -92,7 +92,7 @@ export default function WalletTab() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">My Wallet</h1>
+        <h1 className="text-3xl font-bold text-gray-800">My Wallet </h1>
         <button
           onClick={() => setShowWithdrawalModal(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"

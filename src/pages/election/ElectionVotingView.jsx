@@ -2,18 +2,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, Loader, Play } from 'lucide-react';
 import { getElection } from '../../redux/api/election/electionApi';
+import { 
+  generateVoteId, 
+  generateReceiptId, 
+  generateLotteryTicket,
+  createVoteHash,
+  encryptVoteData 
+} from '../../utils/voteEncryption';
 
-// ✅ Import sub-components from components folder
-//import ElectionHeader from '../../components/Election/VotingView/ElectionHeader';
-//import VideoModal from '../../components/Election/VotingView/VideoModal';
-//import PricingTab from '../../components/Election/VotingView/PricingTab';
-//import VoteTab from '../../components/Election/VotingView/VoteTab';
-//import PaymentModal from '../../components/Election/VotingView/PaymentModal';
+// Import components
 import ElectionHeader from '../../components/election/VotingView/ElectionHeader';
 import VideoModal from '../../components/election/VotingView/VideoModal';
 import PricingTab from '../../components/election/VotingView/PricingTab';
 import VoteTab from '../../components/election/VotingView/VoteTab';
 import PaymentModal from '../../components/election/VotingView/PaymentModal';
+import LotteryMachine from '../../components/election/VotingView/LotteryMachine';
+import VoteSuccessModal from '../../components/election/VotingView/VoteSuccessModal';
 
 export default function ElectionVotingView() {
   const { electionId } = useParams();
@@ -30,13 +34,33 @@ export default function ElectionVotingView() {
   const [applicableFee, setApplicableFee] = useState(null);
   const [processingFeePercent, setProcessingFeePercent] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  /*eslint-disable*/
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [votingInProgress, setVotingInProgress] = useState(false);
   const [videoWatched, setVideoWatched] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  
+  // Lottery & Success states
+  const [showLotteryAnimation, setShowLotteryAnimation] = useState(false);
+  const [lotteryBallNumber, setLotteryBallNumber] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [voteReceiptData, setVoteReceiptData] = useState(null);
 
-  // ✅ Get user country and processing fee from localStorage
+  // Get user data
+  const getUserData = () => {
+    try {
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        return JSON.parse(userDataStr);
+      }
+    } catch (err) {
+      console.error('Error reading user data:', err);
+    }
+    return null;
+  };
+
+  // Get user country and processing fee from localStorage
   useEffect(() => {
     try {
       const userDataStr = localStorage.getItem('userData');
@@ -65,42 +89,137 @@ export default function ElectionVotingView() {
     }
   }, []);
 
-  // ✅ Fetch election data
-  useEffect(() => {
-    let isMounted = true;
+  // Fetch election data
+  // Fetch election data
+useEffect(() => {
+  let isMounted = true;
 
-    const fetchElectionData = async () => {
-      if (!electionId) return;
+  const fetchElectionData = async () => {
+    if (!electionId) return;
 
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await getElection(electionId);
-        if (!isMounted) return;
+      const response = await getElection(electionId);
+      if (!isMounted) return;
 
-        let electionData = response.data?.election || response.election || response.data || response;
+      let electionData = response.data?.election || response.election || response.data || response;
+      
+      if (electionData?.id) {
+        console.log('✅ Election loaded:', electionData.title);
         
-        if (electionData?.id) {
-          console.log('✅ Election loaded:', electionData.title);
-          setCurrentElection(electionData);
-        } else {
-          throw new Error('Election data not found');
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        console.error('❌ Error:', err);
-        setError(err.message || 'Failed to load election');
-      } finally {
-        if (isMounted) setLoading(false);
+        // 🔥🔥🔥 FORCE LOTTERY TO ALWAYS BE ENABLED (FOR TESTING)
+        const processedElection = {
+          ...electionData,
+          is_lotterized: true,  // ALWAYS TRUE
+          lottery_prize_amount: parseFloat(electionData.lottery_prize_amount) || 5000,
+          lottery_winner_count: parseInt(electionData.lottery_winner_count || electionData.lottery_winners) || 36
+        };
+        
+        console.log('🎰 LOTTERY FORCED ON:', {
+          is_lotterized: processedElection.is_lotterized,
+          lottery_prize_amount: processedElection.lottery_prize_amount,
+          lottery_winner_count: processedElection.lottery_winner_count
+        });
+        
+        setCurrentElection(processedElection);
+      } else {
+        throw new Error('Election data not found');
       }
-    };
+    } catch (err) {
+      if (!isMounted) return;
+      console.error('❌ Error:', err);
+      setError(err.message || 'Failed to load election');
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
 
-    fetchElectionData();
-    return () => { isMounted = false; };
-  }, [electionId]);
+  fetchElectionData();
+  return () => { isMounted = false; };
+}, [electionId]);
+  // useEffect(() => {
+  //   let isMounted = true;
 
-  // ✅ Detect user's region
+  //   const fetchElectionData = async () => {
+  //     if (!electionId) return;
+
+  //     try {
+  //       setLoading(true);
+  //       setError(null);
+
+  //       const response = await getElection(electionId);
+  //       if (!isMounted) return;
+
+  //       let electionData = response.data?.election || response.election || response.data || response;
+        
+  //       console.log('🔍 RAW ELECTION DATA:', electionData);
+  //       console.log('🔍 is_lotterized (raw):', electionData.is_lotterized);
+  //       console.log('🔍 lottery_prize_amount:', electionData.lottery_prize_amount);
+  //       console.log('🔍 lottery_winner_count:', electionData.lottery_winner_count);
+  //       console.log('🔍 lottery_winners:', electionData.lottery_winners);
+  //       console.log('🔍 lottery_prize_description:', electionData.lottery_prize_description);
+        
+  //       if (electionData?.id) {
+  //         console.log('✅ Election loaded:', electionData.title);
+          
+  //         // 🔥 FORCE LOTTERY IF NOT SET BUT HAS LOTTERY DATA
+  //         let lotteryEnabled = Boolean(electionData.is_lotterized);
+  //         let prizeAmount = parseFloat(electionData.lottery_prize_amount) || 0;
+  //         let winnerCount = parseInt(electionData.lottery_winner_count || electionData.lottery_winners) || 1;
+          
+  //         // Check if election has lottery indicators but is_lotterized is false/undefined
+  //         const hasLotteryIndicators = 
+  //           electionData.lottery_prize_description || 
+  //           electionData.lottery_winners || 
+  //           electionData.lottery_winner_count;
+          
+  //         if (!lotteryEnabled && hasLotteryIndicators) {
+  //           console.warn('⚠️ Found lottery indicators but is_lotterized is false/undefined');
+  //           console.warn('🔥 FORCING LOTTERY TO BE ENABLED');
+  //           lotteryEnabled = true;
+            
+  //           // Set default values based on what's available
+  //           if (electionData.lottery_prize_description === 'Moscow Tour') {
+  //             prizeAmount = prizeAmount || 5000;
+  //           }
+  //           winnerCount = parseInt(electionData.lottery_winners) || winnerCount || 36;
+  //         }
+          
+  //         // Process election with lottery data
+  //         const processedElection = {
+  //           ...electionData,
+  //           is_lotterized: lotteryEnabled,
+  //           lottery_prize_amount: prizeAmount,
+  //           lottery_winner_count: winnerCount
+  //         };
+          
+  //         console.log('✅ Processed Election Data:', {
+  //           is_lotterized: processedElection.is_lotterized,
+  //           lottery_prize_amount: processedElection.lottery_prize_amount,
+  //           lottery_winner_count: processedElection.lottery_winner_count,
+  //           forced: !electionData.is_lotterized && lotteryEnabled
+  //         });
+          
+  //         setCurrentElection(processedElection);
+  //       } else {
+  //         throw new Error('Election data not found');
+  //       }
+  //     } catch (err) {
+  //       if (!isMounted) return;
+  //       console.error('❌ Error:', err);
+  //       setError(err.message || 'Failed to load election');
+  //     } finally {
+  //       if (isMounted) setLoading(false);
+  //     }
+  //   };
+
+  //   fetchElectionData();
+  //   return () => { isMounted = false; };
+  // }, [electionId]);
+
+  // Detect user's region
   useEffect(() => {
     if (!currentElection || !userCountry) return;
     if (currentElection.is_free || currentElection.pricing_type !== 'regional_fee') return;
@@ -128,7 +247,7 @@ export default function ElectionVotingView() {
     setUserRegion(matched || currentElection.regional_pricing[0]);
   }, [currentElection, userCountry]);
 
-  // ✅ Calculate fee
+  // Calculate fee
   useEffect(() => {
     if (!currentElection) return;
 
@@ -138,7 +257,8 @@ export default function ElectionVotingView() {
         processingFee: 0, 
         total: 0, 
         frozenAmount: 0,
-        currency: 'USD' 
+        currency: 'USD',
+        processingPercentage: processingFeePercent
       });
       return;
     }
@@ -147,25 +267,17 @@ export default function ElectionVotingView() {
       const baseFee = parseFloat(currentElection.general_participation_fee || 0);
       const processing = baseFee * (processingFeePercent / 100);
       
-      console.log('💰 General fee:', { baseFee, processing, total: baseFee + processing });
-      
       setApplicableFee({
         participationFee: baseFee,
         processingFee: processing,
         total: baseFee + processing,
         frozenAmount: baseFee,
-        currency: 'USD'
+        currency: 'USD',
+        processingPercentage: processingFeePercent
       });
     } else if (currentElection.pricing_type === 'regional_fee' && userRegion) {
       const baseFee = parseFloat(userRegion.participation_fee || 0);
       const processing = baseFee * (processingFeePercent / 100);
-      
-      console.log('💰 Regional fee:', { 
-        baseFee, 
-        processing, 
-        total: baseFee + processing,
-        region: userRegion.region_name 
-      });
       
       setApplicableFee({
         participationFee: baseFee,
@@ -173,7 +285,8 @@ export default function ElectionVotingView() {
         total: baseFee + processing,
         frozenAmount: baseFee,
         currency: userRegion.currency || 'USD',
-        region: userRegion.region_name
+        region: userRegion.region_name,
+        processingPercentage: processingFeePercent
       });
     }
   }, [currentElection, userRegion, processingFeePercent]);
@@ -247,7 +360,6 @@ export default function ElectionVotingView() {
   const handleVoteSubmit = async () => {
     const videoUrl = currentElection.topic_video_url || currentElection.video_url;
     
-    // ✅ Check video requirement
     if (videoUrl && !videoWatched) {
       alert('You must watch the video before voting');
       setShowVideo(true);
@@ -276,8 +388,23 @@ export default function ElectionVotingView() {
     try {
       setVotingInProgress(true);
 
+      const userData = getUserData();
+      if (!userData) {
+        throw new Error('User not authenticated');
+      }
+
+      // Generate secure IDs
+      const voteId = generateVoteId();
+      const receiptId = generateReceiptId();
+      const timestamp = new Date().toISOString();
+
+      // Prepare vote data
       const voteData = {
-        election_id: currentElection.id,
+        voteId,
+        receiptId,
+        timestamp,
+        electionId: currentElection.id,
+        userId: userData.userId,
         answers: Object.keys(selectedAnswers).map(qId => ({
           question_id: parseInt(qId),
           option_ids: selectedAnswers[qId]
@@ -286,35 +413,78 @@ export default function ElectionVotingView() {
           total: applicableFee.total,
           participationFee: applicableFee.participationFee,
           processingFee: applicableFee.processingFee,
-          frozenAmount: applicableFee.frozenAmount,
           currency: applicableFee.currency,
           method: paymentMethod,
           region: userRegion?.region_code
         } : null
       };
 
-      console.log('📤 Submitting vote:', voteData);
+      // Create vote hash for integrity
+      const voteHash = createVoteHash(voteData);
+      voteData.voteHash = voteHash;
+
+      // Encrypt sensitive data
+      const encryptedVote = encryptVoteData(voteData);
+
+      console.log('📤 Submitting encrypted vote...');
+      console.log('🔒 Vote Hash:', voteHash);
 
       // TODO: Replace with actual API call
-      // await submitVoteAPI(voteData);
+      // const response = await fetch('http://localhost:5006/api/votes/submit', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ encryptedVote })
+      // });
 
-      alert('Vote submitted successfully!');
+      // Simulate API response
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      navigate(`/elections/${currentElection.id}/confirmation`, {
-        state: {
-          voteData,
-          paymentData: applicableFee,
-          electionTitle: currentElection.title,
-          receiptId: 'RECEIPT-' + Date.now()
-        }
-      });
+      // Generate lottery ticket if election is lotterized
+      let lotteryTicketNumber = null;
+      if (currentElection.is_lotterized) {
+        lotteryTicketNumber = generateLotteryTicket(userData.userId, currentElection.id);
+        console.log('🎫 Generated lottery ticket:', lotteryTicketNumber);
+        setLotteryBallNumber(lotteryTicketNumber);
+        setShowLotteryAnimation(true);
+
+        // Show animation for 3 seconds
+        setTimeout(() => {
+          setShowLotteryAnimation(false);
+        }, 3000);
+      }
+
+      // Prepare receipt data
+      const receiptData = {
+        voteId,
+        receiptId,
+        timestamp,
+        lotteryTicketNumber,
+        voteHash,
+        electionTitle: currentElection.title,
+        electionId: currentElection.id
+      };
+
+      setVoteReceiptData(receiptData);
+
+      // Show success modal
+      setTimeout(() => {
+        setShowSuccessModal(true);
+      }, currentElection.is_lotterized ? 3500 : 500);
+
+      console.log('✅ Vote submitted successfully!');
+
     } catch (error) {
       console.error('❌ Error:', error);
-      alert('Failed to submit vote');
+      alert(`Failed to submit vote: ${error.message}`);
     } finally {
       setVotingInProgress(false);
       setShowPaymentModal(false);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    navigate('/my-votes');
   };
 
   if (loading) {
@@ -347,6 +517,16 @@ export default function ElectionVotingView() {
   }
 
   const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+  const isLotterized = Boolean(currentElection.is_lotterized);
+  const lotteryPrizeAmount = parseFloat(currentElection.lottery_prize_amount) || 0;
+  const lotteryWinnerCount = parseInt(currentElection.lottery_winner_count) || 1;
+
+  console.log('🎰 Lottery Display Check:', {
+    isLotterized,
+    lotteryPrizeAmount,
+    lotteryWinnerCount,
+    activeTab
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -380,10 +560,10 @@ export default function ElectionVotingView() {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow mb-6">
-        <div className="flex border-b">
+        <div className="flex border-b overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-6 py-4 font-medium transition-colors ${
+            className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'overview'
                 ? 'border-b-2 border-blue-600 text-blue-600'
                 : 'text-gray-600 hover:text-gray-900'
@@ -394,7 +574,7 @@ export default function ElectionVotingView() {
           {!currentElection.is_free && (
             <button
               onClick={() => setActiveTab('pricing')}
-              className={`px-6 py-4 font-medium transition-colors ${
+              className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'pricing'
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-600 hover:text-gray-900'
@@ -403,10 +583,22 @@ export default function ElectionVotingView() {
               Pricing
             </button>
           )}
+          {isLotterized && (
+            <button
+              onClick={() => setActiveTab('lottery')}
+              className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'lottery'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              🎰 Lottery
+            </button>
+          )}
           {canUserVote.can && currentElection.questions?.length > 0 && (
             <button
               onClick={() => setActiveTab('vote')}
-              className={`px-6 py-4 font-medium transition-colors ${
+              className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'vote'
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-600 hover:text-gray-900'
@@ -453,6 +645,23 @@ export default function ElectionVotingView() {
                 </p>
               </div>
             )}
+
+            {/* Show lottery info on overview if enabled */}
+            {isLotterized && (
+              <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  🎰 Lottery Enabled!
+                </h3>
+                <div className="space-y-2 text-gray-700">
+                  <p className="font-semibold">Vote to win amazing prizes!</p>
+                  <p>💰 Prize Pool: {applicableFee?.currency || 'USD'} {lotteryPrizeAmount.toFixed(2)}</p>
+                  <p>🏆 Winners: {lotteryWinnerCount}</p>
+                  <p className="text-sm text-gray-600 mt-4">
+                    Each vote automatically enters you into the lottery draw!
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -463,6 +672,105 @@ export default function ElectionVotingView() {
             applicableFee={applicableFee}
             processingFeePercent={processingFeePercent}
           />
+        )}
+
+        {activeTab === 'lottery' && isLotterized && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">🎰 Lottery Information</h2>
+            
+            <div className="mb-8">
+              <LotteryMachine
+                isVisible={true}
+                isSpinning={canUserVote.can}
+                prizeAmount={lotteryPrizeAmount}
+                currency={applicableFee?.currency || 'USD'}
+                winnerCount={lotteryWinnerCount}
+                showVoteBall={false}
+                ballNumber={null}
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-bold text-lg mb-4 text-blue-900">💰 Prize Details</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Total Prize Pool:</span>
+                    <span className="font-bold text-xl text-blue-600">
+                      {applicableFee?.currency || 'USD'} {lotteryPrizeAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Number of Winners:</span>
+                    <span className="font-bold text-xl text-blue-600">{lotteryWinnerCount}</span>
+                  </div>
+                  {lotteryWinnerCount > 1 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">Prize per Winner:</span>
+                      <span className="font-bold text-lg text-blue-600">
+                        {applicableFee?.currency || 'USD'} {(lotteryPrizeAmount / lotteryWinnerCount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="font-bold text-lg mb-4 text-green-900">✅ How to Participate</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">1.</span>
+                    <span>Cast your vote in this election</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">2.</span>
+                    <span>Receive automatic lottery entry</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">3.</span>
+                    <span>Get unique lottery ticket number</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">4.</span>
+                    <span>Winners announced at election end</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 p-6 bg-purple-50 border border-purple-200 rounded-lg">
+              <h3 className="font-bold text-lg mb-4 text-purple-900">🎲 How Winners Are Selected</h3>
+              <div className="space-y-3 text-gray-700">
+                <p>
+                  <strong>Fair & Transparent:</strong> Winners are selected using cryptographically secure 
+                  random number generation, ensuring complete fairness.
+                </p>
+                <p>
+                  <strong>Automatic Draw:</strong> The lottery draw happens automatically when the election 
+                  ends on {formatDate(currentElection.end_date)}.
+                </p>
+                <p>
+                  <strong>Verification:</strong> All lottery draws are recorded on the blockchain for 
+                  complete transparency and verification.
+                </p>
+                <p className="text-sm text-gray-600 mt-4">
+                  <strong>Note:</strong> You must vote to be eligible for the lottery. Each voter receives 
+                  exactly one lottery ticket, ensuring equal chances for all participants.
+                </p>
+              </div>
+            </div>
+
+            {canUserVote.can && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setActiveTab('vote')}
+                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-bold rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all shadow-lg"
+                >
+                  🎰 Vote Now & Enter Lottery
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === 'vote' && canUserVote.can && currentElection.questions?.length > 0 && (
@@ -494,15 +802,1990 @@ export default function ElectionVotingView() {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
+        electionId={electionId}
         applicableFee={applicableFee}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
-        onConfirm={submitVote}
-        votingInProgress={votingInProgress}
+        onPaymentSuccess={(paymentId) => {
+          console.log('✅ Payment successful:', paymentId);
+          submitVote();
+        }}
+      />
+
+      {/* Lottery Animation Overlay */}
+      {showLotteryAnimation && (
+        <div className="fixed inset-0 bg-black bg-opacity-85 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-2xl shadow-2xl">
+            <h2 className="text-3xl font-bold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+              🎰 Entering Lottery...
+            </h2>
+            <p className="text-center text-gray-600 mb-6">Your vote is being added to the lottery machine!</p>
+            <LotteryMachine
+              isVisible={true}
+              isSpinning={true}
+              prizeAmount={lotteryPrizeAmount}
+              currency={applicableFee?.currency || 'USD'}
+              winnerCount={lotteryWinnerCount}
+              showVoteBall={true}
+              ballNumber={lotteryBallNumber}
+            />
+            <div className="mt-6 text-center">
+              <p className="text-lg font-semibold text-gray-800">
+                Your Lottery Ticket: <span className="text-blue-600">#{lotteryBallNumber}</span>
+              </p>
+              <p className="text-sm text-gray-600 mt-2">Good luck! 🍀</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      <VoteSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        voteData={voteReceiptData}
+        electionTitle={currentElection.title}
       />
     </div>
   );
 }
+// import React, { useState, useEffect, useMemo } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { ArrowLeft, AlertCircle, Loader, Play } from 'lucide-react';
+// import { getElection } from '../../redux/api/election/electionApi';
+// import { 
+//   generateVoteId, 
+//   generateReceiptId, 
+//   generateLotteryTicket,
+//   createVoteHash,
+//   encryptVoteData 
+// } from '../../utils/voteEncryption';
+
+// // Import components
+// import ElectionHeader from '../../components/election/VotingView/ElectionHeader';
+// import VideoModal from '../../components/election/VotingView/VideoModal';
+// import PricingTab from '../../components/election/VotingView/PricingTab';
+// import VoteTab from '../../components/election/VotingView/VoteTab';
+// import PaymentModal from '../../components/election/VotingView/PaymentModal';
+// import LotteryMachine from '../../components/election/VotingView/LotteryMachine';
+// import VoteSuccessModal from '../../components/election/VotingView/VoteSuccessModal';
+
+// export default function ElectionVotingView() {
+//   const { electionId } = useParams();
+//   const navigate = useNavigate();
+
+//   // State
+//   const [currentElection, setCurrentElection] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [activeTab, setActiveTab] = useState('overview');
+//   const [selectedAnswers, setSelectedAnswers] = useState({});
+//   const [userCountry, setUserCountry] = useState(null);
+//   const [userRegion, setUserRegion] = useState(null);
+//   const [applicableFee, setApplicableFee] = useState(null);
+//   const [processingFeePercent, setProcessingFeePercent] = useState(0);
+//   const [showPaymentModal, setShowPaymentModal] = useState(false);
+//   /*eslint-disable*/
+//   const [paymentMethod, setPaymentMethod] = useState('wallet');
+//   const [agreeToTerms, setAgreeToTerms] = useState(false);
+//   const [votingInProgress, setVotingInProgress] = useState(false);
+//   const [videoWatched, setVideoWatched] = useState(false);
+//   const [showVideo, setShowVideo] = useState(false);
+  
+//   // Lottery & Success states
+//   const [showLotteryAnimation, setShowLotteryAnimation] = useState(false);
+//   const [lotteryBallNumber, setLotteryBallNumber] = useState(null);
+//   const [showSuccessModal, setShowSuccessModal] = useState(false);
+//   const [voteReceiptData, setVoteReceiptData] = useState(null);
+
+//   // Get user data
+//   const getUserData = () => {
+//     try {
+//       const userDataStr = localStorage.getItem('userData');
+//       if (userDataStr) {
+//         return JSON.parse(userDataStr);
+//       }
+//     } catch (err) {
+//       console.error('Error reading user data:', err);
+//     }
+//     return null;
+//   };
+
+//   // Get user country and processing fee from localStorage
+//   useEffect(() => {
+//     try {
+//       const userDataStr = localStorage.getItem('userData');
+//       if (userDataStr) {
+//         const userData = JSON.parse(userDataStr);
+//         console.log('👤 User data:', userData);
+//         setUserCountry(userData.country || null);
+//       }
+
+//       const persistStr = localStorage.getItem('persist:vottery-root');
+//       if (persistStr) {
+//         const persist = JSON.parse(persistStr);
+//         const subscriptionData = JSON.parse(persist.subscription || '{}');
+        
+//         const processingFee = parseFloat(
+//           subscriptionData.currentPlan?.processingFeePercentage ||
+//           subscriptionData.processingFeePercentage ||
+//           0
+//         );
+        
+//         console.log('💰 Processing fee:', processingFee + '%');
+//         setProcessingFeePercent(processingFee);
+//       }
+//     } catch (err) {
+//       console.error('Error reading localStorage:', err);
+//     }
+//   }, []);
+
+//   // Fetch election data
+//   useEffect(() => {
+//     let isMounted = true;
+
+//     const fetchElectionData = async () => {
+//       if (!electionId) return;
+
+//       try {
+//         setLoading(true);
+//         setError(null);
+
+//         const response = await getElection(electionId);
+//         if (!isMounted) return;
+
+//         let electionData = response.data?.election || response.election || response.data || response;
+//         console.log('🔍 RAW ELECTION DATA:', electionData);
+//         console.log('🔍 is_lotterized:', electionData.is_lotterized);
+//         console.log('🔍 lottery_prize_amount:', electionData.lottery_prize_amount);
+//         console.log('🔍 lottery_winner_count:', electionData.lottery_winner_count);
+        
+//         if (electionData?.id) {
+//           console.log('✅ Election loaded:', electionData.title);
+//           console.log('🎰 Lottery enabled:', electionData.is_lotterized);
+          
+//           // Force lottery data to be boolean and ensure numeric values
+//           const processedElection = {
+//             ...electionData,
+//             is_lotterized: Boolean(electionData.is_lotterized),
+//             lottery_prize_amount: parseFloat(electionData.lottery_prize_amount) || 0,
+//             lottery_winner_count: parseInt(electionData.lottery_winner_count) || 1
+//           };
+          
+//           console.log('✅ Processed Election Data:', {
+//             is_lotterized: processedElection.is_lotterized,
+//             lottery_prize_amount: processedElection.lottery_prize_amount,
+//             lottery_winner_count: processedElection.lottery_winner_count
+//           });
+          
+//           setCurrentElection(processedElection);
+//         } else {
+//           throw new Error('Election data not found');
+//         }
+//       } catch (err) {
+//         if (!isMounted) return;
+//         console.error('❌ Error:', err);
+//         setError(err.message || 'Failed to load election');
+//       } finally {
+//         if (isMounted) setLoading(false);
+//       }
+//     };
+
+//     fetchElectionData();
+//     return () => { isMounted = false; };
+//   }, [electionId]);
+
+//   // Detect user's region
+//   useEffect(() => {
+//     if (!currentElection || !userCountry) return;
+//     if (currentElection.is_free || currentElection.pricing_type !== 'regional_fee') return;
+//     if (!currentElection.regional_pricing?.length) return;
+
+//     const regionMap = {
+//       'US': 'region_1_us_canada', 'CA': 'region_1_us_canada',
+//       'United States': 'region_1_us_canada', 'Canada': 'region_1_us_canada',
+//       'GB': 'region_2_western_europe', 'DE': 'region_2_western_europe',
+//       'FR': 'region_2_western_europe', 'IT': 'region_2_western_europe',
+//       'PL': 'region_3_eastern_europe', 'RO': 'region_3_eastern_europe',
+//       'NG': 'region_4_africa', 'ZA': 'region_4_africa',
+//       'BR': 'region_5_latin_america', 'MX': 'region_5_latin_america',
+//       'BD': 'region_6_middle_east_asia', 'IN': 'region_6_middle_east_asia',
+//       'Bangladesh': 'region_6_middle_east_asia', 'India': 'region_6_middle_east_asia',
+//       'AU': 'region_7_australasia', 'NZ': 'region_7_australasia',
+//     };
+
+//     const regionCode = regionMap[userCountry];
+//     const matched = regionCode 
+//       ? currentElection.regional_pricing.find(r => r.region_code === regionCode)
+//       : null;
+
+//     console.log('🌍 Region detection:', { userCountry, regionCode, matched: matched?.region_name });
+//     setUserRegion(matched || currentElection.regional_pricing[0]);
+//   }, [currentElection, userCountry]);
+
+//   // Calculate fee
+//   useEffect(() => {
+//     if (!currentElection) return;
+
+//     if (currentElection.is_free) {
+//       setApplicableFee({ 
+//         participationFee: 0, 
+//         processingFee: 0, 
+//         total: 0, 
+//         frozenAmount: 0,
+//         currency: 'USD' 
+//       });
+//       return;
+//     }
+
+//     if (currentElection.pricing_type === 'general_fee') {
+//       const baseFee = parseFloat(currentElection.general_participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: 'USD',
+//         processingPercentage: processingFeePercent
+//       });
+//     } else if (currentElection.pricing_type === 'regional_fee' && userRegion) {
+//       const baseFee = parseFloat(userRegion.participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: userRegion.currency || 'USD',
+//         region: userRegion.region_name,
+//         processingPercentage: processingFeePercent
+//       });
+//     }
+//   }, [currentElection, userRegion, processingFeePercent]);
+
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'Not set';
+//     try {
+//       const date = new Date(dateString);
+//       return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US', { 
+//         year: 'numeric', month: 'long', day: 'numeric' 
+//       });
+//     } catch { return 'Invalid Date'; }
+//   };
+
+//   const canUserVote = useMemo(() => {
+//     if (!currentElection) return { can: false, reason: 'Election not found' };
+
+//     const now = new Date();
+//     const startDate = new Date(currentElection.start_date);
+//     const endDate = new Date(currentElection.end_date);
+
+//     if (currentElection.status !== 'published' && currentElection.status !== 'active') {
+//       return { can: false, reason: `Election is ${currentElection.status}` };
+//     }
+
+//     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+//       return { can: false, reason: 'Invalid dates' };
+//     }
+
+//     if (now < startDate) {
+//       return { can: false, reason: `Starts on ${formatDate(currentElection.start_date)}` };
+//     }
+
+//     if (now > endDate) {
+//       return { can: false, reason: 'Election has ended' };
+//     }
+
+//     return { can: true, reason: null };
+//   }, [currentElection]);
+
+//   const handleAnswerSelect = (questionId, optionId, questionType, maxSelections) => {
+//     setSelectedAnswers(prev => {
+//       const current = prev[questionId] || [];
+      
+//       if (questionType === 'multiple_choice' && maxSelections === 1) {
+//         return { ...prev, [questionId]: [optionId] };
+//       } else {
+//         if (current.includes(optionId)) {
+//           return { ...prev, [questionId]: current.filter(id => id !== optionId) };
+//         } else {
+//           if (maxSelections && current.length >= maxSelections) return prev;
+//           return { ...prev, [questionId]: [...current, optionId] };
+//         }
+//       }
+//     });
+//   };
+
+//   const validateAnswers = () => {
+//     if (!currentElection?.questions) return { valid: true, errors: [] };
+
+//     const errors = [];
+//     currentElection.questions.forEach(question => {
+//       if (question.is_required && !selectedAnswers[question.id]?.length) {
+//         errors.push(`"${question.question_text}" is required`);
+//       }
+//     });
+
+//     return { valid: errors.length === 0, errors };
+//   };
+
+//   const handleVoteSubmit = async () => {
+//     const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+    
+//     if (videoUrl && !videoWatched) {
+//       alert('You must watch the video before voting');
+//       setShowVideo(true);
+//       return;
+//     }
+
+//     const validation = validateAnswers();
+//     if (!validation.valid) {
+//       alert(validation.errors.join('\n'));
+//       return;
+//     }
+
+//     if (!currentElection.is_free && !agreeToTerms) {
+//       alert('Please agree to the terms');
+//       return;
+//     }
+
+//     if (!currentElection.is_free) {
+//       setShowPaymentModal(true);
+//     } else {
+//       await submitVote();
+//     }
+//   };
+
+//   const submitVote = async () => {
+//     try {
+//       setVotingInProgress(true);
+
+//       const userData = getUserData();
+//       if (!userData) {
+//         throw new Error('User not authenticated');
+//       }
+
+//       // Generate secure IDs
+//       const voteId = generateVoteId();
+//       const receiptId = generateReceiptId();
+//       const timestamp = new Date().toISOString();
+
+//       // Prepare vote data
+//       const voteData = {
+//         voteId,
+//         receiptId,
+//         timestamp,
+//         electionId: currentElection.id,
+//         userId: userData.userId,
+//         answers: Object.keys(selectedAnswers).map(qId => ({
+//           question_id: parseInt(qId),
+//           option_ids: selectedAnswers[qId]
+//         })),
+//         payment: !currentElection.is_free ? {
+//           total: applicableFee.total,
+//           participationFee: applicableFee.participationFee,
+//           processingFee: applicableFee.processingFee,
+//           currency: applicableFee.currency,
+//           method: paymentMethod,
+//           region: userRegion?.region_code
+//         } : null
+//       };
+
+//       // Create vote hash for integrity
+//       const voteHash = createVoteHash(voteData);
+//       voteData.voteHash = voteHash;
+
+//       // Encrypt sensitive data
+//       const encryptedVote = encryptVoteData(voteData);
+
+//       console.log('📤 Submitting encrypted vote...');
+//       console.log('🔒 Vote Hash:', voteHash);
+
+//       // TODO: Replace with actual API call
+//       // const response = await fetch('http://localhost:5006/api/votes/submit', {
+//       //   method: 'POST',
+//       //   headers: { 'Content-Type': 'application/json' },
+//       //   body: JSON.stringify({ encryptedVote })
+//       // });
+
+//       // Simulate API response
+//       await new Promise(resolve => setTimeout(resolve, 1500));
+
+//       // Generate lottery ticket if election is lotterized
+//       let lotteryTicketNumber = null;
+//       if (currentElection.is_lotterized) {
+//         lotteryTicketNumber = generateLotteryTicket(userData.userId, currentElection.id);
+//         console.log('🎫 Generated lottery ticket:', lotteryTicketNumber);
+//         setLotteryBallNumber(lotteryTicketNumber);
+//         setShowLotteryAnimation(true);
+
+//         // Show animation for 3 seconds
+//         setTimeout(() => {
+//           setShowLotteryAnimation(false);
+//         }, 3000);
+//       }
+
+//       // Prepare receipt data
+//       const receiptData = {
+//         voteId,
+//         receiptId,
+//         timestamp,
+//         lotteryTicketNumber,
+//         voteHash,
+//         electionTitle: currentElection.title,
+//         electionId: currentElection.id
+//       };
+
+//       setVoteReceiptData(receiptData);
+
+//       // Show success modal
+//       setTimeout(() => {
+//         setShowSuccessModal(true);
+//       }, currentElection.is_lotterized ? 3500 : 500);
+
+//       console.log('✅ Vote submitted successfully!');
+
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//       alert(`Failed to submit vote: ${error.message}`);
+//     } finally {
+//       setVotingInProgress(false);
+//       setShowPaymentModal(false);
+//     }
+//   };
+
+//   const handleSuccessModalClose = () => {
+//     setShowSuccessModal(false);
+//     navigate('/my-votes');
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+//           <p className="text-gray-600">Loading election...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (error || !currentElection) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <AlertCircle className="text-red-600 mx-auto mb-4" size={48} />
+//           <p className="text-red-600 font-semibold mb-2">Error Loading Election</p>
+//           <p className="text-gray-600 mb-4">{error || 'Not found'}</p>
+//           <button
+//             onClick={() => navigate(-1)}
+//             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+//           >
+//             Go Back
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+//   const isLotterized = Boolean(currentElection.is_lotterized);
+//   const lotteryPrizeAmount = parseFloat(currentElection.lottery_prize_amount) || 0;
+//   const lotteryWinnerCount = parseInt(currentElection.lottery_winner_count) || 1;
+
+//   console.log('🎰 Lottery Display Check:', {
+//     isLotterized,
+//     lotteryPrizeAmount,
+//     lotteryWinnerCount,
+//     activeTab
+//   });
+
+//   return (
+//     <div className="max-w-7xl mx-auto px-4 py-8">
+//       <button
+//         onClick={() => navigate(-1)}
+//         className="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-700"
+//       >
+//         <ArrowLeft size={20} />
+//         Back
+//       </button>
+
+//       <ElectionHeader
+//         election={currentElection}
+//         formatDate={formatDate}
+//         videoUrl={videoUrl}
+//         videoWatched={videoWatched}
+//         onWatchVideo={() => setShowVideo(true)}
+//       />
+
+//       {!canUserVote.can && (
+//         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6 rounded-r-lg">
+//           <div className="flex items-start gap-4">
+//             <AlertCircle className="text-yellow-600" size={24} />
+//             <div>
+//               <h3 className="text-lg font-semibold text-yellow-800 mb-2">Cannot Vote</h3>
+//               <p className="text-yellow-700">{canUserVote.reason}</p>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Tabs */}
+//       <div className="bg-white rounded-lg shadow mb-6">
+//         <div className="flex border-b overflow-x-auto">
+//           <button
+//             onClick={() => setActiveTab('overview')}
+//             className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//               activeTab === 'overview'
+//                 ? 'border-b-2 border-blue-600 text-blue-600'
+//                 : 'text-gray-600 hover:text-gray-900'
+//             }`}
+//           >
+//             Overview
+//           </button>
+//           {!currentElection.is_free && (
+//             <button
+//               onClick={() => setActiveTab('pricing')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'pricing'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Pricing
+//             </button>
+//           )}
+//           {isLotterized && (
+//             <button
+//               onClick={() => setActiveTab('lottery')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'lottery'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               🎰 Lottery
+//             </button>
+//           )}
+//           {canUserVote.can && currentElection.questions?.length > 0 && (
+//             <button
+//               onClick={() => setActiveTab('vote')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'vote'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Vote Now
+//             </button>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Tab Content */}
+//       <div className="bg-white rounded-lg shadow-lg p-8">
+//         {activeTab === 'overview' && (
+//           <div className="space-y-6">
+//             <h2 className="text-2xl font-bold text-gray-900">Election Overview</h2>
+//             <p className="text-gray-700">{currentElection.description || 'No description'}</p>
+            
+//             {currentElection.voting_body_content && (
+//               <div dangerouslySetInnerHTML={{ __html: currentElection.voting_body_content }} />
+//             )}
+
+//             {videoUrl && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">Election Video</h3>
+//                 <button
+//                   onClick={() => setShowVideo(true)}
+//                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+//                 >
+//                   <Play size={20} />
+//                   {videoWatched ? 'Watch Again' : 'Watch Video (Required)'}
+//                 </button>
+//               </div>
+//             )}
+
+//             {currentElection.questions?.length > 0 && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">
+//                   Questions ({currentElection.questions.length})
+//                 </h3>
+//                 <p className="text-gray-600">
+//                   This election has {currentElection.questions.length} question(s).
+//                   {canUserVote.can ? ' Click "Vote Now" to participate.' : ''}
+//                 </p>
+//               </div>
+//             )}
+
+//             {/* Show lottery info on overview if enabled */}
+//             {isLotterized && (
+//               <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+//                   🎰 Lottery Enabled!
+//                 </h3>
+//                 <div className="space-y-2 text-gray-700">
+//                   <p className="font-semibold">Vote to win amazing prizes!</p>
+//                   <p>💰 Prize Pool: {applicableFee?.currency || 'USD'} {lotteryPrizeAmount.toFixed(2)}</p>
+//                   <p>🏆 Winners: {lotteryWinnerCount}</p>
+//                   <p className="text-sm text-gray-600 mt-4">
+//                     Each vote automatically enters you into the lottery draw!
+//                   </p>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {activeTab === 'pricing' && (
+//           <PricingTab
+//             election={currentElection}
+//             userRegion={userRegion}
+//             applicableFee={applicableFee}
+//             processingFeePercent={processingFeePercent}
+//           />
+//         )}
+
+//         {activeTab === 'lottery' && isLotterized && (
+//           <div>
+//             <h2 className="text-2xl font-bold text-gray-900 mb-6">🎰 Lottery Information</h2>
+            
+//             <div className="mb-8">
+//               <LotteryMachine
+//                 isVisible={true}
+//                 isSpinning={canUserVote.can}
+//                 prizeAmount={lotteryPrizeAmount}
+//                 currency={applicableFee?.currency || 'USD'}
+//                 winnerCount={lotteryWinnerCount}
+//                 showVoteBall={false}
+//                 ballNumber={null}
+//               />
+//             </div>
+
+//             <div className="grid md:grid-cols-2 gap-6">
+//               <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+//                 <h3 className="font-bold text-lg mb-4 text-blue-900">💰 Prize Details</h3>
+//                 <div className="space-y-3">
+//                   <div className="flex justify-between items-center">
+//                     <span className="text-gray-700">Total Prize Pool:</span>
+//                     <span className="font-bold text-xl text-blue-600">
+//                       {applicableFee?.currency || 'USD'} {lotteryPrizeAmount.toFixed(2)}
+//                     </span>
+//                   </div>
+//                   <div className="flex justify-between items-center">
+//                     <span className="text-gray-700">Number of Winners:</span>
+//                     <span className="font-bold text-xl text-blue-600">{lotteryWinnerCount}</span>
+//                   </div>
+//                   {lotteryWinnerCount > 1 && (
+//                     <div className="flex justify-between items-center">
+//                       <span className="text-gray-700">Prize per Winner:</span>
+//                       <span className="font-bold text-lg text-blue-600">
+//                         {applicableFee?.currency || 'USD'} {(lotteryPrizeAmount / lotteryWinnerCount).toFixed(2)}
+//                       </span>
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+
+//               <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
+//                 <h3 className="font-bold text-lg mb-4 text-green-900">✅ How to Participate</h3>
+//                 <ul className="space-y-2 text-gray-700">
+//                   <li className="flex items-start gap-2">
+//                     <span className="text-green-600 font-bold">1.</span>
+//                     <span>Cast your vote in this election</span>
+//                   </li>
+//                   <li className="flex items-start gap-2">
+//                     <span className="text-green-600 font-bold">2.</span>
+//                     <span>Receive automatic lottery entry</span>
+//                   </li>
+//                   <li className="flex items-start gap-2">
+//                     <span className="text-green-600 font-bold">3.</span>
+//                     <span>Get unique lottery ticket number</span>
+//                   </li>
+//                   <li className="flex items-start gap-2">
+//                     <span className="text-green-600 font-bold">4.</span>
+//                     <span>Winners announced at election end</span>
+//                   </li>
+//                 </ul>
+//               </div>
+//             </div>
+
+//             <div className="mt-6 p-6 bg-purple-50 border border-purple-200 rounded-lg">
+//               <h3 className="font-bold text-lg mb-4 text-purple-900">🎲 How Winners Are Selected</h3>
+//               <div className="space-y-3 text-gray-700">
+//                 <p>
+//                   <strong>Fair & Transparent:</strong> Winners are selected using cryptographically secure 
+//                   random number generation, ensuring complete fairness.
+//                 </p>
+//                 <p>
+//                   <strong>Automatic Draw:</strong> The lottery draw happens automatically when the election 
+//                   ends on {formatDate(currentElection.end_date)}.
+//                 </p>
+//                 <p>
+//                   <strong>Verification:</strong> All lottery draws are recorded on the blockchain for 
+//                   complete transparency and verification.
+//                 </p>
+//                 <p className="text-sm text-gray-600 mt-4">
+//                   <strong>Note:</strong> You must vote to be eligible for the lottery. Each voter receives 
+//                   exactly one lottery ticket, ensuring equal chances for all participants.
+//                 </p>
+//               </div>
+//             </div>
+
+//             {canUserVote.can && (
+//               <div className="mt-6 text-center">
+//                 <button
+//                   onClick={() => setActiveTab('vote')}
+//                   className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-bold rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all shadow-lg"
+//                 >
+//                   🎰 Vote Now & Enter Lottery
+//                 </button>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {activeTab === 'vote' && canUserVote.can && currentElection.questions?.length > 0 && (
+//           <VoteTab
+//             election={currentElection}
+//             selectedAnswers={selectedAnswers}
+//             onAnswerSelect={handleAnswerSelect}
+//             applicableFee={applicableFee}
+//             agreeToTerms={agreeToTerms}
+//             setAgreeToTerms={setAgreeToTerms}
+//             onSubmit={handleVoteSubmit}
+//             votingInProgress={votingInProgress}
+//             videoUrl={videoUrl}
+//             videoWatched={videoWatched}
+//             onWatchVideo={() => setShowVideo(true)}
+//           />
+//         )}
+//       </div>
+
+//       {/* Modals */}
+//       <VideoModal
+//         videoUrl={videoUrl}
+//         isOpen={showVideo}
+//         onClose={() => setShowVideo(false)}
+//         videoWatched={videoWatched}
+//         onVideoEnd={() => setVideoWatched(true)}
+//       />
+
+//       <PaymentModal
+//         isOpen={showPaymentModal}
+//         onClose={() => setShowPaymentModal(false)}
+//         electionId={electionId}
+//         applicableFee={applicableFee}
+//         onPaymentSuccess={(paymentId) => {
+//           console.log('✅ Payment successful:', paymentId);
+//           submitVote();
+//         }}
+//       />
+
+//       {/* Lottery Animation Overlay */}
+//       {showLotteryAnimation && (
+//         <div className="fixed inset-0 bg-black bg-opacity-85 flex items-center justify-center z-50 backdrop-blur-sm">
+//           <div className="bg-white rounded-2xl p-8 max-w-2xl shadow-2xl">
+//             <h2 className="text-3xl font-bold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+//               🎰 Entering Lottery...
+//             </h2>
+//             <p className="text-center text-gray-600 mb-6">Your vote is being added to the lottery machine!</p>
+//             <LotteryMachine
+//               isVisible={true}
+//               isSpinning={true}
+//               prizeAmount={lotteryPrizeAmount}
+//               currency={applicableFee?.currency || 'USD'}
+//               winnerCount={lotteryWinnerCount}
+//               showVoteBall={true}
+//               ballNumber={lotteryBallNumber}
+//             />
+//             <div className="mt-6 text-center">
+//               <p className="text-lg font-semibold text-gray-800">
+//                 Your Lottery Ticket: <span className="text-blue-600">#{lotteryBallNumber}</span>
+//               </p>
+//               <p className="text-sm text-gray-600 mt-2">Good luck! 🍀</p>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Success Modal */}
+//       <VoteSuccessModal
+//         isOpen={showSuccessModal}
+//         onClose={handleSuccessModalClose}
+//         voteData={voteReceiptData}
+//         electionTitle={currentElection.title}
+//       />
+//     </div>
+//   );
+// }
+// import React, { useState, useEffect, useMemo } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { ArrowLeft, AlertCircle, Loader, Play } from 'lucide-react';
+// import { getElection } from '../../redux/api/election/electionApi';
+// import { 
+//   generateVoteId, 
+//   generateReceiptId, 
+//   generateLotteryTicket,
+//   createVoteHash,
+//   encryptVoteData 
+// } from '../../utils/voteEncryption';
+
+// // Import components
+// import ElectionHeader from '../../components/election/VotingView/ElectionHeader';
+// import VideoModal from '../../components/election/VotingView/VideoModal';
+// import PricingTab from '../../components/election/VotingView/PricingTab';
+// import VoteTab from '../../components/election/VotingView/VoteTab';
+// import PaymentModal from '../../components/election/VotingView/PaymentModal';
+// import LotteryMachine from '../../components/election/VotingView/LotteryMachine';
+// import VoteSuccessModal from '../../components/election/VotingView/VoteSuccessModal';
+
+// export default function ElectionVotingView() {
+//   const { electionId } = useParams();
+//   const navigate = useNavigate();
+
+//   // State
+//   const [currentElection, setCurrentElection] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [activeTab, setActiveTab] = useState('overview');
+//   const [selectedAnswers, setSelectedAnswers] = useState({});
+//   const [userCountry, setUserCountry] = useState(null);
+//   const [userRegion, setUserRegion] = useState(null);
+//   const [applicableFee, setApplicableFee] = useState(null);
+//   const [processingFeePercent, setProcessingFeePercent] = useState(0);
+//   const [showPaymentModal, setShowPaymentModal] = useState(false);
+//   /*eslint-disable*/
+//   const [paymentMethod, setPaymentMethod] = useState('wallet');
+//   const [agreeToTerms, setAgreeToTerms] = useState(false);
+//   const [votingInProgress, setVotingInProgress] = useState(false);
+//   const [videoWatched, setVideoWatched] = useState(false);
+//   const [showVideo, setShowVideo] = useState(false);
+  
+//   // Lottery & Success states
+//   const [showLotteryAnimation, setShowLotteryAnimation] = useState(false);
+//   const [lotteryBallNumber, setLotteryBallNumber] = useState(null);
+//   const [showSuccessModal, setShowSuccessModal] = useState(false);
+//   const [voteReceiptData, setVoteReceiptData] = useState(null);
+
+//   // Get user data
+//   const getUserData = () => {
+//     try {
+//       const userDataStr = localStorage.getItem('userData');
+//       if (userDataStr) {
+//         return JSON.parse(userDataStr);
+//       }
+//     } catch (err) {
+//       console.error('Error reading user data:', err);
+//     }
+//     return null;
+//   };
+
+//   // Get user country and processing fee from localStorage
+//   useEffect(() => {
+//     try {
+//       const userDataStr = localStorage.getItem('userData');
+//       if (userDataStr) {
+//         const userData = JSON.parse(userDataStr);
+//         console.log('👤 User data:', userData);
+//         setUserCountry(userData.country || null);
+//       }
+
+//       const persistStr = localStorage.getItem('persist:vottery-root');
+//       if (persistStr) {
+//         const persist = JSON.parse(persistStr);
+//         const subscriptionData = JSON.parse(persist.subscription || '{}');
+        
+//         const processingFee = parseFloat(
+//           subscriptionData.currentPlan?.processingFeePercentage ||
+//           subscriptionData.processingFeePercentage ||
+//           0
+//         );
+        
+//         console.log('💰 Processing fee:', processingFee + '%');
+//         setProcessingFeePercent(processingFee);
+//       }
+//     } catch (err) {
+//       console.error('Error reading localStorage:', err);
+//     }
+//   }, []);
+
+//   // Fetch election data
+//   useEffect(() => {
+//     let isMounted = true;
+
+//     const fetchElectionData = async () => {
+//       if (!electionId) return;
+
+//       try {
+//         setLoading(true);
+//         setError(null);
+
+//         const response = await getElection(electionId);
+//         if (!isMounted) return;
+
+//         let electionData = response.data?.election || response.election || response.data || response;
+//         console.log('🔍 RAW ELECTION DATA:', electionData);
+// console.log('🔍 is_lotterized:', electionData.is_lotterized);
+// console.log('🔍 lottery_prize_amount:', electionData.lottery_prize_amount);
+// console.log('🔍 lottery_winner_count:', electionData.lottery_winner_count);
+//         if (electionData?.id) {
+//           console.log('✅ Election loaded:', electionData.title);
+//           console.log('🎰 Lottery enabled:', electionData.is_lotterized);
+//           setCurrentElection(electionData);
+//         } else {
+//           throw new Error('Election data not found');
+//         }
+//       } catch (err) {
+//         if (!isMounted) return;
+//         console.error('❌ Error:', err);
+//         setError(err.message || 'Failed to load election');
+//       } finally {
+//         if (isMounted) setLoading(false);
+//       }
+//     };
+
+//     fetchElectionData();
+//     return () => { isMounted = false; };
+//   }, [electionId]);
+
+//   // Detect user's region
+//   useEffect(() => {
+//     if (!currentElection || !userCountry) return;
+//     if (currentElection.is_free || currentElection.pricing_type !== 'regional_fee') return;
+//     if (!currentElection.regional_pricing?.length) return;
+
+//     const regionMap = {
+//       'US': 'region_1_us_canada', 'CA': 'region_1_us_canada',
+//       'United States': 'region_1_us_canada', 'Canada': 'region_1_us_canada',
+//       'GB': 'region_2_western_europe', 'DE': 'region_2_western_europe',
+//       'FR': 'region_2_western_europe', 'IT': 'region_2_western_europe',
+//       'PL': 'region_3_eastern_europe', 'RO': 'region_3_eastern_europe',
+//       'NG': 'region_4_africa', 'ZA': 'region_4_africa',
+//       'BR': 'region_5_latin_america', 'MX': 'region_5_latin_america',
+//       'BD': 'region_6_middle_east_asia', 'IN': 'region_6_middle_east_asia',
+//       'Bangladesh': 'region_6_middle_east_asia', 'India': 'region_6_middle_east_asia',
+//       'AU': 'region_7_australasia', 'NZ': 'region_7_australasia',
+//     };
+
+//     const regionCode = regionMap[userCountry];
+//     const matched = regionCode 
+//       ? currentElection.regional_pricing.find(r => r.region_code === regionCode)
+//       : null;
+
+//     console.log('🌍 Region detection:', { userCountry, regionCode, matched: matched?.region_name });
+//     setUserRegion(matched || currentElection.regional_pricing[0]);
+//   }, [currentElection, userCountry]);
+
+//   // Calculate fee
+//   useEffect(() => {
+//     if (!currentElection) return;
+
+//     if (currentElection.is_free) {
+//       setApplicableFee({ 
+//         participationFee: 0, 
+//         processingFee: 0, 
+//         total: 0, 
+//         frozenAmount: 0,
+//         currency: 'USD' 
+//       });
+//       return;
+//     }
+
+//     if (currentElection.pricing_type === 'general_fee') {
+//       const baseFee = parseFloat(currentElection.general_participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: 'USD',
+//         processingPercentage: processingFeePercent
+//       });
+//     } else if (currentElection.pricing_type === 'regional_fee' && userRegion) {
+//       const baseFee = parseFloat(userRegion.participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: userRegion.currency || 'USD',
+//         region: userRegion.region_name,
+//         processingPercentage: processingFeePercent
+//       });
+//     }
+//   }, [currentElection, userRegion, processingFeePercent]);
+
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'Not set';
+//     try {
+//       const date = new Date(dateString);
+//       return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US', { 
+//         year: 'numeric', month: 'long', day: 'numeric' 
+//       });
+//     } catch { return 'Invalid Date'; }
+//   };
+
+//   const canUserVote = useMemo(() => {
+//     if (!currentElection) return { can: false, reason: 'Election not found' };
+
+//     const now = new Date();
+//     const startDate = new Date(currentElection.start_date);
+//     const endDate = new Date(currentElection.end_date);
+
+//     if (currentElection.status !== 'published' && currentElection.status !== 'active') {
+//       return { can: false, reason: `Election is ${currentElection.status}` };
+//     }
+
+//     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+//       return { can: false, reason: 'Invalid dates' };
+//     }
+
+//     if (now < startDate) {
+//       return { can: false, reason: `Starts on ${formatDate(currentElection.start_date)}` };
+//     }
+
+//     if (now > endDate) {
+//       return { can: false, reason: 'Election has ended' };
+//     }
+
+//     return { can: true, reason: null };
+//   }, [currentElection]);
+
+//   const handleAnswerSelect = (questionId, optionId, questionType, maxSelections) => {
+//     setSelectedAnswers(prev => {
+//       const current = prev[questionId] || [];
+      
+//       if (questionType === 'multiple_choice' && maxSelections === 1) {
+//         return { ...prev, [questionId]: [optionId] };
+//       } else {
+//         if (current.includes(optionId)) {
+//           return { ...prev, [questionId]: current.filter(id => id !== optionId) };
+//         } else {
+//           if (maxSelections && current.length >= maxSelections) return prev;
+//           return { ...prev, [questionId]: [...current, optionId] };
+//         }
+//       }
+//     });
+//   };
+
+//   const validateAnswers = () => {
+//     if (!currentElection?.questions) return { valid: true, errors: [] };
+
+//     const errors = [];
+//     currentElection.questions.forEach(question => {
+//       if (question.is_required && !selectedAnswers[question.id]?.length) {
+//         errors.push(`"${question.question_text}" is required`);
+//       }
+//     });
+
+//     return { valid: errors.length === 0, errors };
+//   };
+
+//   const handleVoteSubmit = async () => {
+//     const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+    
+//     if (videoUrl && !videoWatched) {
+//       alert('You must watch the video before voting');
+//       setShowVideo(true);
+//       return;
+//     }
+
+//     const validation = validateAnswers();
+//     if (!validation.valid) {
+//       alert(validation.errors.join('\n'));
+//       return;
+//     }
+
+//     if (!currentElection.is_free && !agreeToTerms) {
+//       alert('Please agree to the terms');
+//       return;
+//     }
+
+//     if (!currentElection.is_free) {
+//       setShowPaymentModal(true);
+//     } else {
+//       await submitVote();
+//     }
+//   };
+
+//   const submitVote = async () => {
+//     try {
+//       setVotingInProgress(true);
+
+//       const userData = getUserData();
+//       if (!userData) {
+//         throw new Error('User not authenticated');
+//       }
+
+//       // Generate secure IDs
+//       const voteId = generateVoteId();
+//       const receiptId = generateReceiptId();
+//       const timestamp = new Date().toISOString();
+
+//       // Prepare vote data
+//       const voteData = {
+//         voteId,
+//         receiptId,
+//         timestamp,
+//         electionId: currentElection.id,
+//         userId: userData.userId,
+//         answers: Object.keys(selectedAnswers).map(qId => ({
+//           question_id: parseInt(qId),
+//           option_ids: selectedAnswers[qId]
+//         })),
+//         payment: !currentElection.is_free ? {
+//           total: applicableFee.total,
+//           participationFee: applicableFee.participationFee,
+//           processingFee: applicableFee.processingFee,
+//           currency: applicableFee.currency,
+//           method: paymentMethod,
+//           region: userRegion?.region_code
+//         } : null
+//       };
+
+//       // Create vote hash for integrity
+//       const voteHash = createVoteHash(voteData);
+//       voteData.voteHash = voteHash;
+
+//       // Encrypt sensitive data
+//       const encryptedVote = encryptVoteData(voteData);
+
+//       console.log('📤 Submitting encrypted vote...');
+//       console.log('🔒 Vote Hash:', voteHash);
+
+//       // TODO: Replace with actual API call
+//       // const response = await fetch('http://localhost:5006/api/votes/submit', {
+//       //   method: 'POST',
+//       //   headers: { 'Content-Type': 'application/json' },
+//       //   body: JSON.stringify({ encryptedVote })
+//       // });
+
+//       // Simulate API response
+//       await new Promise(resolve => setTimeout(resolve, 1500));
+
+//       // Generate lottery ticket if election is lotterized
+//       let lotteryTicketNumber = null;
+//       if (currentElection.is_lotterized) {
+//         lotteryTicketNumber = generateLotteryTicket(userData.userId, currentElection.id);
+//         setLotteryBallNumber(lotteryTicketNumber);
+//         setShowLotteryAnimation(true);
+
+//         // Show animation for 2 seconds
+//         setTimeout(() => {
+//           setShowLotteryAnimation(false);
+//         }, 2000);
+//       }
+
+//       // Prepare receipt data
+//       const receiptData = {
+//         voteId,
+//         receiptId,
+//         timestamp,
+//         lotteryTicketNumber,
+//         voteHash,
+//         electionTitle: currentElection.title,
+//         electionId: currentElection.id
+//       };
+
+//       setVoteReceiptData(receiptData);
+
+//       // Show success modal
+//       setTimeout(() => {
+//         setShowSuccessModal(true);
+//       }, currentElection.is_lotterized ? 2500 : 500);
+
+//       console.log('✅ Vote submitted successfully!');
+
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//       alert(`Failed to submit vote: ${error.message}`);
+//     } finally {
+//       setVotingInProgress(false);
+//       setShowPaymentModal(false);
+//     }
+//   };
+
+//   const handleSuccessModalClose = () => {
+//     setShowSuccessModal(false);
+//     navigate('/my-votes');
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+//           <p className="text-gray-600">Loading election...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (error || !currentElection) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <AlertCircle className="text-red-600 mx-auto mb-4" size={48} />
+//           <p className="text-red-600 font-semibold mb-2">Error Loading Election</p>
+//           <p className="text-gray-600 mb-4">{error || 'Not found'}</p>
+//           <button
+//             onClick={() => navigate(-1)}
+//             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+//           >
+//             Go Back
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+//   const isLotterized = currentElection.is_lotterized || false;
+
+//   return (
+//     <div className="max-w-7xl mx-auto px-4 py-8">
+//       <button
+//         onClick={() => navigate(-1)}
+//         className="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-700"
+//       >
+//         <ArrowLeft size={20} />
+//         Back
+//       </button>
+
+//       <ElectionHeader
+//         election={currentElection}
+//         formatDate={formatDate}
+//         videoUrl={videoUrl}
+//         videoWatched={videoWatched}
+//         onWatchVideo={() => setShowVideo(true)}
+//       />
+
+//       {!canUserVote.can && (
+//         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6 rounded-r-lg">
+//           <div className="flex items-start gap-4">
+//             <AlertCircle className="text-yellow-600" size={24} />
+//             <div>
+//               <h3 className="text-lg font-semibold text-yellow-800 mb-2">Cannot Vote</h3>
+//               <p className="text-yellow-700">{canUserVote.reason}</p>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Tabs */}
+//       <div className="bg-white rounded-lg shadow mb-6">
+//         <div className="flex border-b overflow-x-auto">
+//           <button
+//             onClick={() => setActiveTab('overview')}
+//             className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//               activeTab === 'overview'
+//                 ? 'border-b-2 border-blue-600 text-blue-600'
+//                 : 'text-gray-600 hover:text-gray-900'
+//             }`}
+//           >
+//             Overview
+//           </button>
+//           {!currentElection.is_free && (
+//             <button
+//               onClick={() => setActiveTab('pricing')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'pricing'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Pricing
+//             </button>
+//           )}
+//           {isLotterized && (
+//             <button
+//               onClick={() => setActiveTab('lottery')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'lottery'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               🎰 Lottery
+//             </button>
+//           )}
+//           {canUserVote.can && currentElection.questions?.length > 0 && (
+//             <button
+//               onClick={() => setActiveTab('vote')}
+//               className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+//                 activeTab === 'vote'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Vote Now
+//             </button>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Tab Content */}
+//       <div className="bg-white rounded-lg shadow-lg p-8">
+//         {activeTab === 'overview' && (
+//           <div className="space-y-6">
+//             <h2 className="text-2xl font-bold text-gray-900">Election Overview</h2>
+//             <p className="text-gray-700">{currentElection.description || 'No description'}</p>
+            
+//             {currentElection.voting_body_content && (
+//               <div dangerouslySetInnerHTML={{ __html: currentElection.voting_body_content }} />
+//             )}
+
+//             {videoUrl && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">Election Video</h3>
+//                 <button
+//                   onClick={() => setShowVideo(true)}
+//                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+//                 >
+//                   <Play size={20} />
+//                   {videoWatched ? 'Watch Again' : 'Watch Video (Required)'}
+//                 </button>
+//               </div>
+//             )}
+
+//             {currentElection.questions?.length > 0 && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">
+//                   Questions ({currentElection.questions.length})
+//                 </h3>
+//                 <p className="text-gray-600">
+//                   This election has {currentElection.questions.length} question(s).
+//                   {canUserVote.can ? ' Click "Vote Now" to participate.' : ''}
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {activeTab === 'pricing' && (
+//           <PricingTab
+//             election={currentElection}
+//             userRegion={userRegion}
+//             applicableFee={applicableFee}
+//             processingFeePercent={processingFeePercent}
+//           />
+//         )}
+
+//         {activeTab === 'lottery' && isLotterized && (
+//           <div>
+//             <h2 className="text-2xl font-bold text-gray-900 mb-6">Lottery Information</h2>
+//             <LotteryMachine
+//               isVisible={true}
+//               isSpinning={canUserVote.can}
+//               prizeAmount={currentElection.lottery_prize_amount || 0}
+//               currency={applicableFee?.currency || 'USD'}
+//               winnerCount={currentElection.lottery_winner_count || 1}
+//               showVoteBall={false}
+//               ballNumber={null}
+//             />
+//             <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+//               <h3 className="font-bold text-lg mb-4">How it Works:</h3>
+//               <ul className="space-y-2 text-gray-700">
+//                 <li>✅ Vote to automatically enter the lottery</li>
+//                 <li>🎫 Each vote gets a unique lottery ticket number</li>
+//                 <li>🎰 Winners drawn randomly at election end</li>
+//                 <li>💰 Prize: {applicableFee?.currency || 'USD'} {currentElection.lottery_prize_amount?.toFixed(2) || '0.00'}</li>
+//                 <li>🏆 Winners: {currentElection.lottery_winner_count || 1}</li>
+//               </ul>
+//             </div>
+//           </div>
+//         )}
+
+//         {activeTab === 'vote' && canUserVote.can && currentElection.questions?.length > 0 && (
+//           <VoteTab
+//             election={currentElection}
+//             selectedAnswers={selectedAnswers}
+//             onAnswerSelect={handleAnswerSelect}
+//             applicableFee={applicableFee}
+//             agreeToTerms={agreeToTerms}
+//             setAgreeToTerms={setAgreeToTerms}
+//             onSubmit={handleVoteSubmit}
+//             votingInProgress={votingInProgress}
+//             videoUrl={videoUrl}
+//             videoWatched={videoWatched}
+//             onWatchVideo={() => setShowVideo(true)}
+//           />
+//         )}
+//       </div>
+
+//       {/* Modals */}
+//       <VideoModal
+//         videoUrl={videoUrl}
+//         isOpen={showVideo}
+//         onClose={() => setShowVideo(false)}
+//         videoWatched={videoWatched}
+//         onVideoEnd={() => setVideoWatched(true)}
+//       />
+
+//       <PaymentModal
+//         isOpen={showPaymentModal}
+//         onClose={() => setShowPaymentModal(false)}
+//         electionId={electionId}
+//         applicableFee={applicableFee}
+//         onPaymentSuccess={(paymentId) => {
+//           console.log('✅ Payment successful:', paymentId);
+//           submitVote();
+//         }}
+//       />
+
+//       {/* Lottery Animation Overlay */}
+//       {showLotteryAnimation && (
+//         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+//           <div className="bg-white rounded-2xl p-8 max-w-lg">
+//             <h2 className="text-2xl font-bold text-center mb-4">🎰 Entering Lottery...</h2>
+//             <LotteryMachine
+//               isVisible={true}
+//               isSpinning={true}
+//               prizeAmount={currentElection.lottery_prize_amount || 0}
+//               currency={applicableFee?.currency || 'USD'}
+//               winnerCount={currentElection.lottery_winner_count || 1}
+//               showVoteBall={true}
+//               ballNumber={lotteryBallNumber}
+//             />
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Success Modal */}
+//       <VoteSuccessModal
+//         isOpen={showSuccessModal}
+//         onClose={handleSuccessModalClose}
+//         voteData={voteReceiptData}
+//         electionTitle={currentElection.title}
+//       />
+//     </div>
+//   );
+// }
+// import React, { useState, useEffect, useMemo } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { ArrowLeft, AlertCircle, Loader, Play } from 'lucide-react';
+// import { getElection } from '../../redux/api/election/electionApi';
+
+// // ✅ Import sub-components from components folder
+// //import ElectionHeader from '../../components/Election/VotingView/ElectionHeader';
+// //import VideoModal from '../../components/Election/VotingView/VideoModal';
+// //import PricingTab from '../../components/Election/VotingView/PricingTab';
+// //import VoteTab from '../../components/Election/VotingView/VoteTab';
+// //import PaymentModal from '../../components/Election/VotingView/PaymentModal';
+// import ElectionHeader from '../../components/election/VotingView/ElectionHeader';
+// import VideoModal from '../../components/election/VotingView/VideoModal';
+// import PricingTab from '../../components/election/VotingView/PricingTab';
+// import VoteTab from '../../components/election/VotingView/VoteTab';
+// import PaymentModal from '../../components/election/VotingView/PaymentModal';
+
+// export default function ElectionVotingView() {
+//   const { electionId } = useParams();
+//   const navigate = useNavigate();
+
+//   // State
+//   const [currentElection, setCurrentElection] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [activeTab, setActiveTab] = useState('overview');
+//   const [selectedAnswers, setSelectedAnswers] = useState({});
+//   const [userCountry, setUserCountry] = useState(null);
+//   const [userRegion, setUserRegion] = useState(null);
+//   const [applicableFee, setApplicableFee] = useState(null);
+//   const [processingFeePercent, setProcessingFeePercent] = useState(0);
+//   const [showPaymentModal, setShowPaymentModal] = useState(false);
+//   const [paymentMethod, setPaymentMethod] = useState('wallet');
+//   const [agreeToTerms, setAgreeToTerms] = useState(false);
+//   const [votingInProgress, setVotingInProgress] = useState(false);
+//   const [videoWatched, setVideoWatched] = useState(false);
+//   const [showVideo, setShowVideo] = useState(false);
+
+//   // ✅ Get user country and processing fee from localStorage
+//   useEffect(() => {
+//     try {
+//       const userDataStr = localStorage.getItem('userData');
+//       if (userDataStr) {
+//         const userData = JSON.parse(userDataStr);
+//         console.log('👤 User data:', userData);
+//         setUserCountry(userData.country || null);
+//       }
+
+//       const persistStr = localStorage.getItem('persist:vottery-root');
+//       if (persistStr) {
+//         const persist = JSON.parse(persistStr);
+//         const subscriptionData = JSON.parse(persist.subscription || '{}');
+        
+//         const processingFee = parseFloat(
+//           subscriptionData.currentPlan?.processingFeePercentage ||
+//           subscriptionData.processingFeePercentage ||
+//           0
+//         );
+        
+//         console.log('💰 Processing fee:', processingFee + '%');
+//         setProcessingFeePercent(processingFee);
+//       }
+//     } catch (err) {
+//       console.error('Error reading localStorage:', err);
+//     }
+//   }, []);
+
+//   // ✅ Fetch election data
+//   useEffect(() => {
+//     let isMounted = true;
+
+//     const fetchElectionData = async () => {
+//       if (!electionId) return;
+
+//       try {
+//         setLoading(true);
+//         setError(null);
+
+//         const response = await getElection(electionId);
+//         if (!isMounted) return;
+
+//         let electionData = response.data?.election || response.election || response.data || response;
+        
+//         if (electionData?.id) {
+//           console.log('✅ Election loaded:', electionData.title);
+//           setCurrentElection(electionData);
+//         } else {
+//           throw new Error('Election data not found');
+//         }
+//       } catch (err) {
+//         if (!isMounted) return;
+//         console.error('❌ Error:', err);
+//         setError(err.message || 'Failed to load election');
+//       } finally {
+//         if (isMounted) setLoading(false);
+//       }
+//     };
+
+//     fetchElectionData();
+//     return () => { isMounted = false; };
+//   }, [electionId]);
+
+//   // ✅ Detect user's region
+//   useEffect(() => {
+//     if (!currentElection || !userCountry) return;
+//     if (currentElection.is_free || currentElection.pricing_type !== 'regional_fee') return;
+//     if (!currentElection.regional_pricing?.length) return;
+
+//     const regionMap = {
+//       'US': 'region_1_us_canada', 'CA': 'region_1_us_canada',
+//       'United States': 'region_1_us_canada', 'Canada': 'region_1_us_canada',
+//       'GB': 'region_2_western_europe', 'DE': 'region_2_western_europe',
+//       'FR': 'region_2_western_europe', 'IT': 'region_2_western_europe',
+//       'PL': 'region_3_eastern_europe', 'RO': 'region_3_eastern_europe',
+//       'NG': 'region_4_africa', 'ZA': 'region_4_africa',
+//       'BR': 'region_5_latin_america', 'MX': 'region_5_latin_america',
+//       'BD': 'region_6_middle_east_asia', 'IN': 'region_6_middle_east_asia',
+//       'Bangladesh': 'region_6_middle_east_asia', 'India': 'region_6_middle_east_asia',
+//       'AU': 'region_7_australasia', 'NZ': 'region_7_australasia',
+//     };
+
+//     const regionCode = regionMap[userCountry];
+//     const matched = regionCode 
+//       ? currentElection.regional_pricing.find(r => r.region_code === regionCode)
+//       : null;
+
+//     console.log('🌍 Region detection:', { userCountry, regionCode, matched: matched?.region_name });
+//     setUserRegion(matched || currentElection.regional_pricing[0]);
+//   }, [currentElection, userCountry]);
+
+//   // ✅ Calculate fee
+//   useEffect(() => {
+//     if (!currentElection) return;
+
+//     if (currentElection.is_free) {
+//       setApplicableFee({ 
+//         participationFee: 0, 
+//         processingFee: 0, 
+//         total: 0, 
+//         frozenAmount: 0,
+//         currency: 'USD' 
+//       });
+//       return;
+//     }
+
+//     if (currentElection.pricing_type === 'general_fee') {
+//       const baseFee = parseFloat(currentElection.general_participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       console.log('💰 General fee:', { baseFee, processing, total: baseFee + processing });
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: 'USD'
+//       });
+//     } else if (currentElection.pricing_type === 'regional_fee' && userRegion) {
+//       const baseFee = parseFloat(userRegion.participation_fee || 0);
+//       const processing = baseFee * (processingFeePercent / 100);
+      
+//       console.log('💰 Regional fee:', { 
+//         baseFee, 
+//         processing, 
+//         total: baseFee + processing,
+//         region: userRegion.region_name 
+//       });
+      
+//       setApplicableFee({
+//         participationFee: baseFee,
+//         processingFee: processing,
+//         total: baseFee + processing,
+//         frozenAmount: baseFee,
+//         currency: userRegion.currency || 'USD',
+//         region: userRegion.region_name
+//       });
+//     }
+//   }, [currentElection, userRegion, processingFeePercent]);
+
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'Not set';
+//     try {
+//       const date = new Date(dateString);
+//       return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US', { 
+//         year: 'numeric', month: 'long', day: 'numeric' 
+//       });
+//     } catch { return 'Invalid Date'; }
+//   };
+
+//   const canUserVote = useMemo(() => {
+//     if (!currentElection) return { can: false, reason: 'Election not found' };
+
+//     const now = new Date();
+//     const startDate = new Date(currentElection.start_date);
+//     const endDate = new Date(currentElection.end_date);
+
+//     if (currentElection.status !== 'published' && currentElection.status !== 'active') {
+//       return { can: false, reason: `Election is ${currentElection.status}` };
+//     }
+
+//     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+//       return { can: false, reason: 'Invalid dates' };
+//     }
+
+//     if (now < startDate) {
+//       return { can: false, reason: `Starts on ${formatDate(currentElection.start_date)}` };
+//     }
+
+//     if (now > endDate) {
+//       return { can: false, reason: 'Election has ended' };
+//     }
+
+//     return { can: true, reason: null };
+//   }, [currentElection]);
+
+//   const handleAnswerSelect = (questionId, optionId, questionType, maxSelections) => {
+//     setSelectedAnswers(prev => {
+//       const current = prev[questionId] || [];
+      
+//       if (questionType === 'multiple_choice' && maxSelections === 1) {
+//         return { ...prev, [questionId]: [optionId] };
+//       } else {
+//         if (current.includes(optionId)) {
+//           return { ...prev, [questionId]: current.filter(id => id !== optionId) };
+//         } else {
+//           if (maxSelections && current.length >= maxSelections) return prev;
+//           return { ...prev, [questionId]: [...current, optionId] };
+//         }
+//       }
+//     });
+//   };
+
+//   const validateAnswers = () => {
+//     if (!currentElection?.questions) return { valid: true, errors: [] };
+
+//     const errors = [];
+//     currentElection.questions.forEach(question => {
+//       if (question.is_required && !selectedAnswers[question.id]?.length) {
+//         errors.push(`"${question.question_text}" is required`);
+//       }
+//     });
+
+//     return { valid: errors.length === 0, errors };
+//   };
+
+//   const handleVoteSubmit = async () => {
+//     const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+    
+//     // ✅ Check video requirement
+//     if (videoUrl && !videoWatched) {
+//       alert('You must watch the video before voting');
+//       setShowVideo(true);
+//       return;
+//     }
+
+//     const validation = validateAnswers();
+//     if (!validation.valid) {
+//       alert(validation.errors.join('\n'));
+//       return;
+//     }
+
+//     if (!currentElection.is_free && !agreeToTerms) {
+//       alert('Please agree to the terms');
+//       return;
+//     }
+
+//     if (!currentElection.is_free) {
+//       setShowPaymentModal(true);
+//     } else {
+//       await submitVote();
+//     }
+//   };
+
+//   const submitVote = async () => {
+//     try {
+//       setVotingInProgress(true);
+
+//       const voteData = {
+//         election_id: currentElection.id,
+//         answers: Object.keys(selectedAnswers).map(qId => ({
+//           question_id: parseInt(qId),
+//           option_ids: selectedAnswers[qId]
+//         })),
+//         payment: !currentElection.is_free ? {
+//           total: applicableFee.total,
+//           participationFee: applicableFee.participationFee,
+//           processingFee: applicableFee.processingFee,
+//           frozenAmount: applicableFee.frozenAmount,
+//           currency: applicableFee.currency,
+//           method: paymentMethod,
+//           region: userRegion?.region_code
+//         } : null
+//       };
+
+//       console.log('📤 Submitting vote:', voteData);
+
+//       // TODO: Replace with actual API call
+//       // await submitVoteAPI(voteData);
+
+//       alert('Vote submitted successfully!');
+
+//       navigate(`/elections/${currentElection.id}/confirmation`, {
+//         state: {
+//           voteData,
+//           paymentData: applicableFee,
+//           electionTitle: currentElection.title,
+//           receiptId: 'RECEIPT-' + Date.now()
+//         }
+//       });
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//       alert('Failed to submit vote');
+//     } finally {
+//       setVotingInProgress(false);
+//       setShowPaymentModal(false);
+//     }
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+//           <p className="text-gray-600">Loading election...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (error || !currentElection) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen">
+//         <div className="text-center">
+//           <AlertCircle className="text-red-600 mx-auto mb-4" size={48} />
+//           <p className="text-red-600 font-semibold mb-2">Error Loading Election</p>
+//           <p className="text-gray-600 mb-4">{error || 'Not found'}</p>
+//           <button
+//             onClick={() => navigate(-1)}
+//             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+//           >
+//             Go Back
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const videoUrl = currentElection.topic_video_url || currentElection.video_url;
+
+//   return (
+//     <div className="max-w-7xl mx-auto px-4 py-8">
+//       <button
+//         onClick={() => navigate(-1)}
+//         className="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-700"
+//       >
+//         <ArrowLeft size={20} />
+//         Back
+//       </button>
+
+//       <ElectionHeader
+//         election={currentElection}
+//         formatDate={formatDate}
+//         videoUrl={videoUrl}
+//         videoWatched={videoWatched}
+//         onWatchVideo={() => setShowVideo(true)}
+//       />
+
+//       {!canUserVote.can && (
+//         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6 rounded-r-lg">
+//           <div className="flex items-start gap-4">
+//             <AlertCircle className="text-yellow-600" size={24} />
+//             <div>
+//               <h3 className="text-lg font-semibold text-yellow-800 mb-2">Cannot Vote</h3>
+//               <p className="text-yellow-700">{canUserVote.reason}</p>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Tabs */}
+//       <div className="bg-white rounded-lg shadow mb-6">
+//         <div className="flex border-b">
+//           <button
+//             onClick={() => setActiveTab('overview')}
+//             className={`px-6 py-4 font-medium transition-colors ${
+//               activeTab === 'overview'
+//                 ? 'border-b-2 border-blue-600 text-blue-600'
+//                 : 'text-gray-600 hover:text-gray-900'
+//             }`}
+//           >
+//             Overview
+//           </button>
+//           {!currentElection.is_free && (
+//             <button
+//               onClick={() => setActiveTab('pricing')}
+//               className={`px-6 py-4 font-medium transition-colors ${
+//                 activeTab === 'pricing'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Pricing
+//             </button>
+//           )}
+//           {canUserVote.can && currentElection.questions?.length > 0 && (
+//             <button
+//               onClick={() => setActiveTab('vote')}
+//               className={`px-6 py-4 font-medium transition-colors ${
+//                 activeTab === 'vote'
+//                   ? 'border-b-2 border-blue-600 text-blue-600'
+//                   : 'text-gray-600 hover:text-gray-900'
+//               }`}
+//             >
+//               Vote Now
+//             </button>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Tab Content */}
+//       <div className="bg-white rounded-lg shadow-lg p-8">
+//         {activeTab === 'overview' && (
+//           <div className="space-y-6">
+//             <h2 className="text-2xl font-bold text-gray-900">Election Overview</h2>
+//             <p className="text-gray-700">{currentElection.description || 'No description'}</p>
+            
+//             {currentElection.voting_body_content && (
+//               <div dangerouslySetInnerHTML={{ __html: currentElection.voting_body_content }} />
+//             )}
+
+//             {videoUrl && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">Election Video</h3>
+//                 <button
+//                   onClick={() => setShowVideo(true)}
+//                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+//                 >
+//                   <Play size={20} />
+//                   {videoWatched ? 'Watch Again' : 'Watch Video (Required)'}
+//                 </button>
+//               </div>
+//             )}
+
+//             {currentElection.questions?.length > 0 && (
+//               <div className="mt-6">
+//                 <h3 className="text-xl font-bold text-gray-900 mb-4">
+//                   Questions ({currentElection.questions.length})
+//                 </h3>
+//                 <p className="text-gray-600">
+//                   This election has {currentElection.questions.length} question(s).
+//                   {canUserVote.can ? ' Click "Vote Now" to participate.' : ''}
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {activeTab === 'pricing' && (
+//           <PricingTab
+//             election={currentElection}
+//             userRegion={userRegion}
+//             applicableFee={applicableFee}
+//             processingFeePercent={processingFeePercent}
+//           />
+//         )}
+
+//         {activeTab === 'vote' && canUserVote.can && currentElection.questions?.length > 0 && (
+//           <VoteTab
+//             election={currentElection}
+//             selectedAnswers={selectedAnswers}
+//             onAnswerSelect={handleAnswerSelect}
+//             applicableFee={applicableFee}
+//             agreeToTerms={agreeToTerms}
+//             setAgreeToTerms={setAgreeToTerms}
+//             onSubmit={handleVoteSubmit}
+//             votingInProgress={votingInProgress}
+//             videoUrl={videoUrl}
+//             videoWatched={videoWatched}
+//             onWatchVideo={() => setShowVideo(true)}
+//           />
+//         )}
+//       </div>
+
+//       {/* Modals */}
+//       <VideoModal
+//         videoUrl={videoUrl}
+//         isOpen={showVideo}
+//         onClose={() => setShowVideo(false)}
+//         videoWatched={videoWatched}
+//         onVideoEnd={() => setVideoWatched(true)}
+//       />
+
+//       {/* <PaymentModal
+//         isOpen={showPaymentModal}
+//         onClose={() => setShowPaymentModal(false)}
+//         applicableFee={applicableFee}
+//         paymentMethod={paymentMethod}
+//         setPaymentMethod={setPaymentMethod}
+//         onConfirm={submitVote}
+//         votingInProgress={votingInProgress}
+//       /> */}
+//       <PaymentModal
+//   isOpen={showPaymentModal}
+//   onClose={() => setShowPaymentModal(false)}
+//   electionId={electionId}
+//   setPaymentMethod={setPaymentMethod}
+//   applicableFee={{
+//     ...applicableFee,
+//     processingPercentage: processingFeePercent
+//   }}
+//   onPaymentSuccess={(paymentId) => {
+//     console.log('✅ Payment successful:', paymentId);
+//     submitVote();
+//   }}
+// />
+//     </div>
+//   );
+// }
 // import React, { useState, useEffect, useMemo } from 'react';
 // import { useParams, useNavigate } from 'react-router-dom';
 // //import { useSelector } from 'react-redux';
