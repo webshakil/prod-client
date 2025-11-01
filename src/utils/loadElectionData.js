@@ -1,256 +1,138 @@
-// src/utils/loadElectionData.js
 import { 
-  setMyElections,
+  setMyElections, 
   setPublicElections,
-  setDrafts,
+  setSelectedElectionDetails,
   setCurrentElection,
   setLoading,
-  setError
+  setError 
 } from '../redux/slices/electionSlice';
 
-// Import your existing API functions
-import { 
-  getMyElections, 
-  getPublicElections, 
-  getMyDrafts,
-  getElection 
-} from '../redux/api/election/electionApi';
+import { getAllElections, getElection } from '../redux/api/election/electionApi';
 
-// Main loader function - loads all election data globally
+/**
+ * Load user's elections with COMPLETE data into Redux
+ * This stores ALL fields: regional_pricing, questions, lottery_config, etc.
+ */
 export const loadElectionData = async (dispatch) => {
   try {
-    console.log('🔄 [loadElectionData] Loading election data globally...');
+    console.log('📊 [loadElectionData] Loading elections with complete data...');
     dispatch(setLoading(true));
-
-    // 1. Load my elections
-    try {
-      const myElectionsResponse = await getMyElections(1, 100, 'all');
-      
-      if (myElectionsResponse.success && myElectionsResponse.data) {
-        const elections = myElectionsResponse.data.elections || myElectionsResponse.data;
-        dispatch(setMyElections(Array.isArray(elections) ? elections : []));
-        console.log('✅ [loadElectionData] My elections loaded:', elections.length);
-      } else {
-        dispatch(setMyElections([]));
-      }
-    } catch (error) {
-      console.log('⚠️ [loadElectionData] Could not load my elections:', error.message);
-      dispatch(setMyElections([]));
-    }
-
-    // 2. Load public elections
-    try {
-      const publicElectionsResponse = await getPublicElections(1, 50);
-      
-      if (publicElectionsResponse.success && publicElectionsResponse.data) {
-        const elections = publicElectionsResponse.data.elections || publicElectionsResponse.data;
-        dispatch(setPublicElections(Array.isArray(elections) ? elections : []));
-        console.log('✅ [loadElectionData] Public elections loaded:', elections.length);
-      } else {
-        dispatch(setPublicElections([]));
-      }
-    } catch (error) {
-      console.log('⚠️ [loadElectionData] Could not load public elections:', error.message);
-      dispatch(setPublicElections([]));
-    }
-
-    // 3. Load drafts
-    try {
-      const draftsResponse = await getMyDrafts();
-      
-      if (draftsResponse.success && draftsResponse.data) {
-        const drafts = draftsResponse.data.drafts || draftsResponse.data;
-        dispatch(setDrafts(Array.isArray(drafts) ? drafts : []));
-        console.log('✅ [loadElectionData] Drafts loaded:', drafts.length);
-      } else {
-        dispatch(setDrafts([]));
-      }
-    } catch (error) {
-      console.log('⚠️ [loadElectionData] Could not load drafts:', error.message);
-      dispatch(setDrafts([]));
-    }
-
-    dispatch(setLoading(false));
-    console.log('✅ [loadElectionData] Election data loaded successfully');
-    return true;
+    
+    // Fetch ALL elections with complete data
+    const response = await getAllElections(1, 100, 'all');
+    
+    console.log('📊 [loadElectionData] Raw API Response:', response);
+    
+    // Handle different response formats
+    const allElections = response.data?.elections || response.elections || [];
+    
+    console.log('✅ [loadElectionData] Elections loaded:', {
+      count: allElections.length,
+      firstElection: allElections[0] ? {
+        id: allElections[0].id,
+        title: allElections[0].title,
+        hasRegionalPricing: !!allElections[0].regional_pricing,
+        regionalPricingCount: allElections[0].regional_pricing?.length || 0,
+        hasQuestions: !!allElections[0].questions,
+        questionsCount: allElections[0].questions?.length || 0,
+        hasLottery: !!allElections[0].lottery_config,
+        allFields: Object.keys(allElections[0])
+      } : null
+    });
+    
+    // Dispatch COMPLETE election objects to Redux
+    dispatch(setMyElections(allElections));
+    
+    console.log('✅ [loadElectionData] Dispatched to Redux');
+    
+    return allElections;
   } catch (error) {
-    console.error('❌ [loadElectionData] Error loading election data globally:', error);
-    dispatch(setError(error.message));
+    console.error('❌ [loadElectionData] Failed:', error);
+    dispatch(setError(error.message || 'Failed to load elections'));
+    return [];
+  } finally {
     dispatch(setLoading(false));
-    return false;
   }
 };
 
-// Load single election by ID and set as currentElection
-export const loadSingleElection = async (dispatch, electionId) => {
+/**
+ * Load public elections with complete data
+ */
+export const loadPublicElections = async (dispatch) => {
   try {
-    console.log('🔄 [loadSingleElection] Loading election:', electionId);
+    console.log('🌍 [loadPublicElections] Loading public elections...');
     dispatch(setLoading(true));
-
-    const response = await getElection(electionId);
     
-    if (response.success && response.data) {
-      const electionData = response.data;
-
-      // Map the election data to the redux structure for currentElection
-      const currentElectionData = {
-        // Basic IDs
-        id: electionData.id,
-        draftId: electionData.draft_id || null,
-        
-        // Step 1 Data - Basic Info
-        step1Data: {
-          title: electionData.title || '',
-          description: electionData.description || '',
-          topic_image: electionData.topic_image_url || null,
-          topic_video: electionData.topic_video_url || null,
-          topic_video_url: electionData.topic_video_url || '',
-          logo: electionData.logo_url || null,
-          start_date: electionData.start_date || '',
-          start_time: electionData.start_time || '',
-          end_date: electionData.end_date || '',
-          end_time: electionData.end_time || '',
-          timezone: electionData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-          creator_type: electionData.creator_type || 'individual',
-        },
-        
-        // Step 2 Data - Configuration
-        step2Data: {
-          category_id: electionData.category_id || null,
-          voting_type: electionData.voting_type || 'plurality',
-          permission_type: electionData.permission_type || 'public',
-          allowed_countries: electionData.allowed_countries || [],
-          is_free: electionData.is_free !== undefined ? electionData.is_free : true,
-          pricing_type: electionData.pricing_type || 'free',
-          general_participation_fee: electionData.general_participation_fee || 0,
-          regional_fees: electionData.regional_pricing || {},
-          biometric_required: electionData.biometric_required || false,
-          authentication_methods: electionData.authentication_methods || ['passkey'],
-          show_live_results: electionData.show_live_results !== undefined ? electionData.show_live_results : false,
-          vote_editing_allowed: electionData.vote_editing_allowed !== undefined ? electionData.vote_editing_allowed : false,
-          
-          // Lottery
-          lottery_enabled: electionData.lottery_config?.is_lotterized || false,
-          lottery_config: electionData.lottery_config || {
-            prize_funding_source: 'creator_funded',
-            reward_type: 'monetary',
-            reward_amount: 0,
-            total_prize_pool: 0,
-            winner_count: 1,
-            prize_pool_total: 0,
-            prize_description: '',
-            estimated_value: 0,
-            projected_revenue: 0,
-            revenue_share_percentage: 0,
-          },
-        },
-        
-        // Step 3 Data - Questions
-        step3Data: {
-          questions: electionData.questions || [],
-          election_slug: electionData.slug || '',
-        },
-        
-        // Progress tracking
-        completedSteps: [1, 2, 3, 4],
-        currentStep: 4,
-        
-        // Additional metadata
-        status: electionData.status || 'draft',
-        creator_id: electionData.creator_id,
-        organization_id: electionData.organization_id || null,
-        shareable_url: electionData.shareable_url || '',
-        processing_fee_percentage: electionData.processing_fee_percentage || 0,
-        view_count: electionData.view_count || 0,
-        vote_count: electionData.vote_count || 0,
-        created_at: electionData.created_at,
-        updated_at: electionData.updated_at,
-        published_at: electionData.published_at || null,
-      };
-
-      dispatch(setCurrentElection(currentElectionData));
-      dispatch(setLoading(false));
-      
-      console.log('✅ [loadSingleElection] Election loaded:', electionData.title);
-      return currentElectionData;
-    } else {
-      dispatch(setLoading(false));
-      console.log('⚠️ [loadSingleElection] No election data found');
-      return null;
-    }
+    const response = await getAllElections(1, 100, 'public');
+    const publicElections = response.data?.elections || response.elections || [];
+    
+    console.log('✅ [loadPublicElections] Loaded:', publicElections.length);
+    dispatch(setPublicElections(publicElections));
+    
+    return publicElections;
   } catch (error) {
-    console.error('❌ [loadSingleElection] Error loading election:', error);
-    dispatch(setError(error.message));
+    console.error('❌ [loadPublicElections] Failed:', error);
+    dispatch(setError(error.message || 'Failed to load public elections'));
+    return [];
+  } finally {
     dispatch(setLoading(false));
-    return null;
   }
 };
 
-// Optional: Load only user's elections (lightweight version)
-export const loadMyElectionsOnly = async (dispatch) => {
+/**
+ * Load specific election with COMPLETE data
+ * Stores in both selectedElectionDetails AND currentElection
+ */
+export const loadSpecificElection = async (electionId, dispatch) => {
   try {
-    console.log('🔄 [loadMyElectionsOnly] Loading my elections...');
+    console.log(`📋 [loadSpecificElection] Loading election ${electionId}...`);
+    dispatch(setLoading(true));
     
-    const myElectionsResponse = await getMyElections(1, 100, 'all');
+    // Fetch complete election details
+    const electionResponse = await getElection(electionId);
     
-    if (myElectionsResponse.success && myElectionsResponse.data) {
-      const elections = myElectionsResponse.data.elections || myElectionsResponse.data;
-      dispatch(setMyElections(Array.isArray(elections) ? elections : []));
-      console.log('✅ [loadMyElectionsOnly] My elections loaded:', elections.length);
-      return elections;
-    } else {
-      dispatch(setMyElections([]));
-      return [];
-    }
+    // Handle different response formats
+    const electionData = electionResponse.data?.election || 
+                        electionResponse.data || 
+                        electionResponse.election || 
+                        electionResponse;
+    
+    console.log('✅ [loadSpecificElection] Election loaded:', {
+      id: electionData.id,
+      title: electionData.title,
+      hasRegionalPricing: !!electionData.regional_pricing,
+      regionalPricingCount: electionData.regional_pricing?.length || 0,
+      hasQuestions: !!electionData.questions,
+      questionsCount: electionData.questions?.length || 0,
+      hasLottery: !!electionData.lottery_config,
+      allFields: Object.keys(electionData)
+    });
+    
+    // Store in selectedElectionDetails (for viewing)
+    dispatch(setSelectedElectionDetails(electionData));
+    
+    // ALSO store in currentElection (for editing/viewing)
+    dispatch(setCurrentElection({
+      ...electionData,
+      currentStep: 4,
+      completedSteps: [1, 2, 3, 4],
+    }));
+    
+    return electionData;
   } catch (error) {
-    console.error('❌ [loadMyElectionsOnly] Error:', error);
-    dispatch(setMyElections([]));
-    return [];
+    console.error('❌ [loadSpecificElection] Failed:', error);
+    dispatch(setError(error.message || 'Failed to load election'));
+    throw error;
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
-// Optional: Load only public elections (lightweight version)
-export const loadPublicElectionsOnly = async (dispatch) => {
-  try {
-    console.log('🔄 [loadPublicElectionsOnly] Loading public elections...');
-    
-    const publicElectionsResponse = await getPublicElections(1, 50);
-    
-    if (publicElectionsResponse.success && publicElectionsResponse.data) {
-      const elections = publicElectionsResponse.data.elections || publicElectionsResponse.data;
-      dispatch(setPublicElections(Array.isArray(elections) ? elections : []));
-      console.log('✅ [loadPublicElectionsOnly] Public elections loaded:', elections.length);
-      return elections;
-    } else {
-      dispatch(setPublicElections([]));
-      return [];
-    }
-  } catch (error) {
-    console.error('❌ [loadPublicElectionsOnly] Error:', error);
-    dispatch(setPublicElections([]));
-    return [];
-  }
-};
-
-// Optional: Load only drafts (lightweight version)
-export const loadDraftsOnly = async (dispatch) => {
-  try {
-    console.log('🔄 [loadDraftsOnly] Loading drafts...');
-    
-    const draftsResponse = await getMyDrafts();
-    
-    if (draftsResponse.success && draftsResponse.data) {
-      const drafts = draftsResponse.data.drafts || draftsResponse.data;
-      dispatch(setDrafts(Array.isArray(drafts) ? drafts : []));
-      console.log('✅ [loadDraftsOnly] Drafts loaded:', drafts.length);
-      return drafts;
-    } else {
-      dispatch(setDrafts([]));
-      return [];
-    }
-  } catch (error) {
-    console.error('❌ [loadDraftsOnly] Error:', error);
-    dispatch(setDrafts([]));
-    return [];
-  }
+/**
+ * Refresh elections after create/update/delete
+ */
+export const refreshElectionData = async (dispatch) => {
+  console.log('🔄 [refreshElectionData] Refreshing...');
+  await loadElectionData(dispatch);
+  console.log('✅ [refreshElectionData] Refreshed');
 };
