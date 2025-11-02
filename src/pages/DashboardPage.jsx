@@ -47,13 +47,20 @@ export default function DashboardPage() {
   };
 
   // Update tab when URL query parameter changes
+  // useEffect(() => {
+  //   const tabFromUrl = searchParams.get('tab');
+  //   if (tabFromUrl && tabFromUrl !== activeTab) {
+  //     console.log('🔄 Changing tab from URL:', tabFromUrl);
+  //     setActiveTab(tabFromUrl);
+  //   }
+  // }, [searchParams, activeTab]);
+
   useEffect(() => {
-    const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      console.log('🔄 Changing tab from URL:', tabFromUrl);
-      setActiveTab(tabFromUrl);
-    }
-  }, [searchParams, activeTab]);
+  const tabFromUrl = searchParams.get('tab');
+  if (tabFromUrl) {
+    setActiveTab(tabFromUrl);
+  }
+}, [searchParams]);
 
   // Memoize tabs - only recalculate when roles change
   const tabs = useMemo(() => {
