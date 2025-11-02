@@ -482,10 +482,17 @@ useEffect(() => {
     }
   };
 
+  // const handleSuccessModalClose = () => {
+  //   setShowSuccessModal(false);
+  //   navigate('/my-votes');
+  // };
   const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    navigate('/my-votes');
-  };
+  console.log('🔄 Success modal closing, navigating to My Votes...');
+  setShowSuccessModal(false);
+  // Navigate to dashboard with vote-history tab
+  navigate('/dashboard?tab=vote-history', { replace: true });
+};
+
 
   if (loading) {
     return (
