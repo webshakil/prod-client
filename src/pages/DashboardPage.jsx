@@ -21,6 +21,7 @@ import Subscription from '../components/Dashboard/Tabs/Subscription';
 import Wallet from '../components/Dashboard/Tabs/Wallet';
 import LotteryTickets from '../components/Dashboard/Tabs/LotteryTickets';
 import VoteHistory from '../components/Dashboard/Tabs/VoteHistory';
+import PublicBulletin from '../components/Dashboard/Tabs/PublicBulletin';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -85,6 +86,13 @@ export default function DashboardPage() {
       label: 'Dashboard',
       icon: '📊',
       component: Dashboard,
+    });
+    
+    tabsList.push({
+      id: 'public-bulletin',
+      label: 'Public Bulletin',
+      icon: '🌐',
+      component: PublicBulletin,
     });
 
     // Vote Now Tab
