@@ -19,7 +19,6 @@ import { getElectionBySlug } from '../../redux/api/election/electionApi';
 export default function VotingPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  
   const [election, setElection] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +31,10 @@ export default function VotingPage() {
   const fetchElectionData = async () => {
     try {
       setLoading(true);
-      
       const response = await getElectionBySlug(slug);
       const electionData = response.data?.election || response.data || response;
-      
       setElection(electionData);
       setQuestions(electionData.questions || []);
-      
     } catch (error) {
       console.error('Error fetching election:', error);
       toast.error('Election not found');
@@ -61,8 +57,9 @@ export default function VotingPage() {
   };
 
   const handleSubmitVote = () => {
-    toast.info('Voting functionality will be implemented soon!');
+    // 🔥 MODIFIED: Navigate to /auth instead of showing toast
     console.log('Answers:', answers);
+    navigate('/');
   };
 
   const formatDate = (dateString) => {
@@ -78,11 +75,10 @@ export default function VotingPage() {
 
   const renderVideo = (videoUrl) => {
     if (!videoUrl) return null;
-    
+
     // Check if it's a YouTube URL
     if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
       let videoId = '';
-      
       if (videoUrl.includes('youtube.com/watch?v=')) {
         videoId = videoUrl.split('v=')[1]?.split('&')[0];
       } else if (videoUrl.includes('youtu.be/')) {
@@ -90,7 +86,7 @@ export default function VotingPage() {
       } else if (videoUrl.includes('youtube.com/embed/')) {
         videoId = videoUrl.split('embed/')[1]?.split('?')[0];
       }
-      
+
       if (videoId) {
         return (
           <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
@@ -106,7 +102,7 @@ export default function VotingPage() {
         );
       }
     }
-    
+
     // Regular video file
     return (
       <video controls className="w-full rounded-lg">
@@ -144,9 +140,10 @@ export default function VotingPage() {
     );
   }
 
-  const fee = election.is_free ? 'Free' : 
-    election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0 ?
-      (() => {
+  const fee = election.is_free
+    ? 'Free'
+    : election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0
+    ? (() => {
         const fees = election.regional_pricing.map(r => parseFloat(r.participation_fee));
         const min = Math.min(...fees);
         const max = Math.max(...fees);
@@ -183,22 +180,19 @@ export default function VotingPage() {
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 text-lg font-bold text-green-600 mb-1">
-                <FaUsers />
-                {questions.length}
+                <FaUsers /> {questions.length}
               </div>
               <p className="text-xs text-gray-600">Questions</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 text-lg font-bold text-orange-600 mb-1">
-                <FaDollarSign />
-                {fee}
+                <FaDollarSign /> {fee}
               </div>
               <p className="text-xs text-gray-600">Fee</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 text-lg font-bold text-purple-600 mb-1">
-                <FaCheckCircle />
-                {election.status}
+                <FaCheckCircle /> {election.status}
               </div>
               <p className="text-xs text-gray-600">Status</p>
             </div>
@@ -228,7 +222,10 @@ export default function VotingPage() {
         {/* Voting Body Content */}
         {election.voting_body_content && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: election.voting_body_content }} />
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: election.voting_body_content }}
+            />
           </div>
         )}
 
@@ -311,11 +308,15 @@ export default function VotingPage() {
               onClick={handleSubmitVote}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors"
             >
-              <FaVoteYea />
-              Submit Your Vote
+              <FaVoteYea /> Vote & Win prize
             </button>
             <p className="text-center text-sm text-gray-500 mt-3">
-              {election.biometric_required && <><FaLock className="inline mr-1" />Biometric verification required</>}
+              {election.biometric_required && (
+                <>
+                  <FaLock className="inline mr-1" />
+                  Biometric verification required
+                </>
+              )}
             </p>
           </div>
         )}
