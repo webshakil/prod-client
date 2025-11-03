@@ -32,8 +32,6 @@ export default function UserCard({ user, profile }) {
         <p>
           <strong>Member Since:</strong> {new Date(user?.user_registered).toLocaleDateString()}
         </p>
-        <pre>{JSON.stringify(user, null, 4)}</pre>
-        <pre>{JSON.stringify(profile, null, 4)}</pre>
       </div>
     </div>
   );
