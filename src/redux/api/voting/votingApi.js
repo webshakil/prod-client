@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:5004/api';
+const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3004/api';
 
 export const votingApi = createApi({
   reducerPath: 'votingApi',
@@ -281,7 +281,7 @@ export const {
 } = votingApi;
 // import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-// const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:5004/api';
+// const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3004/api';
 
 // export const votingApi = createApi({
 //   reducerPath: 'votingApi',

@@ -63,7 +63,7 @@ Keep it safe for verification.
   const verifyVote = async (vote) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:5004/api'}/votes/verify/${vote.receipt_id}`
+        `${import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3004/api'}/votes/verify/${vote.receipt_id}`
       );
       
       if (!response.ok) {

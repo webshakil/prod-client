@@ -16,7 +16,7 @@ export default function AuditTrail() {
   const [selectedElectionForHash, setSelectedElectionForHash] = useState('');
 
   // Get API URL
-  const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:5006/api';
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3006/api';
 
   // Get user data from localStorage
   const getUserData = () => {

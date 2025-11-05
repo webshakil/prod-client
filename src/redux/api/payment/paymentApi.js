@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const paymentApi = createApi({
   reducerPath: 'paymentApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:5006/api',
+    baseUrl: import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:3006/api',
     credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth?.token;
@@ -84,7 +84,7 @@ export const {
 // export const paymentApi = createApi({
 //   reducerPath: 'paymentApi',
 //   baseQuery: fetchBaseQuery({
-//     baseUrl: import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:5006/api',
+//     baseUrl: import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:3006/api',
 //     credentials: 'include',
 //     prepareHeaders: (headers, { getState }) => {
 //       const token = getState().auth?.token;

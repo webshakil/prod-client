@@ -134,7 +134,7 @@ export default function PaymentModal({
     setError(null);
     
     try {
-      const apiUrl = import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:5006/api';
+      const apiUrl = import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:3006/api';
       const xUserData = getXUserDataHeader();
       
       const response = await fetch(`${apiUrl}/payments/election/${electionId}/create-intent`, {
@@ -235,7 +235,7 @@ export default function PaymentModal({
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:5006/api';
+      const apiUrl = import.meta.env.VITE_REACT_APP_PAYMENT_SERVICE_URL || 'http://localhost:3006/api';
       const xUserData = getXUserDataHeader();
 
       const response = await fetch(`${apiUrl}/payments/wallet/pay`, {

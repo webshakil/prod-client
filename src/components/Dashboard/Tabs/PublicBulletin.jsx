@@ -9,7 +9,7 @@ export default function PublicBulletin() {
   const [loadingElections, setLoadingElections] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:5006/api';
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3006/api';
 
   useEffect(() => {
     fetchElections();
