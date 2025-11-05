@@ -726,24 +726,40 @@ const handleDelete = async (userId, roleName) => {
               </div>
               
               {/* Role */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Role *
-                </label>
-                <select
-                  required
-                  value={assignFormData.roleId}
-                  onChange={(e) => setAssignFormData({ ...assignFormData, roleId: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">-- Select a role --</option>
-                  {(rolesData?.data || []).map(role => (
-                    <option key={role.role_id} value={role.role_id}>
-                      {role.role_name} ({role.role_type})
-                    </option>
-                  ))}
-                </select>
-              </div>
+   {/* Role */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Select Role * (Admin Roles Only)
+  </label>
+  <select
+    required
+    value={assignFormData.roleId}
+    onChange={(e) => setAssignFormData({ ...assignFormData, roleId: e.target.value })}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">-- Select a role --</option>
+    {/* ✅ Filter to show only admin roles */}
+    {(rolesData?.data || [])
+      .filter(role => role.role_type === 'admin')
+      .map(role => (
+        <option key={role.role_id} value={role.role_id}>
+          {role.role_name}
+        </option>
+      ))}
+  </select>
+  {/* ✅ Helper text */}
+  <p className="mt-1 text-xs text-gray-500">
+    Only admin roles can be manually assigned. User roles are system-managed.
+  </p>
+</div>
+
+
+
+
+
+
+
+
               
               {/* Assignment Type */}
               <div>
