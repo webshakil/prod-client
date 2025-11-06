@@ -51,8 +51,8 @@ export default function LotteryTicketsTab() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">My Lottery Tickets</h1>
-        <p className="text-gray-600">Track your lottery entries and winnings</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">My Gamified Election Tickets</h1>
+        <p className="text-gray-600">Track your gamified entries and winnings</p>
       </div>
 
       {/* Stats Cards */}

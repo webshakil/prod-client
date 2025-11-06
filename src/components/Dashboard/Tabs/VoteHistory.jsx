@@ -41,7 +41,7 @@ Election: ${vote.election_title}
 Vote ID: ${vote.voting_id}
 Receipt ID: ${vote.receipt_id}
 Timestamp: ${new Date(vote.created_at).toLocaleString()}
-${vote.lottery_ticket_number ? `Lottery Ticket: #${vote.lottery_ticket_number}` : ''}
+${vote.lottery_ticket_number ? `Gamified Election Ticket Numbser: #${vote.lottery_ticket_number}` : ''}
 
 Vote Hash: ${vote.vote_hash}
 
@@ -248,7 +248,7 @@ Keep it safe for verification.
                       <div className="flex-1">
                         <p className="text-sm font-bold text-orange-900 flex items-center gap-2">
                           <Ticket size={16} />
-                          Lottery Ticket #{vote.lottery_ticket_number}
+                          Gamified Election Ticket  #{vote.lottery_ticket_number}
                         </p>
                         <p className="text-xs text-orange-700 mt-1">
                           Status: {vote.lottery_status || 'Pending Draw'} • Winners announced at election end

@@ -650,7 +650,7 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <FaGift className="text-yellow-600" />
-            Lottery Feature
+            Gamification Feature
           </h3>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -665,8 +665,8 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 
         <p className="text-gray-700 mb-4 font-medium">
           {data.lottery_enabled
-            ? '🎉 Turn this election into a lottery with prizes for voters'
-            : 'Add excitement by making this election a lottery with prizes'}
+            ? '🎉 Gamify this election with prizes for voters'
+            : 'Add excitement by making this election a gamify with prizes'}
         </p>
 
         {data.lottery_enabled && (

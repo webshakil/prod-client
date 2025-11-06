@@ -105,7 +105,7 @@ You can verify your vote in "My Votes"
                     <div className="flex items-center gap-3">
                       <Ticket className="text-orange-600" size={32} />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-600 font-medium">Lottery Ticket Number</div>
+                        <div className="text-xs text-gray-600 font-medium">Gamified Election Ticket Number</div>
                         <div className="text-3xl font-bold text-orange-600">
                           #{voteData.lotteryTicketNumber}
                         </div>

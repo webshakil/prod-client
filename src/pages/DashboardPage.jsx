@@ -151,7 +151,7 @@ const currentUser = useMemo(() => {
     // NEW: Lottery Tickets Tab
     tabsList.push({
       id: 'lottery',
-      label: 'Lottery Tickets',
+      label: 'Gamified Election Tickets',
       icon: '🎰',
       component: LotteryTickets,
     });

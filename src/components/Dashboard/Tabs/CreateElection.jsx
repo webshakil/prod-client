@@ -369,7 +369,7 @@ export default function CreateElection() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
               <FaStar className="text-purple-500" />
-              Plan Features
+              Plan Features 
             </h3>
             <FaInfoCircle className="text-purple-500 text-xl" />
           </div>
@@ -379,7 +379,7 @@ export default function CreateElection() {
             <FeatureItem enabled={eligibility.canCreatePaidElections} text="Paid Elections (Regional Pricing)" />
             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Custom Branding & Logo" />
             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Unlimited Voters" />
-            <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Lottery Prizes" />
+            <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Gamified Election Prices" />
             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Advanced Analytics" />
             <FeatureItem enabled={roles?.includes('ContentCreator') || roles?.includes('Content_Creator')} text="Content Creator Tools" />
             <FeatureItem enabled={roles?.includes('Manager') || roles?.includes('Admin')} text="Organization Management" />
