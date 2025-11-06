@@ -151,9 +151,9 @@ export default function LotteryTicketsTab() {
         {tickets.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <Ticket size={64} className="mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">No Lottery Tickets Yet</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">No Gamify Tickets Yet</h3>
             <p className="text-gray-600 mb-6">
-              Vote in lotterized elections to automatically receive lottery tickets!
+              Vote in gamified elections to automatically receive lottery tickets!
             </p>
             <button
               onClick={() => window.location.href = '/dashboard'}
