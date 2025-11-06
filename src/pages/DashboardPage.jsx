@@ -96,6 +96,7 @@ const currentUser = useMemo(() => {
 
     const isManager = normalizedRoles.includes('manager');
     const isAdmin = normalizedRoles.includes('admin');
+    /*eslint-disable*/
     const isContentCreator = normalizedRoles.includes('contentcreator');
     const isModerator = normalizedRoles.includes('moderator');
 
@@ -165,14 +166,31 @@ const currentUser = useMemo(() => {
     });
 
     // Create Election Tab (Content Creators, Admins, Managers only)
-    if (isContentCreator || isAdmin || isManager) {
+    // if (isContentCreator || isAdmin || isManager) {
+    //   tabsList.push({
+    //     id: 'create-election',
+    //     label: 'Create Election',
+    //     icon: '➕',
+    //     component: CreateElection,
+    //   });
+    // }
+//any role can create elections
+        
       tabsList.push({
         id: 'create-election',
         label: 'Create Election',
         icon: '➕',
         component: CreateElection,
       });
-    }
+    //       if (isContentCreator) {
+    //   tabsList.push({
+    //     id: 'create-election',
+    //     label: 'Create Election',
+    //     icon: '➕',
+    //     component: CreateElection,
+    //   });
+    // }
+   
 
     // Verify Votes Tab (Moderators, Admins, Managers only)
     if (isModerator || isAdmin || isManager) {

@@ -645,23 +645,37 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
         )}
       </div>
 
-      {/* Lottery Feature - IMPROVED DESIGN */}
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
+      {/* Lottery Feature - IMPROVED DESIGN WITH DISABLED STATE FOR FREE USERS */}
+      <div className={`bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl shadow-lg p-6 border-2 border-yellow-300 ${
+        !eligibility?.canCreatePaidElections ? 'opacity-50' : ''
+      }`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <FaGift className="text-yellow-600" />
             Gamification Feature
           </h3>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className={`relative inline-flex items-center ${
+            eligibility?.canCreatePaidElections ? 'cursor-pointer' : 'cursor-not-allowed'
+          }`}>
             <input
               type="checkbox"
               checked={data.lottery_enabled || false}
-              onChange={(e) => updateData({ lottery_enabled: e.target.checked })}
+              onChange={(e) => eligibility?.canCreatePaidElections && updateData({ lottery_enabled: e.target.checked })}
+              disabled={!eligibility?.canCreatePaidElections}
               className="sr-only peer"
             />
-            <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500"></div>
+            <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"></div>
           </label>
         </div>
+
+        {!eligibility?.canCreatePaidElections && (
+          <div className="mb-4 p-3 bg-red-100 border-2 border-red-300 rounded-lg">
+            <p className="text-sm text-red-700 font-semibold flex items-center gap-2">
+              <FaInfoCircle />
+              ⚠️ Upgrade your plan to enable Gamification Feature
+            </p>
+          </div>
+        )}
 
         <p className="text-gray-700 mb-4 font-medium">
           {data.lottery_enabled
@@ -669,7 +683,7 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
             : 'Add excitement by making this election a gamify with prizes'}
         </p>
 
-        {data.lottery_enabled && (
+        {data.lottery_enabled && eligibility?.canCreatePaidElections && (
           <div className="space-y-6">
             {/* Prize Funding Source Selection */}
             <div className="bg-white rounded-lg p-5 border-2 border-yellow-200">
@@ -1094,10 +1108,10 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
     </div>
   );
 }
-// import React, { useState } from 'react';
+//Last workable code
+// import React, { useState, useEffect } from 'react';
 // import { toast } from 'react-toastify';
 // import {
-//   FaVoteYea,
 //   FaGlobe,
 //   FaDollarSign,
 //   FaFingerprint,
@@ -1109,9 +1123,22 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //   FaEdit,
 //   FaLock,
 //   FaTrophy,
-//   FaUsers,
-//   FaMapMarkedAlt
+//   FaMapMarkedAlt,
+//   FaTags,
+//   FaPercent
 // } from 'react-icons/fa';
+
+// // Regional zones for pricing
+// const REGIONAL_ZONES = [
+//   { id: 'north_america', name: 'North America', countries: 'USA, Canada', default_fee: 5.00 },
+//   { id: 'western_europe', name: 'Western Europe', countries: 'UK, Germany, France, etc.', default_fee: 4.50 },
+//   { id: 'australia_nz', name: 'Australia & New Zealand', countries: 'Australia, New Zealand', default_fee: 4.00 },
+//   { id: 'middle_east', name: 'Middle East', countries: 'UAE, Saudi Arabia, Qatar, etc.', default_fee: 3.50 },
+//   { id: 'eastern_europe', name: 'Eastern Europe', countries: 'Poland, Russia, Ukraine, etc.', default_fee: 2.50 },
+//   { id: 'latin_america', name: 'Latin America', countries: 'Brazil, Argentina, Mexico, etc.', default_fee: 2.00 },
+//   { id: 'asia', name: 'Asia', countries: 'China, India, Thailand, etc.', default_fee: 1.50 },
+//   { id: 'africa', name: 'Africa', countries: 'Nigeria, Kenya, South Africa, etc.', default_fee: 1.00 }
+// ];
 
 // // All countries organized by continent
 // const COUNTRIES_BY_CONTINENT = {
@@ -1158,46 +1185,43 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //   ]
 // };
 
-// const VOTING_METHODS = [
-//   {
-//     id: 'plurality',
-//     name: 'Plurality Voting',
-//     icon: '🗳️',
-//     description: 'Single candidate selection - most votes wins',
-//     details: 'Voters select one candidate. Candidate with most votes wins.',
-//     benefits: ['Simple and intuitive', 'Quick vote counting', 'Clear winners', 'Traditional democratic voting']
-//   },
-//   {
-//     id: 'ranked_choice',
-//     name: 'Ranked Choice Voting',
-//     icon: '📊',
-//     description: 'Preference ranking with elimination rounds',
-//     details: 'Voters rank candidates by preference. Elimination rounds until majority.',
-//     benefits: ['Eliminates spoiler effect', 'Ensures majority winner', 'More representative results', 'Encourages broader appeal']
-//   },
-//   {
-//     id: 'approval',
-//     name: 'Approval Voting',
-//     icon: '✅',
-//     description: 'Multiple candidate approval selection',
-//     details: 'Voters approve multiple candidates they support.',
-//     benefits: ['Reduces strategic voting', 'Simple ballot design', 'Encourages moderate candidates', 'Express broader preferences']
-//   }
+// // Election categories (will be fetched from API in real implementation)
+// const ELECTION_CATEGORIES = [
+//   { id: 1, category_name: 'Politics', description: 'Political elections and polls', icon: '🏛️' },
+//   { id: 2, category_name: 'Sports', description: 'Sports-related voting', icon: '⚽' },
+//   { id: 3, category_name: 'Entertainment', description: 'Movies, music, and entertainment', icon: '🎬' },
+//   { id: 4, category_name: 'Education', description: 'Academic and educational voting', icon: '📚' },
+//   { id: 5, category_name: 'Business', description: 'Corporate and business decisions', icon: '💼' },
+//   { id: 6, category_name: 'Community', description: 'Community decisions and polls', icon: '🏘️' },
+//   { id: 7, category_name: 'Technology', description: 'Tech-related polls and surveys', icon: '💻' },
+//   { id: 8, category_name: 'Health', description: 'Health and wellness voting', icon: '🏥' }
 // ];
 
 // export default function Step2Configuration({ data, updateData, onNext, onBack, eligibility }) {
 //   const [errors, setErrors] = useState({});
-//   const [selectedVotingMethod, setSelectedVotingMethod] = useState(data.voting_type || 'plurality');
-//   /*eslint-disable*/
-//   const [showCountrySelector, setShowCountrySelector] = useState(false);
+//   const [regionalFees, setRegionalFees] = useState(data.regional_fees || {});
+
+//   // Initialize regional fees with defaults if needed
+//   useEffect(() => {
+//     if (data.pricing_type === 'paid_regional' && Object.keys(regionalFees).length === 0) {
+//       const defaultFees = {};
+//       REGIONAL_ZONES.forEach(zone => {
+//         defaultFees[zone.id] = zone.default_fee;
+//       });
+//       setRegionalFees(defaultFees);
+//       updateData({ regional_fees: defaultFees });
+//     }
+//   }, [data.pricing_type]);
 
 //   const validateStep = () => {
 //     const newErrors = {};
 
-//     if (!data.voting_type) {
-//       newErrors.voting_type = 'Please select a voting method';
+//     // Category validation
+//     if (!data.category_id) {
+//       newErrors.category_id = 'Please select an election category';
 //     }
 
+//     // Permission type validation
 //     if (!data.permission_type) {
 //       newErrors.permission_type = 'Please select who can participate';
 //     }
@@ -1206,6 +1230,7 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //       newErrors.allowed_countries = 'Please select at least one country';
 //     }
 
+//     // Pricing validation
 //     if (!data.pricing_type) {
 //       newErrors.pricing_type = 'Please select a pricing type';
 //     }
@@ -1214,14 +1239,51 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //       newErrors.general_participation_fee = 'Please enter a valid participation fee';
 //     }
 
+//     if (data.pricing_type === 'paid_regional') {
+//       const invalidRegions = REGIONAL_ZONES.filter(zone => 
+//         !regionalFees[zone.id] || regionalFees[zone.id] <= 0
+//       );
+//       if (invalidRegions.length > 0) {
+//         newErrors.regional_fees = `Please enter valid fees for all regions`;
+//       }
+//     }
+
 //     // Lottery validation
 //     if (data.lottery_enabled) {
-//       if (!data.lottery_config?.reward_type) {
-//         newErrors.lottery_reward_type = 'Please select a reward type';
+//       if (!data.lottery_config?.prize_funding_source) {
+//         newErrors.prize_funding_source = 'Please select prize funding source';
 //       }
-//       if (data.lottery_config?.reward_type === 'monetary' && (!data.lottery_config?.reward_amount || data.lottery_config.reward_amount <= 0)) {
-//         newErrors.lottery_reward_amount = 'Please enter a valid reward amount';
+
+//       if (data.lottery_config?.prize_funding_source === 'creator_funded') {
+//         if (!data.lottery_config?.reward_type) {
+//           newErrors.lottery_reward_type = 'Please select a reward type';
+//         }
+
+//         if (data.lottery_config?.reward_type === 'monetary') {
+//           if (!data.lottery_config?.total_prize_pool || data.lottery_config.total_prize_pool <= 0) {
+//             newErrors.lottery_prize_pool = 'Please enter a valid prize pool amount';
+//           }
+//         }
+
+//         if (data.lottery_config?.reward_type === 'non_monetary') {
+//           if (!data.lottery_config?.prize_description?.trim()) {
+//             newErrors.lottery_prize_description = 'Please describe the non-monetary prize';
+//           }
+//           if (!data.lottery_config?.estimated_value || data.lottery_config.estimated_value <= 0) {
+//             newErrors.lottery_estimated_value = 'Please enter estimated value';
+//           }
+//         }
+
+//         if (data.lottery_config?.reward_type === 'projected_revenue') {
+//           if (!data.lottery_config?.projected_revenue || data.lottery_config.projected_revenue <= 0) {
+//             newErrors.lottery_projected_revenue = 'Please enter projected revenue';
+//           }
+//           if (!data.lottery_config?.revenue_share_percentage || data.lottery_config.revenue_share_percentage <= 0 || data.lottery_config.revenue_share_percentage > 100) {
+//             newErrors.lottery_revenue_share = 'Revenue share must be between 0 and 100%';
+//           }
+//         }
 //       }
+
 //       if (!data.lottery_config?.winner_count || data.lottery_config.winner_count < 1 || data.lottery_config.winner_count > 100) {
 //         newErrors.lottery_winner_count = 'Winner count must be between 1 and 100';
 //       }
@@ -1229,11 +1291,6 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 
 //     setErrors(newErrors);
 //     return Object.keys(newErrors).length === 0;
-//   };
-
-//   const handleVotingMethodSelect = (methodId) => {
-//     setSelectedVotingMethod(methodId);
-//     updateData({ voting_type: methodId });
 //   };
 
 //   const handlePermissionTypeChange = (type) => {
@@ -1257,15 +1314,19 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //     const allSelected = countries.every(c => currentCountries.includes(c));
     
 //     if (allSelected) {
-//       // Deselect all from this continent
 //       updateData({ 
 //         allowed_countries: currentCountries.filter(c => !countries.includes(c)) 
 //       });
 //     } else {
-//       // Select all from this continent
 //       const uniqueCountries = [...new Set([...currentCountries, ...countries])];
 //       updateData({ allowed_countries: uniqueCountries });
 //     }
+//   };
+
+//   const handleRegionalFeeChange = (zoneId, value) => {
+//     const newFees = { ...regionalFees, [zoneId]: parseFloat(value) || 0 };
+//     setRegionalFees(newFees);
+//     updateData({ regional_fees: newFees });
 //   };
 
 //   const handleContinue = () => {
@@ -1285,61 +1346,48 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //           Election Configuration
 //         </h2>
 //         <p className="text-gray-600">
-//           Configure voting methods, access control, pricing, and special features
+//           Configure category, access control, pricing, and special features
 //         </p>
 //       </div>
 
-//       {/* Voting Method Selection */}
+//       {/* Election Category Selection */}
 //       <div className="bg-white rounded-xl shadow-md p-6">
 //         <div className="flex items-center justify-between mb-6">
 //           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-//             <FaVoteYea className="text-blue-600" />
-//             Choose Voting Method *
+//             <FaTags className="text-purple-600" />
+//             Election Category *
 //           </h3>
-//           <FaInfoCircle className="text-gray-400 text-xl cursor-help" title="Select how voters will cast their votes" />
+//           <FaInfoCircle className="text-gray-400 text-xl cursor-help" title="Select the category that best describes your election" />
 //         </div>
 
-//         <div className="grid md:grid-cols-3 gap-4">
-//           {VOTING_METHODS.map((method) => (
+//         <div className="grid md:grid-cols-4 gap-4">
+//           {ELECTION_CATEGORIES.map((category) => (
 //             <button
-//               key={method.id}
-//               onClick={() => handleVotingMethodSelect(method.id)}
-//               className={`p-6 rounded-xl border-3 transition-all transform hover:scale-105 text-left ${
-//                 selectedVotingMethod === method.id
-//                   ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-200'
-//                   : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+//               key={category.id}
+//               onClick={() => updateData({ category_id: category.id })}
+//               className={`p-4 rounded-xl border-2 transition-all transform hover:scale-105 text-center ${
+//                 data.category_id === category.id
+//                   ? 'border-purple-500 bg-purple-50 shadow-lg ring-2 ring-purple-200'
+//                   : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-md'
 //               }`}
 //             >
-//               <div className="text-4xl mb-3">{method.icon}</div>
-//               <h4 className={`font-bold text-lg mb-2 ${
-//                 selectedVotingMethod === method.id ? 'text-blue-600' : 'text-gray-800'
+//               <div className="text-4xl mb-2">{category.icon}</div>
+//               <h4 className={`font-bold text-sm mb-1 ${
+//                 data.category_id === category.id ? 'text-purple-600' : 'text-gray-800'
 //               }`}>
-//                 {method.name}
-//                 {selectedVotingMethod === method.id && (
-//                   <FaCheckCircle className="inline ml-2 text-green-500" />
+//                 {category.category_name}
+//                 {data.category_id === category.id && (
+//                   <FaCheckCircle className="inline ml-1 text-green-500 text-xs" />
 //                 )}
 //               </h4>
-//               <p className="text-sm text-gray-600 mb-3">{method.description}</p>
-//               <p className="text-xs text-gray-500 italic">{method.details}</p>
+//               <p className="text-xs text-gray-500">{category.description}</p>
 //             </button>
 //           ))}
 //         </div>
 
-//         {/* Selected Method Benefits */}
-//         {selectedVotingMethod && (
-//           <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-//             <h4 className="font-semibold text-blue-900 mb-2">Benefits of {VOTING_METHODS.find(m => m.id === selectedVotingMethod)?.name}:</h4>
-//             <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-//               {VOTING_METHODS.find(m => m.id === selectedVotingMethod)?.benefits.map((benefit, idx) => (
-//                 <li key={idx}>{benefit}</li>
-//               ))}
-//             </ul>
-//           </div>
-//         )}
-
-//         {errors.voting_type && (
+//         {errors.category_id && (
 //           <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-//             <FaInfoCircle /> {errors.voting_type}
+//             <FaInfoCircle /> {errors.category_id}
 //           </p>
 //         )}
 //       </div>
@@ -1428,7 +1476,6 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //                   <div className="space-y-4 max-h-96 overflow-y-auto">
 //                     {Object.entries(COUNTRIES_BY_CONTINENT).map(([continent, countries]) => {
 //                       const allSelected = countries.every(c => data.allowed_countries?.includes(c));
-//                       const someSelected = countries.some(c => data.allowed_countries?.includes(c));
                       
 //                       return (
 //                         <div key={continent} className="border-2 border-gray-200 rounded-lg p-4">
@@ -1650,18 +1697,53 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //                   <FaCheckCircle className="text-green-500 ml-auto" />
 //                 )}
 //               </div>
-//               <p className="text-sm text-gray-600">
+//               <p className="text-sm text-gray-600 mb-3">
 //                 Different fees for 8 regional zones based on purchasing power
 //               </p>
+
 //               {!eligibility?.canCreatePaidElections && (
-//                 <p className="text-xs text-red-600 font-semibold mt-2">
+//                 <p className="text-xs text-red-600 font-semibold">
 //                   ⚠️ Upgrade your plan to create paid elections
 //                 </p>
 //               )}
-//               {data.pricing_type === 'paid_regional' && (
-//                 <p className="text-xs text-blue-600 font-semibold mt-2">
-//                   Regional pricing will be configured in the next step
-//                 </p>
+
+//               {data.pricing_type === 'paid_regional' && eligibility?.canCreatePaidElections && (
+//                 <div className="mt-4 p-4 bg-white rounded-lg border-2 border-indigo-200">
+//                   <h4 className="font-semibold text-gray-800 mb-4">Set Fees by Region (USD)</h4>
+//                   <div className="space-y-4">
+//                     {REGIONAL_ZONES.map((zone) => (
+//                       <div key={zone.id} className="flex items-center gap-4">
+//                         <div className="flex-1">
+//                           <label className="block text-sm font-medium text-gray-700 mb-1">
+//                             {zone.name}
+//                           </label>
+//                           <p className="text-xs text-gray-500 mb-2">{zone.countries}</p>
+//                         </div>
+//                         <div className="w-32">
+//                           <input
+//                             type="number"
+//                             min="0.01"
+//                             step="0.01"
+//                             value={regionalFees[zone.id] || zone.default_fee}
+//                             onChange={(e) => handleRegionalFeeChange(zone.id, e.target.value)}
+//                             placeholder={zone.default_fee.toFixed(2)}
+//                             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+//                           />
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                   {errors.regional_fees && (
+//                     <p className="text-red-500 text-sm mt-3">
+//                       {errors.regional_fees}
+//                     </p>
+//                   )}
+//                   {eligibility?.processingFeePercentage && (
+//                     <p className="text-xs text-gray-600 mt-3">
+//                       Processing fee: {eligibility.processingFeePercentage}% will be deducted from each transaction
+//                     </p>
+//                   )}
+//                 </div>
 //               )}
 //             </div>
 //           </label>
@@ -1674,12 +1756,12 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //         )}
 //       </div>
 
-//       {/* Lottery Feature */}
-//       <div className="bg-white rounded-xl shadow-md p-6">
+//       {/* Lottery Feature - IMPROVED DESIGN */}
+//       <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
 //         <div className="flex items-center justify-between mb-4">
 //           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
 //             <FaGift className="text-yellow-600" />
-//             Lottery Feature
+//             Gamification Feature
 //           </h3>
 //           <label className="relative inline-flex items-center cursor-pointer">
 //             <input
@@ -1692,124 +1774,305 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //           </label>
 //         </div>
 
-//         <p className="text-gray-600 mb-4">
+//         <p className="text-gray-700 mb-4 font-medium">
 //           {data.lottery_enabled
-//             ? '🎉 Turn this election into a lottery with prizes for voters'
-//             : 'Add excitement by making this election a lottery with prizes'}
+//             ? '🎉 Gamify this election with prizes for voters'
+//             : 'Add excitement by making this election a gamify with prizes'}
 //         </p>
 
 //         {data.lottery_enabled && (
-//           <div className="space-y-6 p-5 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-//             {/* Prize Type */}
-//             <div>
-//               <label className="block text-sm font-semibold text-gray-700 mb-3">
-//                 Prize Pool Setup *
-//               </label>
+//           <div className="space-y-6">
+//             {/* Prize Funding Source Selection */}
+//             <div className="bg-white rounded-lg p-5 border-2 border-yellow-200">
+//               <h4 className="font-bold text-gray-900 mb-4">Prize Funding Source *</h4>
 //               <div className="space-y-3">
-//                 {/* Monetary Prize */}
-//                 <label className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
-//                   data.lottery_config?.reward_type === 'monetary'
+//                 {/* Creator/Sponsor Funded */}
+//                 <label className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+//                   data.lottery_config?.prize_funding_source === 'creator_funded'
 //                     ? 'border-green-500 bg-green-50'
 //                     : 'border-gray-300 hover:border-green-300'
 //                 }`}>
 //                   <input
 //                     type="radio"
-//                     name="reward_type"
-//                     value="monetary"
-//                     checked={data.lottery_config?.reward_type === 'monetary'}
+//                     name="prize_funding_source"
+//                     value="creator_funded"
+//                     checked={data.lottery_config?.prize_funding_source === 'creator_funded'}
 //                     onChange={(e) => updateData({
-//                       lottery_config: { ...data.lottery_config, reward_type: e.target.value }
+//                       lottery_config: { ...data.lottery_config, prize_funding_source: e.target.value }
 //                     })}
-//                     className="mt-1 w-4 h-4 text-green-600"
+//                     className="w-5 h-5 text-green-600"
 //                   />
-//                   <div className="ml-3 flex-1">
-//                     <div className="flex items-center gap-2 mb-1">
-//                       <span className="text-xl">💰</span>
-//                       <span className="font-bold text-gray-900">Defined Monetary Prize</span>
-//                     </div>
-//                     <p className="text-sm text-gray-600 mb-2">Fixed cash amount</p>
-//                     {data.lottery_config?.reward_type === 'monetary' && (
-//                       <input
-//                         type="number"
-//                         min="1"
-//                         step="1"
-//                         value={data.lottery_config?.reward_amount || ''}
-//                         onChange={(e) => updateData({
-//                           lottery_config: {
-//                             ...data.lottery_config,
-//                             reward_amount: parseFloat(e.target.value),
-//                             prize_pool_total: parseFloat(e.target.value) * (data.lottery_config?.winner_count || 1)
-//                           }
-//                         })}
-//                         placeholder="e.g., 100000"
-//                         className={`w-full px-4 py-2 border-2 rounded-lg ${
-//                           errors.lottery_reward_amount ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                       />
-//                     )}
+//                   <div className="ml-3">
+//                     <span className="font-bold text-gray-900">Creator/Sponsor Funded Prizes</span>
+//                     <p className="text-sm text-gray-600">You or your sponsor will provide the prizes</p>
 //                   </div>
 //                 </label>
 
-//                 {/* Non-monetary Prize */}
-//                 <label className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
-//                   data.lottery_config?.reward_type === 'non_monetary'
-//                     ? 'border-purple-500 bg-purple-50'
-//                     : 'border-gray-300 hover:border-purple-300'
-//                 }`}>
-//                   <input
-//                     type="radio"
-//                     name="reward_type"
-//                     value="non_monetary"
-//                     checked={data.lottery_config?.reward_type === 'non_monetary'}
-//                     onChange={(e) => updateData({
-//                       lottery_config: { ...data.lottery_config, reward_type: e.target.value }
-//                     })}
-//                     className="mt-1 w-4 h-4 text-purple-600"
-//                   />
-//                   <div className="ml-3 flex-1">
-//                     <div className="flex items-center gap-2 mb-1">
-//                       <span className="text-xl">🎁</span>
-//                       <span className="font-bold text-gray-900">Defined Non-monetary Prize</span>
-//                     </div>
-//                     <p className="text-sm text-gray-600">Coupons, vouchers, experiences</p>
-//                     <p className="text-xs text-gray-500 italic">e.g., One week Dubai holiday with 5-star hotel stay</p>
-//                   </div>
-//                 </label>
-
-//                 {/* Projected Revenue */}
-//                 <label className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
-//                   data.lottery_config?.reward_type === 'projected_revenue'
+//                 {/* Participation Fee Funded */}
+//                 <label className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+//                   data.lottery_config?.prize_funding_source === 'participation_fee_funded'
 //                     ? 'border-blue-500 bg-blue-50'
 //                     : 'border-gray-300 hover:border-blue-300'
 //                 }`}>
 //                   <input
 //                     type="radio"
-//                     name="reward_type"
-//                     value="projected_revenue"
-//                     checked={data.lottery_config?.reward_type === 'projected_revenue'}
+//                     name="prize_funding_source"
+//                     value="participation_fee_funded"
+//                     checked={data.lottery_config?.prize_funding_source === 'participation_fee_funded'}
 //                     onChange={(e) => updateData({
-//                       lottery_config: { ...data.lottery_config, reward_type: e.target.value }
+//                       lottery_config: { ...data.lottery_config, prize_funding_source: e.target.value }
 //                     })}
-//                     className="mt-1 w-4 h-4 text-blue-600"
+//                     className="w-5 h-5 text-blue-600"
 //                   />
-//                   <div className="ml-3 flex-1">
-//                     <div className="flex items-center gap-2 mb-1">
-//                       <span className="text-xl">📈</span>
-//                       <span className="font-bold text-gray-900">Defined Projected Content Generated Revenue</span>
-//                     </div>
-//                     <p className="text-sm text-gray-600">Share of projected content revenue</p>
-//                     <p className="text-xs text-gray-500 italic">e.g., USD 300,000 content generated revenue</p>
+//                   <div className="ml-3">
+//                     <span className="font-bold text-gray-900">Participation Fee Funded</span>
+//                     <p className="text-sm text-gray-600">Prize pool comes from voter participation fees</p>
 //                   </div>
 //                 </label>
 //               </div>
-//               {errors.lottery_reward_type && (
-//                 <p className="text-red-500 text-sm mt-2">{errors.lottery_reward_type}</p>
+//               {errors.prize_funding_source && (
+//                 <p className="text-red-500 text-sm mt-2">{errors.prize_funding_source}</p>
 //               )}
 //             </div>
 
+//             {/* Creator-Funded Prize Configuration */}
+//             {data.lottery_config?.prize_funding_source === 'creator_funded' && (
+//               <div className="bg-white rounded-lg p-5 border-2 border-green-200">
+//                 <h4 className="font-bold text-gray-900 mb-4">Prize Type *</h4>
+//                 <div className="space-y-4">
+//                   {/* Defined Monetary Prize */}
+//                   <div className={`p-4 rounded-lg border-2 transition-all ${
+//                     data.lottery_config?.reward_type === 'monetary'
+//                       ? 'border-green-500 bg-green-50'
+//                       : 'border-gray-300'
+//                   }`}>
+//                     <label className="flex items-center cursor-pointer">
+//                       <input
+//                         type="radio"
+//                         name="reward_type"
+//                         value="monetary"
+//                         checked={data.lottery_config?.reward_type === 'monetary'}
+//                         onChange={(e) => updateData({
+//                           lottery_config: { ...data.lottery_config, reward_type: e.target.value }
+//                         })}
+//                         className="w-5 h-5 text-green-600"
+//                       />
+//                       <div className="ml-3 flex-1">
+//                         <div className="flex items-center gap-2 mb-1">
+//                           <span className="text-2xl">💵</span>
+//                           <span className="font-bold text-gray-900">Defined Monetary Prize</span>
+//                         </div>
+//                         <p className="text-sm text-gray-600 mb-2">Fixed cash amount</p>
+//                         <p className="text-xs text-gray-500 italic">e.g., USD 100,000</p>
+//                       </div>
+//                     </label>
+
+//                     {data.lottery_config?.reward_type === 'monetary' && (
+//                       <div className="mt-4 space-y-3">
+//                         <div>
+//                           <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                             💰 Total Prize Pool Amount (USD) *
+//                           </label>
+//                           <input
+//                             type="number"
+//                             min="1"
+//                             step="1"
+//                             value={data.lottery_config?.total_prize_pool || ''}
+//                             onChange={(e) => updateData({
+//                               lottery_config: {
+//                                 ...data.lottery_config,
+//                                 total_prize_pool: parseFloat(e.target.value)
+//                               }
+//                             })}
+//                             placeholder="e.g., 100000"
+//                             className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-green-500 ${
+//                               errors.lottery_prize_pool ? 'border-red-500' : 'border-gray-300'
+//                             }`}
+//                           />
+//                           {errors.lottery_prize_pool && (
+//                             <p className="text-red-500 text-sm mt-1">{errors.lottery_prize_pool}</p>
+//                           )}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Defined Non-monetary Prize */}
+//                   <div className={`p-4 rounded-lg border-2 transition-all ${
+//                     data.lottery_config?.reward_type === 'non_monetary'
+//                       ? 'border-purple-500 bg-purple-50'
+//                       : 'border-gray-300'
+//                   }`}>
+//                     <label className="flex items-center cursor-pointer">
+//                       <input
+//                         type="radio"
+//                         name="reward_type"
+//                         value="non_monetary"
+//                         checked={data.lottery_config?.reward_type === 'non_monetary'}
+//                         onChange={(e) => updateData({
+//                           lottery_config: { ...data.lottery_config, reward_type: e.target.value }
+//                         })}
+//                         className="w-5 h-5 text-purple-600"
+//                       />
+//                       <div className="ml-3 flex-1">
+//                         <div className="flex items-center gap-2 mb-1">
+//                           <span className="text-2xl">🎁</span>
+//                           <span className="font-bold text-gray-900">Defined Non-monetary Prize</span>
+//                         </div>
+//                         <p className="text-sm text-gray-600 mb-2">Coupons, vouchers, experiences</p>
+//                         <p className="text-xs text-gray-500 italic">e.g., One week Dubai holiday with 5-star hotel stay</p>
+//                       </div>
+//                     </label>
+
+//                     {data.lottery_config?.reward_type === 'non_monetary' && (
+//                       <div className="mt-4 space-y-3">
+//                         <div>
+//                           <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                             🏷️ Non-monetary Prize Description *
+//                           </label>
+//                           <textarea
+//                             value={data.lottery_config?.prize_description || ''}
+//                             onChange={(e) => updateData({
+//                               lottery_config: {
+//                                 ...data.lottery_config,
+//                                 prize_description: e.target.value
+//                               }
+//                             })}
+//                             placeholder="e.g., One week Dubai holiday with 5-star hotel stay, luxury spa package, tech gadgets bundle"
+//                             rows={3}
+//                             className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none ${
+//                               errors.lottery_prize_description ? 'border-red-500' : 'border-gray-300'
+//                             }`}
+//                           />
+//                           {errors.lottery_prize_description && (
+//                             <p className="text-red-500 text-sm mt-1">{errors.lottery_prize_description}</p>
+//                           )}
+//                         </div>
+
+//                         <div>
+//                           <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                             💵 Estimated Value (USD) *
+//                           </label>
+//                           <input
+//                             type="number"
+//                             min="1"
+//                             step="1"
+//                             value={data.lottery_config?.estimated_value || ''}
+//                             onChange={(e) => updateData({
+//                               lottery_config: {
+//                                 ...data.lottery_config,
+//                                 estimated_value: parseFloat(e.target.value)
+//                               }
+//                             })}
+//                             placeholder="Estimated monetary value"
+//                             className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 ${
+//                               errors.lottery_estimated_value ? 'border-red-500' : 'border-gray-300'
+//                             }`}
+//                           />
+//                           {errors.lottery_estimated_value && (
+//                             <p className="text-red-500 text-sm mt-1">{errors.lottery_estimated_value}</p>
+//                           )}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Projected Revenue */}
+//                   <div className={`p-4 rounded-lg border-2 transition-all ${
+//                     data.lottery_config?.reward_type === 'projected_revenue'
+//                       ? 'border-blue-500 bg-blue-50'
+//                       : 'border-gray-300'
+//                   }`}>
+//                     <label className="flex items-center cursor-pointer">
+//                       <input
+//                         type="radio"
+//                         name="reward_type"
+//                         value="projected_revenue"
+//                         checked={data.lottery_config?.reward_type === 'projected_revenue'}
+//                         onChange={(e) => updateData({
+//                           lottery_config: { ...data.lottery_config, reward_type: e.target.value }
+//                         })}
+//                         className="w-5 h-5 text-blue-600"
+//                       />
+//                       <div className="ml-3 flex-1">
+//                         <div className="flex items-center gap-2 mb-1">
+//                           <span className="text-2xl">📈</span>
+//                           <span className="font-bold text-gray-900">Defined Projected Content Generated Revenue</span>
+//                         </div>
+//                         <p className="text-sm text-gray-600 mb-2">Share of projected content revenue</p>
+//                         <p className="text-xs text-gray-500 italic">e.g., USD 300,000 content generated revenue</p>
+//                       </div>
+//                     </label>
+
+//                     {data.lottery_config?.reward_type === 'projected_revenue' && (
+//                       <div className="mt-4 space-y-3">
+//                         <div>
+//                           <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                             📊 Projected Content Generated Revenue (USD) *
+//                           </label>
+//                           <input
+//                             type="number"
+//                             min="1"
+//                             step="1"
+//                             value={data.lottery_config?.projected_revenue || ''}
+//                             onChange={(e) => updateData({
+//                               lottery_config: {
+//                                 ...data.lottery_config,
+//                                 projected_revenue: parseFloat(e.target.value)
+//                               }
+//                             })}
+//                             placeholder="e.g., 300000"
+//                             className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${
+//                               errors.lottery_projected_revenue ? 'border-red-500' : 'border-gray-300'
+//                             }`}
+//                           />
+//                           {errors.lottery_projected_revenue && (
+//                             <p className="text-red-500 text-sm mt-1">{errors.lottery_projected_revenue}</p>
+//                           )}
+//                         </div>
+
+//                         <div>
+//                           <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                             <FaPercent className="inline mr-2" />
+//                             Revenue Share Percentage for Winners (%) *
+//                           </label>
+//                           <input
+//                             type="number"
+//                             min="0.1"
+//                             max="100"
+//                             step="0.1"
+//                             value={data.lottery_config?.revenue_share_percentage || ''}
+//                             onChange={(e) => updateData({
+//                               lottery_config: {
+//                                 ...data.lottery_config,
+//                                 revenue_share_percentage: parseFloat(e.target.value)
+//                               }
+//                             })}
+//                             placeholder="e.g., 10.5"
+//                             className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${
+//                               errors.lottery_revenue_share ? 'border-red-500' : 'border-gray-300'
+//                             }`}
+//                           />
+//                           <p className="text-xs text-gray-500 mt-1">
+//                             Winners will receive this percentage of the actual generated revenue
+//                           </p>
+//                           {errors.lottery_revenue_share && (
+//                             <p className="text-red-500 text-sm mt-1">{errors.lottery_revenue_share}</p>
+//                           )}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//                 {errors.lottery_reward_type && (
+//                   <p className="text-red-500 text-sm mt-3">{errors.lottery_reward_type}</p>
+//                 )}
+//               </div>
+//             )}
+
 //             {/* Number of Winners */}
-//             <div>
-//               <label className="block text-sm font-semibold text-gray-700 mb-2">
+//             <div className="bg-white rounded-lg p-5 border-2 border-yellow-200">
+//               <label className="block text-sm font-semibold text-gray-700 mb-3">
 //                 <FaTrophy className="inline mr-2 text-yellow-600" />
 //                 Number of Winners (1-100) *
 //               </label>
@@ -1818,42 +2081,47 @@ export default function Step2Configuration({ data, updateData, onNext, onBack, e
 //                 min="1"
 //                 max="100"
 //                 value={data.lottery_config?.winner_count || 1}
-//                 onChange={(e) => {
-//                   const count = parseInt(e.target.value);
-//                   updateData({
-//                     lottery_config: {
-//                       ...data.lottery_config,
-//                       winner_count: count,
-//                       prize_pool_total: (data.lottery_config?.reward_amount || 0) * count
-//                     }
-//                   });
-//                 }}
-//                 className={`w-full px-4 py-3 border-2 rounded-lg ${
+//                 onChange={(e) => updateData({
+//                   lottery_config: {
+//                     ...data.lottery_config,
+//                     winner_count: parseInt(e.target.value) || 1
+//                   }
+//                 })}
+//                 className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-yellow-500 ${
 //                   errors.lottery_winner_count ? 'border-red-500' : 'border-gray-300'
 //                 }`}
+//                 placeholder="Enter number between 1 and 100"
 //               />
+//               <p className="text-xs text-gray-500 mt-2">
+//                 Specify how many winners will be selected for prizes (any number from 1 to 100)
+//               </p>
 //               {errors.lottery_winner_count && (
 //                 <p className="text-red-500 text-sm mt-1">{errors.lottery_winner_count}</p>
 //               )}
 //             </div>
 
-//             {/* Prize Pool Summary */}
-//             {data.lottery_config?.reward_type === 'monetary' && data.lottery_config?.reward_amount > 0 && (
-//               <div className="p-4 bg-white border-2 border-yellow-400 rounded-lg">
-//                 <h4 className="font-bold text-gray-900 mb-2">Prize Pool Summary</h4>
+//             {/* Prize Pool Summary for Monetary */}
+//             {data.lottery_config?.reward_type === 'monetary' && data.lottery_config?.total_prize_pool > 0 && (
+//               <div className="bg-white rounded-lg p-5 border-2 border-green-400">
+//                 <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+//                   <FaTrophy className="text-yellow-600" />
+//                   Prize Distribution Summary
+//                 </h4>
 //                 <div className="space-y-2 text-sm">
 //                   <div className="flex justify-between">
-//                     <span>Prize per winner:</span>
-//                     <span className="font-bold">${data.lottery_config.reward_amount.toLocaleString()}</span>
+//                     <span>Total Prize Pool:</span>
+//                     <span className="font-bold text-green-600">
+//                       ${data.lottery_config.total_prize_pool.toLocaleString()}
+//                     </span>
 //                   </div>
 //                   <div className="flex justify-between">
-//                     <span>Number of winners:</span>
+//                     <span>Number of Winners:</span>
 //                     <span className="font-bold">{data.lottery_config.winner_count}</span>
 //                   </div>
-//                   <div className="flex justify-between pt-2 border-t-2 border-yellow-300">
-//                     <span className="font-bold">Total Prize Pool:</span>
+//                   <div className="flex justify-between pt-2 border-t-2 border-green-300">
+//                     <span className="font-bold">Prize per Winner:</span>
 //                     <span className="font-bold text-lg text-green-600">
-//                       ${(data.lottery_config.reward_amount * data.lottery_config.winner_count).toLocaleString()}
+//                       ${(data.lottery_config.total_prize_pool / data.lottery_config.winner_count).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 //                     </span>
 //                   </div>
 //                 </div>
