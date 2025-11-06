@@ -133,21 +133,49 @@ export const authSlice = createSlice({
     },
 
     // ✅ SMS OTP VERIFIED - KEEP SESSION ID
+    // setSMSOTPVerified: (state) => {
+    //   state.phoneVerified = true;
+    //   state.completedAuthSteps.smsOTP = true;
+
+    //   if (state.isFirstTimeUser) {
+    //     state.currentAuthStep = 4;
+    //     console.log('🔄 Redux: SMS OTP verified (first-time), step 4, session:', state.sessionId);
+    //   } else {
+    //     state.currentAuthStep = 7;
+    //     console.log('🔄 Redux: SMS OTP verified (returning), completing, session:', state.sessionId);
+    //   }
+
+    //   state.loading = false;
+    //   state.error = null;
+    // },
+
     setSMSOTPVerified: (state) => {
-      state.phoneVerified = true;
-      state.completedAuthSteps.smsOTP = true;
+  state.phoneVerified = true;
+  state.completedAuthSteps.smsOTP = true;
 
-      if (state.isFirstTimeUser) {
-        state.currentAuthStep = 4;
-        console.log('🔄 Redux: SMS OTP verified (first-time), step 4, session:', state.sessionId);
-      } else {
-        state.currentAuthStep = 7;
-        console.log('🔄 Redux: SMS OTP verified (returning), completing, session:', state.sessionId);
-      }
+  // ✅ CRITICAL: Check first-time user status
+  if (state.isFirstTimeUser === true) {
+    state.currentAuthStep = 4;
+    // ✅ DO NOT SET isAuthenticated = true yet!
+    state.isAuthenticated = false;
+    state.authenticationStatus = 'pending';
+    console.log('🔄 Redux: SMS OTP verified (FIRST-TIME USER)', {
+      session: state.sessionId,
+      nextStep: 4,
+      mustComplete: 'Steps 4, 5, 6 before dashboard access',
+    });
+  } else {
+    state.currentAuthStep = 7;
+    // ✅ Returning users can proceed to completion
+    console.log('🔄 Redux: SMS OTP verified (RETURNING USER)', {
+      session: state.sessionId,
+      canComplete: true,
+    });
+  }
 
-      state.loading = false;
-      state.error = null;
-    },
+  state.loading = false;
+  state.error = null;
+},
 
     // ✅ USER DETAILS - KEEP SESSION ID
     setUserDetails: (state, action) => {

@@ -79,6 +79,14 @@ export default function SMSVerificationForm({ sessionId, phone, onNext }) {
       dispatch(setSMSOTPVerified());
       dispatch(setSuccess('Phone verified successfully'));
       console.log('✅ SMS OTP verified, isFirstTimeUser:', auth.isFirstTimeUser);
+      console.log('✅ SMS OTP verified - Current Redux state:', {
+  isFirstTimeUser: auth.isFirstTimeUser,
+  currentAuthStep: auth.currentAuthStep,
+  isAuthenticated: auth.isAuthenticated,
+  authenticationStatus: auth.authenticationStatus,
+  sessionId: auth.sessionId,
+});
+      
       onNext();
     } catch (error) {
       const errorMessage = error.data?.message || 'OTP verification failed';
