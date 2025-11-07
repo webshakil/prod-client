@@ -5,7 +5,10 @@ const initialState = {
   // Current election being created/edited
   currentElection: {
     draftId: null,
-    step1Data: {},
+  
+      step1Data: {
+      required_watch_duration_minutes: 0, // ✅ ADD THIS
+    },
     step2Data: {},
     step3Data: {},
     completedSteps: [],

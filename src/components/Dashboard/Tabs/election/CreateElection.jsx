@@ -843,7 +843,7 @@ function CreatorTypeCard({ selected, onClick, icon, title, description }) {
 //             <FeatureItem enabled={eligibility.canCreatePaidElections} text="Paid Elections (Regional Pricing)" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Custom Branding & Logo" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Unlimited Voters" />
-//             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Lottery Prizes" />
+//             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Gamify Prizes" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Advanced Analytics" />
 //             <FeatureItem enabled={roles?.includes('ContentCreator') || roles?.includes('Content_Creator')} text="Content Creator Tools" />
 //             <FeatureItem enabled={roles?.includes('Manager') || roles?.includes('Admin')} text="Organization Management" />
@@ -1241,7 +1241,7 @@ function CreatorTypeCard({ selected, onClick, icon, title, description }) {
 //             <FeatureItem enabled={displayIsSubscribed} text="Paid Elections (Regional Pricing)" />
 //             <FeatureItem enabled={displaySubscriptionType !== 'Free' && displaySubscriptionType !== 'free'} text="Custom Branding & Logo" />
 //             <FeatureItem enabled={displaySubscriptionType !== 'Free' && displaySubscriptionType !== 'free'} text="Unlimited Voters" />
-//             <FeatureItem enabled={displaySubscriptionType !== 'Free' && displaySubscriptionType !== 'free'} text="Lottery Prizes" />
+//             <FeatureItem enabled={displaySubscriptionType !== 'Free' && displaySubscriptionType !== 'free'} text="Gamify Prizes" />
 //             <FeatureItem enabled={displaySubscriptionType !== 'Free' && displaySubscriptionType !== 'free'} text="Advanced Analytics" />
 //             <FeatureItem enabled={roles?.includes('ContentCreator') || roles?.includes('Content_Creator')} text="Content Creator Tools" />
 //             <FeatureItem enabled={roles?.includes('Manager') || roles?.includes('Admin')} text="Organization Management" />
@@ -1618,7 +1618,7 @@ function CreatorTypeCard({ selected, onClick, icon, title, description }) {
 //             <FeatureItem enabled={eligibility.canCreatePaidElections} text="Paid Elections (Regional Pricing)" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Custom Branding & Logo" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Unlimited Voters" />
-//             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Lottery Prizes" />
+//             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Gamify Prizes" />
 //             <FeatureItem enabled={eligibility.subscriptionType !== 'Free' && eligibility.subscriptionType !== 'free'} text="Advanced Analytics" />
 //             <FeatureItem enabled={roles?.includes('ContentCreator') || roles?.includes('Content_Creator')} text="Content Creator Tools" />
 //             <FeatureItem enabled={roles?.includes('Manager') || roles?.includes('Admin')} text="Organization Management" />
@@ -1955,7 +1955,7 @@ function CreatorTypeCard({ selected, onClick, icon, title, description }) {
 //             />
 //             <FeatureItem 
 //               enabled={eligibility.subscriptionType !== 'Free'}
-//               text="Lottery Prizes"
+//               text="Gamify Prizes"
 //             />
 //             <FeatureItem 
 //               enabled={eligibility.subscriptionType !== 'Free'}

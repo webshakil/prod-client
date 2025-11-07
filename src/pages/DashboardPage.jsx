@@ -50,17 +50,7 @@ export default function DashboardPage() {
 
   const [getProfile, { isLoading: profileLoading, data: profileData }] = useGetProfileMutation();
 
-  // Use profile data if available, otherwise use auth data
-  // const currentUser = profileData?.profile || {
-  //   user_firstname: auth.firstName || 'User',
-  //   user_lastname: auth.lastName || '',
-  //   user_email: auth.email || '',
-  //   roles: auth.roles || ['Voter'],
-  // };
-//   const currentUser = {
-//   ...profileData?.profile,
-//   roles: liveRolesData?.data?.map(r => r.role_name) || profileData?.profile?.roles || ['Voter'],
-// };
+ 
 // ✅ NEW: Preserves user info + uses live roles
 const currentUser = useMemo(() => {
   const profile = profileData?.profile || {};

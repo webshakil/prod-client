@@ -863,28 +863,7 @@ export default function Step3QuestionsVoting({ data, updateData, onNext, onBack,
               </div>
             )}
 
-            {/* Social Sharing */}
-            {/* <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold text-gray-700">Share on:</span>
-              <button
-                onClick={() => window.open(`https://twitter.com/intent/tweet?text=Vote in my election!&url=https://prod-client-omega.vercel.app/vote/${electionSlug}`, '_blank')}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                <FaShare /> Twitter
-              </button>
-              <button
-                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=https://prod-client-omega.vercel.app/vote/${electionSlug}`, '_blank')}
-                className="px-4 py-2 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-800 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                <FaShare /> Facebook
-              </button>
-              <button
-                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https://prod-client-omega.vercel.app/vote/${electionSlug}`, '_blank')}
-                className="px-4 py-2 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-950 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                <FaShare /> LinkedIn
-              </button>
-            </div> */}
+      
 
             <div className="flex items-center gap-3 flex-wrap">
   <span className="text-sm font-semibold text-gray-700">Share on:</span>

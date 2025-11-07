@@ -22,7 +22,7 @@ Election: ${electionTitle}
 Vote ID: ${voteData.voteId}
 Receipt ID: ${voteData.receiptId}
 Timestamp: ${new Date(voteData.timestamp).toLocaleString()}
-${voteData.lotteryTicketNumber ? `Lottery Ticket: #${voteData.lotteryTicketNumber}` : ''}
+${voteData.lotteryTicketNumber ? `Gamification Ticket: #${voteData.lotteryTicketNumber}` : ''}
 
 Vote Hash: ${voteData.voteHash}
 
