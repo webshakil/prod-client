@@ -164,7 +164,7 @@ const getAuthMethodDetails = () => {
     }
 
     const config = data.lottery_config;
-    console.log('Lottery config in display function:', config);
+    console.log('Gamify config in display function:', config);
     
     // Monetary Prize
     if (config.reward_type === 'monetary') {
@@ -707,7 +707,7 @@ const handlePublish = async () => {
             <div className="flex items-center gap-3">
               <FaGift className="text-yellow-600 text-xl" />
               <div className="text-left">
-                <h3 className="text-lg font-semibold text-gray-800">Lottery & Prizes</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Gamify & Prizes</h3>
                 <p className="text-sm text-gray-600">
                   {data?.lottery_config?.winner_count || 1} winner(s)
                 </p>
@@ -723,15 +723,15 @@ const handlePublish = async () => {
                 <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                   <FaEyeSlash className="text-yellow-600" />
                   <p className="text-sm text-yellow-800 font-medium">
-                    Lottery prizes are hidden from public preview
+                    Gamity prizes.
                   </p>
                 </div>
               )}
 
-              {/* Lottery Enabled Badge */}
+              {/* Gamify Enabled Badge */}
               <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                 <FaCheckCircle className="text-green-600" />
-                <span className="text-sm font-medium text-green-800">Lottery Enabled</span>
+                <span className="text-sm font-medium text-green-800">Gamify Enabled</span>
               </div>
 
               {/* ✅ CONDITIONAL DISPLAY - Only show if toggle is ON */}
@@ -818,7 +818,7 @@ const handlePublish = async () => {
                 <div className="p-6 bg-gray-100 rounded-lg border border-gray-300 text-center">
                   <FaEyeSlash className="text-gray-400 text-3xl mx-auto mb-3" />
                   <p className="text-sm text-gray-600 font-medium mb-1">
-                    Lottery prize information hidden from public preview
+                    Gamify prize information hidden from public preview
                   </p>
                   <p className="text-xs text-gray-500">
                     Prize details will be revealed to participants after voting
