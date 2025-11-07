@@ -71,7 +71,7 @@ export function PreviewSettings({
               </label>
             </div>
             <p className="text-sm text-gray-600 ml-6">
-              Display lottery prize information publicly in the election preview
+              Display Gamify prize 
             </p>
           </div>
           <button
