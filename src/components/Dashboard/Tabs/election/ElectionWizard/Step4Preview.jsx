@@ -978,7 +978,7 @@ const handlePublish = async () => {
               <li>• Review all election details carefully</li>
               <li>• Ensure start and end dates are correct</li>
               <li>• Verify questions and voting options</li>
-              <li>• Check pricing and lottery configuration</li>
+              <li>• Check pricing and Gamify configuration</li>
               <li>• Once published, some changes cannot be undone</li>
             </ul>
           </div>
