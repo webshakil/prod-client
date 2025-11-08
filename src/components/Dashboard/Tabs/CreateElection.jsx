@@ -193,7 +193,7 @@ export default function CreateElection() {
           
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {eligibility.canCreate ? 'You can create elections! 🎉' : 'Election creation limit reached 😔'}
+              {eligibility.canCreate ? 'You can create elections! ' : 'Election creation limit reached 😔'}
             </h2>
             <p className="text-gray-700 text-lg">
               {eligibility.message}

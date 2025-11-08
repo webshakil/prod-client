@@ -213,7 +213,7 @@ function ParticipationFeeTab({ plans, editingId, editValues, saving, onEdit, onS
 
       <div className="px-6 py-4 bg-blue-50 border-t">
         <p className="text-xs text-blue-700">
-          <strong>Note:</strong> Everything is editable/changeable. 
+          <strong>Note:</strong> Everything will be editable/changeable later.
           Max Elections and Max Voters: Leave blank for unlimited. 
           Processing fees can be fixed amount ($) or percentage (%) based on plan type and can be mandatory or optional.
         </p>

@@ -77,6 +77,41 @@ export default function Step1BasicInfo({ data, updateData, onNext, creatorType, 
     setDurationDays(days);
   }, [data.start_date, data.start_time, data.end_date, data.end_time]);
 
+  // Add after line 47 (after the duration calculation useEffect)
+
+// ✅ ADD THIS: Instant date validation
+useEffect(() => {
+  if (data.start_date && data.start_time) {
+    const startDateTime = new Date(`${data.start_date}T${data.start_time}`);
+    const now = new Date();
+    
+    if (startDateTime < now) {
+      setErrors(prev => ({ ...prev, start_date: 'Start date/time must be in the future' }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.start_date;
+        return newErrors;
+      });
+    }
+  }
+  
+  if (data.start_date && data.end_date && data.start_time && data.end_time) {
+    const startDateTime = new Date(`${data.start_date}T${data.start_time}`);
+    const endDateTime = new Date(`${data.end_date}T${data.end_time}`);
+    
+    if (endDateTime <= startDateTime) {
+      setErrors(prev => ({ ...prev, end_date: 'End date/time must be after start date/time' }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.end_date;
+        return newErrors;
+      });
+    }
+  }
+}, [data.start_date, data.start_time, data.end_date, data.end_time]);
+
   // Get video IDs for preview
   const youtubeVideoId = getYouTubeVideoId(data.topic_video_url);
   const vimeoVideoId = getVimeoVideoId(data.topic_video_url);
@@ -585,7 +620,7 @@ export default function Step1BasicInfo({ data, updateData, onNext, creatorType, 
             )}
 
             {/* YouTube Video Preview */}
-            {youtubeVideoId && (
+            {/* {youtubeVideoId && (
               <div className="mt-4">
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 mb-3">
                   <FaCheckCircle className="text-green-600" />
@@ -628,7 +663,30 @@ export default function Step1BasicInfo({ data, updateData, onNext, creatorType, 
                   )}
                 </div>
               </div>
-            )}
+            )} */}
+           
+
+{youtubeVideoId && (
+  <div className="mt-4">
+    <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 mb-3">
+      <FaCheckCircle className="text-green-600" />
+      <span className="text-sm text-green-700 font-medium">
+        YouTube video detected
+      </span>
+    </div>
+    
+    <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ paddingBottom: '56.25%' }}>
+      <iframe
+        className="absolute top-0 left-0 w-full h-full"
+        src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  </div>
+)}
 
             {/* Vimeo Video Preview */}
             {vimeoVideoId && (
