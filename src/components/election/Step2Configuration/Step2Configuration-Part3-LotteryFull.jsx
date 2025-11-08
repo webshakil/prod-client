@@ -51,7 +51,7 @@ export function LotteryConfiguration({
     }
     return 0;
   };
-
+/*eslint-disable*/
   const getRemainingAmount = (upToRank) => {
     const totalPool = getTotalPrizePool();
     let distributed = 0;
@@ -283,7 +283,7 @@ export function LotteryConfiguration({
       <p className="text-gray-700 mb-4 font-medium">
         {data.lottery_enabled
           ? '🎉 Gamify this election with prizes for voters'
-          : 'Add excitement by making this election a gamify with prizes'}
+          : 'Add excitement and incentivize voters by Gamifying this Election with Prizes'}
       </p>
 
       {data.lottery_enabled && eligibility?.canCreatePaidElections && (
@@ -665,8 +665,8 @@ export function LotteryConfiguration({
                   {prizeDistribution.map((item, index) => {
                     const totalPool = getTotalPrizePool();
                     const currentAmount = (totalPool * (parseFloat(item.percentage) || 0)) / 100;
-                    const remainingAmount = getRemainingAmount(item.rank);
-                    const remainingPercentage = getRemainingPercentage() + (parseFloat(item.percentage) || 0);
+                    //const remainingAmount = getRemainingAmount(item.rank);
+                    //const remainingPercentage = getRemainingPercentage() + (parseFloat(item.percentage) || 0);
 
                     return (
                       <div key={item.rank} className="space-y-1">
@@ -711,11 +711,11 @@ export function LotteryConfiguration({
                         </div>
                         
                         {/* RUNNING BALANCE DISPLAY */}
-                        <div className="ml-28 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                        {/* <div className="ml-28 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
                           <p className="text-xs text-blue-800 font-semibold">
                             After Rank {item.rank}: ${remainingAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} remaining ({remainingPercentage.toFixed(2)}% left)
                           </p>
-                        </div>
+                        </div> */}
 
                         {percentageErrors[item.rank] && (
                           <div className="ml-28 p-2 bg-red-50 border-l-4 border-red-500 rounded">
