@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Shield, Loader, ArrowLeft } from 'lucide-react';
-import { useVerifyReceiptQuery } from '../../redux/api/voting/votingApi';
+import { useVerifyReceiptQuery } from '../../redux/api/voting-2/votingApi';
 
 export default function VerifyVotePage() {
   const { receiptId } = useParams();

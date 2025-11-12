@@ -10,8 +10,10 @@ import {
   Ticket,
   DollarSign
 } from 'lucide-react';
-import { useGetVotingHistoryQuery } from '../../../redux/api/voting/votingApi';
+
 import { useNavigate } from 'react-router-dom';
+import { useGetVotingHistoryQuery } from '../../../redux/api/voting/votingApi';
+import { useVerifyByReceiptQuery } from '../../../redux/api/verification/verificationApi';
 
 export default function VoteHistoryTab() {
   const navigate = useNavigate();
@@ -20,9 +22,16 @@ export default function VoteHistoryTab() {
     page: 1,
     limit: 10,
   });
+  const [verifyingReceiptId, setVerifyingReceiptId] = useState(null);
 
   // 🔥 Fetch from backend API
   const { data: historyData, isLoading, error } = useGetVotingHistoryQuery(filters);
+  
+  // 🔥 Verification query - only runs when verifyingReceiptId is set
+  const { data: verificationData, isLoading: isVerifying, error: verifyError } = useVerifyByReceiptQuery(
+    verifyingReceiptId,
+    { skip: !verifyingReceiptId }
+  );
   
   const votes = historyData?.data?.votes || [];
   const pagination = historyData?.data?.pagination || {};
@@ -30,6 +39,20 @@ export default function VoteHistoryTab() {
   const filteredVotes = votes.filter(vote => 
     vote.election_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Handle verification result
+  React.useEffect(() => {
+    if (verificationData && verifyingReceiptId) {
+      const result = verificationData;
+      alert(`✅ Vote Verified!\n\nReceipt ID: ${result.receipt.receiptId}\nVote Hash: ${result.receipt.voteHash}\nStatus: Verified\n\nThis vote is cryptographically secure and verified.`);
+      setVerifyingReceiptId(null);
+    }
+    
+    if (verifyError && verifyingReceiptId) {
+      alert('❌ Verification failed. Please try again.');
+      setVerifyingReceiptId(null);
+    }
+  }, [verificationData, verifyError, verifyingReceiptId]);
 
   const downloadReceipt = (vote) => {
     const receiptText = `
@@ -41,7 +64,7 @@ Election: ${vote.election_title}
 Vote ID: ${vote.voting_id}
 Receipt ID: ${vote.receipt_id}
 Timestamp: ${new Date(vote.created_at).toLocaleString()}
-${vote.lottery_ticket_number ? `Gamified Election Ticket Numbser: #${vote.lottery_ticket_number}` : ''}
+${vote.lottery_ticket_number ? `Gamified Election Ticket Number: #${vote.lottery_ticket_number}` : ''}
 
 Vote Hash: ${vote.vote_hash}
 
@@ -60,23 +83,8 @@ Keep it safe for verification.
     URL.revokeObjectURL(url);
   };
 
-  const verifyVote = async (vote) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3004/api'}/votes/verify/${vote.receipt_id}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Verification failed');
-      }
-
-      const result = await response.json();
-      
-      alert(`✅ Vote Verified!\n\nReceipt ID: ${result.data.receipt_id}\nVote Hash: ${result.data.vote_hash}\nStatus: ${result.data.status}\n\nThis vote is cryptographically secure and verified.`);
-      /*eslint-disable*/
-    } catch (error) {
-      alert('❌ Verification failed. Please try again.');
-    }
+  const verifyVote = (vote) => {
+    setVerifyingReceiptId(vote.receipt_id);
   };
 
   if (isLoading) {
@@ -280,10 +288,15 @@ Keep it safe for verification.
                   
                   <button
                     onClick={() => verifyVote(vote)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+                    disabled={isVerifying && verifyingReceiptId === vote.receipt_id}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Eye size={20} />
-                    Verify Vote
+                    {isVerifying && verifyingReceiptId === vote.receipt_id ? (
+                      <Loader className="animate-spin" size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
+                    {isVerifying && verifyingReceiptId === vote.receipt_id ? 'Verifying...' : 'Verify Vote'}
                   </button>
                 </div>
               </div>
@@ -320,6 +333,332 @@ Keep it safe for verification.
     </div>
   );
 }
+//last working code
+// import React, { useState } from 'react';
+// import { 
+//   Vote, 
+//   Calendar, 
+//   CheckCircle, 
+//   Eye, 
+//   Download,
+//   Loader,
+//   Search,
+//   Ticket,
+//   DollarSign
+// } from 'lucide-react';
+
+// import { useNavigate } from 'react-router-dom';
+// import { useGetVotingHistoryQuery } from '../../../redux/api/voting/votingApi';
+
+
+
+// export default function VoteHistoryTab() {
+//   const navigate = useNavigate();
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [filters, setFilters] = useState({
+//     page: 1,
+//     limit: 10,
+//   });
+
+//   // 🔥 Fetch from backend API
+//   const { data: historyData, isLoading, error } = useGetVotingHistoryQuery(filters);
+  
+//   const votes = historyData?.data?.votes || [];
+//   const pagination = historyData?.data?.pagination || {};
+
+//   const filteredVotes = votes.filter(vote => 
+//     vote.election_title?.toLowerCase().includes(searchTerm.toLowerCase())
+//   );
+
+//   const downloadReceipt = (vote) => {
+//     const receiptText = `
+// ╔════════════════════════════════════════╗
+// ║      VOTTERY - VOTE RECEIPT           ║
+// ╚════════════════════════════════════════╝
+
+// Election: ${vote.election_title}
+// Vote ID: ${vote.voting_id}
+// Receipt ID: ${vote.receipt_id}
+// Timestamp: ${new Date(vote.created_at).toLocaleString()}
+// ${vote.lottery_ticket_number ? `Gamified Election Ticket Numbser: #${vote.lottery_ticket_number}` : ''}
+
+// Vote Hash: ${vote.vote_hash}
+
+// ════════════════════════════════════════
+// This is your official vote receipt.
+// Keep it safe for verification.
+// ════════════════════════════════════════
+//     `;
+
+//     const blob = new Blob([receiptText], { type: 'text/plain' });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = `vote-receipt-${vote.receipt_id}.txt`;
+//     a.click();
+//     URL.revokeObjectURL(url);
+//   };
+
+//   const verifyVote = async (vote) => {
+//     try {
+//       const response = await fetch(
+//         `${import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api'}/verification/verify/${vote.receipt_id}`
+//       );
+      
+//       if (!response.ok) {
+//         throw new Error('Verification failed');
+//       }
+
+//       const result = await response.json();
+      
+//       alert(`✅ Vote Verified!\n\nReceipt ID: ${result.data.receipt_id}\nVote Hash: ${result.data.vote_hash}\nStatus: ${result.data.status}\n\nThis vote is cryptographically secure and verified.`);
+//       /*eslint-disable*/
+//     } catch (error) {
+//       alert('❌ Verification failed. Please try again.');
+//     }
+//   };
+
+//   if (isLoading) {
+//     return (
+//       <div className="flex items-center justify-center h-64">
+//         <Loader className="animate-spin text-blue-600" size={48} />
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+//         <p className="text-red-600">Failed to load voting history</p>
+//         <button 
+//           onClick={() => window.location.reload()}
+//           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+//         >
+//           Retry
+//         </button>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Header */}
+//       <div className="flex items-center justify-between">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Vote History</h1>
+//           <p className="text-gray-600">Track all your voting activity - secured in database</p>
+//         </div>
+//       </div>
+
+//       {/* Stats */}
+//       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//         <div className="bg-white rounded-lg shadow p-6">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-gray-600 text-sm mb-1">Total Votes</p>
+//               <p className="text-3xl font-bold text-gray-800">{pagination.total || votes.length}</p>
+//             </div>
+//             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+//               <Vote className="text-blue-600" size={24} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="bg-white rounded-lg shadow p-6">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-gray-600 text-sm mb-1">Lottery Entries</p>
+//               <p className="text-3xl font-bold text-gray-800">
+//                 {votes.filter(v => v.lottery_ticket_number).length}
+//               </p>
+//             </div>
+//             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+//               <Ticket className="text-purple-600" size={24} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="bg-white rounded-lg shadow p-6">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-gray-600 text-sm mb-1">This Month</p>
+//               <p className="text-3xl font-bold text-gray-800">
+//                 {votes.filter(v => {
+//                   const voteDate = new Date(v.created_at);
+//                   const now = new Date();
+//                   return voteDate.getMonth() === now.getMonth() && 
+//                          voteDate.getFullYear() === now.getFullYear();
+//                 }).length}
+//               </p>
+//             </div>
+//             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+//               <Calendar className="text-green-600" size={24} />
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Search */}
+//       {votes.length > 0 && (
+//         <div className="bg-white rounded-lg shadow p-4">
+//           <div className="flex gap-4 items-center">
+//             <div className="flex-1 relative">
+//               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+//               <input
+//                 type="text"
+//                 placeholder="Search by election name..."
+//                 value={searchTerm}
+//                 onChange={(e) => setSearchTerm(e.target.value)}
+//                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+//               />
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Votes List */}
+//       <div className="space-y-4">
+//         {filteredVotes.length === 0 ? (
+//           <div className="bg-white rounded-lg shadow p-12 text-center">
+//             <Vote size={64} className="mx-auto mb-4 text-gray-300" />
+//             <h3 className="text-xl font-bold text-gray-800 mb-2">No Votes Yet</h3>
+//             <p className="text-gray-600 mb-6">
+//               {searchTerm ? 'No votes match your search.' : 'Start voting in elections to see your history here!'}
+//             </p>
+//             {!searchTerm && (
+//               <button
+//                 onClick={() => navigate('/dashboard?tab=vote-now')}
+//                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+//               >
+//                 Browse Elections
+//               </button>
+//             )}
+//           </div>
+//         ) : (
+//           filteredVotes.map((vote) => (
+//             <div key={vote.id} className="bg-white rounded-lg shadow hover:shadow-lg transition">
+//               <div className="p-6">
+//                 <div className="flex items-start justify-between mb-4">
+//                   <div className="flex-1">
+//                     <h3 className="text-xl font-bold text-gray-800 mb-2">
+//                       {vote.election_title}
+//                     </h3>
+//                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+//                       <span className="flex items-center gap-1">
+//                         <Calendar size={16} />
+//                         {new Date(vote.created_at).toLocaleDateString()}
+//                       </span>
+//                       <span className="flex items-center gap-1">
+//                         <CheckCircle size={16} className="text-green-600" />
+//                         Vote ID: {vote.voting_id?.slice(0, 8)}...
+//                       </span>
+//                     </div>
+//                   </div>
+//                   <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+//                     {vote.status || 'Valid'}
+//                   </div>
+//                 </div>
+
+//                 {/* Receipt Info */}
+//                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 mb-4 border border-blue-200">
+//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+//                     <div>
+//                       <p className="text-gray-600 font-semibold mb-1">Receipt ID</p>
+//                       <p className="font-mono text-xs text-gray-800 break-all bg-white px-2 py-1 rounded">
+//                         {vote.receipt_id}
+//                       </p>
+//                     </div>
+//                     <div>
+//                       <p className="text-gray-600 font-semibold mb-1">Vote Hash</p>
+//                       <p className="font-mono text-xs text-gray-800 break-all bg-white px-2 py-1 rounded">
+//                         {vote.vote_hash?.slice(0, 32)}...
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </div>
+
+//                 {/* Lottery Info */}
+//                 {vote.lottery_ticket_number && (
+//                   <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+//                     <div className="flex items-center gap-3">
+//                       <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+//                         {vote.ball_number || vote.lottery_ticket_number}
+//                       </div>
+//                       <div className="flex-1">
+//                         <p className="text-sm font-bold text-orange-900 flex items-center gap-2">
+//                           <Ticket size={16} />
+//                           Gamified Election Ticket  #{vote.lottery_ticket_number}
+//                         </p>
+//                         <p className="text-xs text-orange-700 mt-1">
+//                           Status: {vote.lottery_status || 'Pending Draw'} • Winners announced at election end
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {/* Payment Info */}
+//                 {vote.payment_amount && vote.payment_amount > 0 && (
+//                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+//                     <DollarSign size={16} className="text-green-600" />
+//                     <p className="text-sm text-green-800">
+//                       Payment: {vote.payment_currency || 'USD'} {parseFloat(vote.payment_amount).toFixed(2)}
+//                     </p>
+//                   </div>
+//                 )}
+
+//                 {/* Actions */}
+//                 <div className="flex gap-3">
+//                   <button
+//                     onClick={() => downloadReceipt(vote)}
+//                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+//                   >
+//                     <Download size={20} />
+//                     Download Receipt
+//                   </button>
+                  
+//                   <button
+//                     onClick={() => verifyVote(vote)}
+//                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+//                   >
+//                     <Eye size={20} />
+//                     Verify Vote
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+//           ))
+//         )}
+//       </div>
+
+//       {/* Pagination */}
+//       {pagination.totalPages > 1 && (
+//         <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
+//           <p className="text-sm text-gray-600">
+//             Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
+//             {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of {pagination.total} votes
+//           </p>
+//           <div className="flex gap-2">
+//             <button
+//               onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+//               disabled={pagination.currentPage === 1}
+//               className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//             >
+//               Previous
+//             </button>
+//             <button
+//               onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+//               disabled={pagination.currentPage === pagination.totalPages}
+//               className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//             >
+//               Next
+//             </button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 // import React, { useState } from 'react';
 // import { 
 //   Vote, 

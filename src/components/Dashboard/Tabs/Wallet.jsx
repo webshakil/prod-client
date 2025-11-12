@@ -17,7 +17,7 @@ import {
   useGetWalletTransactionsQuery,
   /*eslint-disable*/
   useRequestWithdrawalMutation 
-} from '../../../redux/api/voting/votingApi';
+} from '../../../redux/api/voting-2/votingApi';
 import { toast } from 'react-toastify';
 import WithdrawalModal from './wallet/WithdrawalModal';
 

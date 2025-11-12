@@ -1,4 +1,4 @@
-// src/App.js - WITH ROLE MANAGEMENT INTEGRATION ADDED (ALL EXISTING ROUTES PRESERVED)
+// src/App.js - WITH ROLE MANAGEMENT + ELECTION ACCESS GUARD INTEGRATION
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,7 +13,7 @@ import { PUBLIC_ROUTES, PROTECTED_ROUTES, ADMIN_ROUTES } from './components/rout
 
 // Hooks
 import { useUserData } from './hooks/useUserData';
-import { useUserRoles } from './hooks/useUserRoles'; // ✅ NEW: Role management hook
+import { useUserRoles } from './hooks/useUserRoles';
 
 // Public Pages
 import LandingPage from './pages/public/LandingPage';
@@ -30,7 +30,7 @@ import SubscriptionSync from './components/Dashboard/Tabs/subscription/Subscript
 
 // Election Pages
 import ElectionView from './pages/election/ElectionView';
-import ElectionVotingView from './pages/election/ElectionVotingView';
+//import ElectionAccessGuard from './components/voting/ElectionAccessGuard'; // ✅ NEW: Access guard wrapper
 
 // Voting Pages
 import VotingPage from './pages/voting/VotingPage';
@@ -41,18 +41,19 @@ import VerifyVotePage from './pages/voting/VerifyVotePage';
 // Data Loaders
 import { loadSubscriptionData } from './utils/loadSubscriptionData';
 import { loadElectionData } from './utils/loadElectionData';
+import ElectionAccessGuard from './components/voting/ElectionAccessGuard';
 
 export default function App() {
   const auth = useAuth();
   useUserData();
-  useUserRoles(); // ✅ NEW: Load user roles on app start
+  useUserRoles();
   
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { userSubscription } = useSelector((state) => state.subscription);
   const { myElections, loading } = useSelector((state) => state.election);
 
-  // ✅ SIMPLE FIX: Load subscription data once
+  // Load subscription data once
   useEffect(() => {
     if (isAuthenticated && !userSubscription) {
       console.log('🔄 Loading subscription...');
@@ -60,17 +61,13 @@ export default function App() {
     }
   }, [isAuthenticated, userSubscription, dispatch]);
 
-  // ✅ SIMPLE FIX: Load elections once - check loading flag
+  // Load elections once
   useEffect(() => {
-    // Only load if:
-    // 1. User is authenticated
-    // 2. No elections loaded yet
-    // 3. Not currently loading
     if (isAuthenticated && myElections.length === 0 && !loading) {
       console.log('🔄 Loading elections...');
       loadElectionData(dispatch);
     }
-  }, [isAuthenticated, dispatch]); // ✅ ONLY these dependencies!
+  }, [isAuthenticated, dispatch]);
 
   return (
     <Router>
@@ -113,21 +110,19 @@ export default function App() {
         <Route path="/verify/:receiptId" element={<VerifyVotePage />} />
         <Route path="/vote/:electionId" element={<VotingMainPage />} />
 
-        {/* ========================================
-            ✅ NEW VOTING ROUTES ADDED BELOW
-        ======================================== */}
+
         
-        {/* Detailed voting view with payment (Protected) */}
+        {/* Detailed voting view with payment/auth/video checks */}
         <Route
           path="/elections/:electionId/vote"
           element={
             <ProtectedRoute>
-              <ElectionVotingView />
+              <ElectionAccessGuard />
             </ProtectedRoute>
           }
         />
 
-        {/* Vote confirmation/success page (Protected) */}
+        {/* Vote confirmation/success page */}
         <Route
           path="/elections/:electionId/confirmation"
           element={
@@ -164,7 +159,7 @@ export default function App() {
           />
         ))}
 
-        {/* ADMIN ROUTES - ✅ UPDATED to support requiredRoles */}
+        {/* ADMIN ROUTES */}
         {ADMIN_ROUTES.map((route) => (
           <Route
             key={route.path}
@@ -193,8 +188,8 @@ export default function App() {
     </Router>
   );
 }
-//last workable code
-// // src/App.js - WITH NEW VOTING ROUTES ADDED (ALL EXISTING ROUTES PRESERVED)
+//last workable perfect codes
+// // src/App.js - WITH ROLE MANAGEMENT INTEGRATION ADDED (ALL EXISTING ROUTES PRESERVED)
 // import React, { useEffect } from 'react';
 // import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 // import { useDispatch, useSelector } from 'react-redux';
@@ -209,6 +204,7 @@ export default function App() {
 
 // // Hooks
 // import { useUserData } from './hooks/useUserData';
+// import { useUserRoles } from './hooks/useUserRoles'; // ✅ NEW: Role management hook
 
 // // Public Pages
 // import LandingPage from './pages/public/LandingPage';
@@ -225,12 +221,12 @@ export default function App() {
 
 // // Election Pages
 // import ElectionView from './pages/election/ElectionView';
-// import ElectionVotingView from './pages/election/ElectionVotingView'; // ✅ NEW
+// import ElectionVotingView from './pages/election/ElectionVotingView';
 
 // // Voting Pages
 // import VotingPage from './pages/voting/VotingPage';
 // import VotingMainPage from './pages/voting/VotingMainPage';
-// import VoteConfirmationPage from './pages/voting/VoteConfirmationPage'; // ✅ NEW
+// import VoteConfirmationPage from './pages/voting/VoteConfirmationPage';
 // import VerifyVotePage from './pages/voting/VerifyVotePage';
 
 // // Data Loaders
@@ -240,6 +236,7 @@ export default function App() {
 // export default function App() {
 //   const auth = useAuth();
 //   useUserData();
+//   useUserRoles(); // ✅ NEW: Load user roles on app start
   
 //   const dispatch = useDispatch();
 //   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -358,13 +355,16 @@ export default function App() {
 //           />
 //         ))}
 
-//         {/* ADMIN ROUTES */}
+//         {/* ADMIN ROUTES - ✅ UPDATED to support requiredRoles */}
 //         {ADMIN_ROUTES.map((route) => (
 //           <Route
 //             key={route.path}
 //             path={route.path}
 //             element={
-//               <AdminRoute requiredRole={route.requiredRole}>
+//               <AdminRoute 
+//                 requiredRole={route.requiredRole}
+//                 requiredRoles={route.requiredRoles}
+//               >
 //                 {route.element}
 //               </AdminRoute>
 //             }
@@ -384,3 +384,4 @@ export default function App() {
 //     </Router>
 //   );
 // }
+

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import { useRequestWithdrawalMutation } from '../../../../redux/api/voting/votingApi';
+import { useRequestWithdrawalMutation } from '../../../../redux/api/voting-2/votingApi';
 import { toast } from 'react-toastify';
 
 export default function WithdrawalModal({ balance, currency, onClose }) {

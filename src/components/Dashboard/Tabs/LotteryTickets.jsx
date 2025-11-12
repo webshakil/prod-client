@@ -15,7 +15,7 @@ import {
   /*eslint-disable*/
   useGetLotteryWinnersQuery,
   useClaimPrizeMutation 
-} from '../../../redux/api/voting/votingApi';
+} from '../../../redux/api/voting-2/votingApi';
 import { toast } from 'react-toastify';
 
 export default function LotteryTicketsTab() {

@@ -40,3 +40,363 @@ code {
 .letter-spacing-2 {
   letter-spacing: 0.5rem;
 }
+
+/* 
+3d/4d animation */
+
+/* Add to src/index.css or global styles */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better mobile touch */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+
+/* ============================================
+   VOTE-TO-BALL ANIMATION STYLES
+   Copy this entire section to your App.css
+   ============================================ */
+
+/* Container */
+.vote-animation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* STAGE 1: Receipt */
+.vote-receipt-anim {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  animation: receiptPop 1s ease-out;  /* Slower: 1s instead of 0.5s */
+}
+
+.receipt-box {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border: 3px solid #10b981;
+  text-align: center;
+  min-width: 200px;
+}
+
+.receipt-check {
+  color: #10b981;
+  font-size: 48px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.receipt-title {
+  font-weight: bold;
+  color: #111827;
+  margin: 0 0 4px 0;
+  font-size: 18px;
+}
+
+.receipt-num {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* STAGE 2 & 3: Ball */
+.vote-ball-anim {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+}
+
+.vote-ball-anim.transform-stage {
+  animation: ballMorph 2s ease-in-out;  /* Slower: 2s instead of 1.5s */
+}
+
+.vote-ball-anim.fly-stage {
+  animation: ballFlyAnim 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;  /* Slower: 2.5s instead of 1s */
+}
+
+.ball-shape {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.8),
+              0 0 60px rgba(236, 72, 153, 0.6),
+              0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: ballSpin 1s linear infinite;
+}
+
+.ball-num {
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ball-glow {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%);
+  animation: glowPulse 0.5s infinite;
+  z-index: 1;
+}
+
+/* Particles */
+.particle-anim {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #fbbf24;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  margin: -5px 0 0 -5px;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+  animation: particleBurst 1.5s ease-out forwards;
+}
+
+/* Sparkles */
+.sparkle-anim {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #fef08a;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  margin: -3px 0 0 -3px;
+  box-shadow: 0 0 8px rgba(254, 240, 138, 0.9);
+  animation: sparkleMove 0.6s ease-out infinite;
+}
+
+.sparkle-anim:nth-child(1) { animation-delay: 0s; }
+.sparkle-anim:nth-child(2) { animation-delay: 0.05s; }
+.sparkle-anim:nth-child(3) { animation-delay: 0.1s; }
+.sparkle-anim:nth-child(4) { animation-delay: 0.15s; }
+.sparkle-anim:nth-child(5) { animation-delay: 0.2s; }
+.sparkle-anim:nth-child(6) { animation-delay: 0.25s; }
+.sparkle-anim:nth-child(7) { animation-delay: 0.3s; }
+.sparkle-anim:nth-child(8) { animation-delay: 0.35s; }
+.sparkle-anim:nth-child(9) { animation-delay: 0.4s; }
+.sparkle-anim:nth-child(10) { animation-delay: 0.45s; }
+.sparkle-anim:nth-child(11) { animation-delay: 0.5s; }
+.sparkle-anim:nth-child(12) { animation-delay: 0.55s; }
+
+/* Success Message */
+.vote-success-msg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  animation: msgSlide 1s ease-out;
+}
+
+.vote-success-msg p {
+  background: linear-gradient(90deg, #9333ea 0%, #db2777 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 50px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+@keyframes receiptPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotate(-10deg);
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ballMorph {
+  0% {
+    width: 200px;
+    height: 150px;
+    border-radius: 12px;
+    opacity: 1;
+  }
+  50% {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(180deg) scale(0.8);
+  }
+  100% {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes ballFlyAnim {
+  0% {
+    left: var(--start-x, 50%);
+    top: var(--start-y, 50%);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  100% {
+    left: var(--end-x, 80%);
+    top: var(--end-y, 50%);
+    opacity: 1;  /* Changed from 0 to 1 - ball stays visible */
+    transform: translate(-50%, -50%) scale(0.6) rotate(720deg);
+  }
+}
+
+@keyframes ballSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes particleBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(60px, 0) scale(0.3);
+  }
+}
+
+@keyframes sparkleMove {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc((random() - 0.5) * 80px),
+      calc((random() - 0.5) * 80px)
+    ) scale(0);
+  }
+}
+
+@keyframes msgSlide {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 30px));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .ball-shape {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .ball-num {
+    font-size: 18px;
+  }
+  
+  .vote-success-msg p {
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+  
+  .receipt-box {
+    min-width: 160px;
+    padding: 16px;
+  }
+}
+
+/* ============================================
+   END OF VOTE-TO-BALL ANIMATION STYLES
+   ============================================ */
+
