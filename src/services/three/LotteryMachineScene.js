@@ -141,24 +141,18 @@ export class LotteryMachineScene {
       emissiveIntensity: 0.2,
     });
     
-    // ✨✨✨ IMPROVED GLASS ELLIPSOID - MORE VISIBLE & GLASS-LIKE! ✨✨✨
-    const glassGeometry = new THREE.SphereGeometry(5, 64, 64);
+    // ✨✨✨ CRYSTAL CLEAR SMOOTH GLASS - PERFECT! ✨✨✨
+    const glassGeometry = new THREE.SphereGeometry(5, 128, 128); // ✅ Higher resolution for smoother edges
     glassGeometry.scale(1.5, 0.75, 1.5); // Flattened ellipsoid
     
-    const glassMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xE0F0FF, // ✅ Slight blue tint for glass look
+    const glassMaterial = new THREE.MeshStandardMaterial({
+      color: 0xFFFFFF, // ✅ Pure white for clarity
       transparent: true,
-      opacity: 0.45, // ✅ INCREASED from 0.25 - Less transparent, more visible
-      metalness: 0.05,
-      roughness: 0.05, // ✅ Very smooth but slightly rougher for visibility
-      transmission: 0.65, // ✅ REDUCED from 0.85 - Less see-through, more solid
-      thickness: 3.5, // ✅ INCREASED from 2.5 - Thicker glass
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1, // ✅ Slight roughness for better visibility
+      opacity: 0.3, // ✅ More transparent, less foggy
+      metalness: 0,
+      roughness: 0, // ✅ Perfectly smooth = glass-like
       side: THREE.DoubleSide,
-      envMapIntensity: 2.5, // ✅ INCREASED from 2.0 - Stronger reflections
-      ior: 1.52, // Real glass index of refraction
-      reflectivity: 0.7, // ✅ Balanced reflectivity
+      depthWrite: false, // ✅ Prevents rendering artifacts
     });
     
     const glassEllipsoid = new THREE.Mesh(glassGeometry, glassMaterial);
