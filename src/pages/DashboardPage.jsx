@@ -18,7 +18,7 @@ import Dashboard from '../components/Dashboard/Tabs/Dashboard';
 import Subscription from '../components/Dashboard/Tabs/Subscription';
 
 // Import NEW voting-related tab components
-import Wallet from '../components/Dashboard/Tabs/Wallet';
+//import Wallet from '../components/Dashboard/Tabs/Wallet';
 import LotteryTickets from '../components/Dashboard/Tabs/LotteryTickets';
 import VoteHistory from '../components/Dashboard/Tabs/VoteHistory';
 import PublicBulletin from '../components/Dashboard/Tabs/PublicBulletin';
@@ -27,6 +27,7 @@ import PermissionManagement from '../components/Dashboard/Tabs/roles/PermissionM
 import UserRoleAssignment from '../components/Dashboard/Tabs/roles/UserRoleAssignment';
 import RoleAssignmentHistory from '../components/Dashboard/Tabs/roles/RoleAssignmentHistory';
 import { useGetUserRolesQuery } from '../redux/api/role/roleApi';
+import Wallet from '../components/Dashboard/Tabs/wallet/Wallet';
 
 
 
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  /*eslint-disable*/
   const [profileError, setProfileError] = useState(null);
 
   const [getProfile, { isLoading: profileLoading, data: profileData }] = useGetProfileMutation();

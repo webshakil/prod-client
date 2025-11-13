@@ -642,6 +642,14 @@ export class LotteryMachineScene {
     this.isInitialized = false;
   }
 }
+
+
+
+
+
+
+
+
 //THis code is perfect. jus to make galss thicker above code
 // // src/services/three/LotteryMachineScene.js
 // // ✨ REVOLUTIONARY DESIGN - Just floating numbers, no balls!
@@ -1293,6 +1301,20 @@ export class LotteryMachineScene {
 //     this.isInitialized = false;
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // src/services/three/LotteryMachineScene.js
 // // ✨ REVOLUTIONARY DESIGN - Just floating numbers, no balls!
 // import * as THREE from 'three';

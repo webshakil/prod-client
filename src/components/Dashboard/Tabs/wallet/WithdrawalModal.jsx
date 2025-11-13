@@ -1,6 +1,7 @@
+// src/components/Dashboard/Tabs/wallet/WithdrawalModal.jsx
 import React, { useState } from 'react';
-import { X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import { useRequestWithdrawalMutation } from '../../../../redux/api/voting-2/votingApi';
+import { X, AlertCircle, Loader } from 'lucide-react';
+import { useRequestWithdrawalMutation } from '../../../../redux/api/walllet/wallletApi';
 import { toast } from 'react-toastify';
 
 export default function WithdrawalModal({ balance, currency, onClose }) {
@@ -61,12 +62,12 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
       }).unwrap();
 
       if (result.success) {
-        toast.success('Withdrawal request submitted successfully!');
+        toast.success(result.message || 'Withdrawal request submitted successfully!');
         onClose();
       }
     } catch (error) {
       console.error('Withdrawal error:', error);
-      toast.error(error?.data?.message || 'Failed to request withdrawal');
+      toast.error(error?.data?.error || error?.message || 'Failed to request withdrawal');
     }
   };
 
@@ -79,7 +80,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-2xl font-bold text-gray-800">Withdraw Funds</h2>
           <button
             onClick={onClose}
@@ -120,7 +121,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
                     setErrors({ ...errors, amount: null });
                   }
                 }}
-                className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                   errors.amount ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="0.00"
@@ -174,7 +175,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="stripe">Stripe (Instant)</option>
               <option value="bank_transfer">Bank Transfer (2-3 days)</option>
@@ -196,7 +197,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
                   setErrors({ ...errors, accountEmail: null });
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                 errors.accountEmail ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="your@email.com"
@@ -222,7 +223,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
                   setErrors({ ...errors, accountName: null });
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                 errors.accountName ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="John Doe"
@@ -249,7 +250,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
                     setErrors({ ...errors, bankAccount: null });
                   }
                 }}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                   errors.bankAccount ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Account Number"
@@ -271,7 +272,7 @@ export default function WithdrawalModal({ balance, currency, onClose }) {
                 <p className="font-semibold mb-1">Important Information:</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Minimum withdrawal amount: $10</li>
-                  <li>Withdrawals over $1000 require admin approval</li>
+                  <li>Withdrawals over $5000 require admin approval</li>
                   <li>Processing time: 1-3 business days</li>
                   <li>You'll receive a confirmation email once processed</li>
                 </ul>

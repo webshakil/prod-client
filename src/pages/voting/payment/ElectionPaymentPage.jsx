@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 /*eslint-disable*/
 import { useSelector } from 'react-redux';
 import { usePayForElectionMutation } from '../../../redux/api/walllet/electionPaymentApi';
-import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
+import { useGetWalletQuery } from '../../../redux/api/walllet/wallletApi';
 import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -114,11 +114,17 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
 
       // ✅ CRITICAL: Check if payment already succeeded
       if (result.alreadyPaid || result.payment?.status === 'succeeded') {
-        console.log('✅ Payment already completed, skipping Stripe confirmation');
-        setProcessing(false);
-        onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
-        return;
-      }
+  console.log('✅ Payment already completed, skipping Stripe confirmation');
+  setProcessing(false);
+  onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+  return;
+}
+      // if (result.alreadyPaid || result.payment?.status === 'succeeded') {
+      //   console.log('✅ Payment already completed, skipping Stripe confirmation');
+      //   setProcessing(false);
+      //   onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+      //   return;
+      // }
 
       // ✅ Check if we have client_secret
       if (!result.clientSecret) {
