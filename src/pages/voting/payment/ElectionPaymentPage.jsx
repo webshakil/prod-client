@@ -224,27 +224,56 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
   // ========================================
   // HANDLE PADDLE PAYMENT
   // ========================================
-  const handlePaddlePayment = async () => {
-    setProcessing(true);
-    setError(null);
+  // Replace the handlePaddlePayment function in ElectionPaymentPage.jsx
 
-    try {
-      const result = await payForElection({
-        electionId,
-        regionCode: 'region_1_us_canada',
-      }).unwrap();
+const handlePaddlePayment = async () => {
+  setProcessing(true);
+  setError(null);
 
-      if (result.payment?.gateway_used === 'paddle' && result.paymentUrl) {
-        // Redirect to Paddle checkout
-        window.location.href = result.paymentUrl;
-      } else {
-        setError('Paddle payment not available');
-      }
-    } catch (err) {
-      setError(err.data?.error || 'Paddle payment failed');
-      setProcessing(false);
+  try {
+    // ✅ FIXED: Pass paymentGateway parameter
+    const result = await payForElection({
+      electionId,
+      regionCode: 'region_1_us_canada',
+      paymentGateway: 'paddle', // ← Add this!
+    }).unwrap();
+
+    console.log('🟣 Paddle payment result:', result);
+
+    // ✅ FIXED: Check for checkoutUrl (not paymentUrl)
+    if (result.checkoutUrl) {
+      // Redirect to Paddle checkout
+      window.location.href = result.checkoutUrl;
+    } else {
+      setError('Paddle payment URL not received');
     }
-  };
+  } catch (err) {
+    console.error('Paddle payment error:', err);
+    setError(err.data?.error || 'Paddle payment failed');
+    setProcessing(false);
+  }
+};
+  // const handlePaddlePayment = async () => {
+  //   setProcessing(true);
+  //   setError(null);
+
+  //   try {
+  //     const result = await payForElection({
+  //       electionId,
+  //       regionCode: 'region_1_us_canada',
+  //     }).unwrap();
+
+  //     if (result.payment?.gateway_used === 'paddle' && result.paymentUrl) {
+  //       // Redirect to Paddle checkout
+  //       window.location.href = result.paymentUrl;
+  //     } else {
+  //       setError('Paddle payment not available');
+  //     }
+  //   } catch (err) {
+  //     setError(err.data?.error || 'Paddle payment failed');
+  //     setProcessing(false);
+  //   }
+  // };
 
   // ========================================
   // HANDLE WALLET PAYMENT

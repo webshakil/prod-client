@@ -238,7 +238,7 @@ export default function ElectionAccessGuard() {
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <Shield className="w-16 h-16 text-blue-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-center mb-2">Authentication Required</h2>
-            <p className="text-gray-600 text-center mb-6">Please authenticate to proceed</p>
+            <p className="text-gray-600 text-center mb-6">Please authenticate to proceed Shakil</p>
 
             <AuthenticationSelector 
               methods={authMethods} 
