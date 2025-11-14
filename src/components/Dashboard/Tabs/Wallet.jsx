@@ -19,7 +19,7 @@ import {
   useRequestWithdrawalMutation 
 } from '../../../redux/api/voting-2/votingApi';
 import { toast } from 'react-toastify';
-import WithdrawalModal from './wallet/WithdrawalModal';
+import WithdrawalModal from './wallet/Wallet';
 
 export default function WalletTab() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
