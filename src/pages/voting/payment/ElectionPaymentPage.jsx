@@ -13,9 +13,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 // ✅ FIXED: Use correct environment variable
 const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLIC_KEY);
 
-// ========================================
-// PAYMENT METHOD SELECTOR
-// ========================================
+
 function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }) {
   return (
     <div className="space-y-4 mb-6">
@@ -87,9 +85,7 @@ function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }
   );
 }
 
-// ========================================
-// STRIPE CARD FORM
-// ========================================
+
 function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -119,14 +115,6 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
   return;
 }
-      // if (result.alreadyPaid || result.payment?.status === 'succeeded') {
-      //   console.log('✅ Payment already completed, skipping Stripe confirmation');
-      //   setProcessing(false);
-      //   onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
-      //   return;
-      // }
-
-      // ✅ Check if we have client_secret
       if (!result.clientSecret) {
         console.error('❌ No client secret received:', result);
         throw new Error('No client secret received. Payment may already be complete.');
@@ -205,9 +193,6 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   );
 }
 
-// ========================================
-// MAIN PAYMENT PAGE
-// ========================================
 export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [processing, setProcessing] = useState(false);
@@ -221,10 +206,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
   // ✅ Use wallet service mutation
   const [payForElection] = usePayForElectionMutation();
 
-  // ========================================
-  // HANDLE PADDLE PAYMENT
-  // ========================================
-  // Replace the handlePaddlePayment function in ElectionPaymentPage.jsx
+  
 
 const handlePaddlePayment = async () => {
   setProcessing(true);
@@ -253,31 +235,7 @@ const handlePaddlePayment = async () => {
     setProcessing(false);
   }
 };
-  // const handlePaddlePayment = async () => {
-  //   setProcessing(true);
-  //   setError(null);
 
-  //   try {
-  //     const result = await payForElection({
-  //       electionId,
-  //       regionCode: 'region_1_us_canada',
-  //     }).unwrap();
-
-  //     if (result.payment?.gateway_used === 'paddle' && result.paymentUrl) {
-  //       // Redirect to Paddle checkout
-  //       window.location.href = result.paymentUrl;
-  //     } else {
-  //       setError('Paddle payment not available');
-  //     }
-  //   } catch (err) {
-  //     setError(err.data?.error || 'Paddle payment failed');
-  //     setProcessing(false);
-  //   }
-  // };
-
-  // ========================================
-  // HANDLE WALLET PAYMENT
-  // ========================================
   const handleWalletPayment = async () => {
     if (walletBalance < amount) {
       setError('Insufficient wallet balance. Please deposit funds first.');
