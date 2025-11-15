@@ -91,6 +91,7 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
   const [payForElection] = usePayForElectionMutation();
+  const { refetch: refetchWallet } = useGetWalletQuery();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -141,7 +142,7 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
           const userData = JSON.parse(localStorage.getItem('userData') || '{}');
           const token = localStorage.getItem('accessToken');
           
-          await fetch(
+          const confirmResponse = await fetch(
             `${import.meta.env.VITE_VOTING_SERVICE_URL}/wallet/election-payment/confirm`,
             {
               method: 'POST',
@@ -161,9 +162,15 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
             }
           );
           
-          console.log('✅ Backend confirmed - wallet updated!');
+          if (confirmResponse.ok) {
+            console.log('✅ Backend confirmed - wallet updated!');
+            // ✅ Refetch wallet data to update UI
+            await refetchWallet();
+          } else {
+            console.error('⚠️ Backend confirmation failed');
+          }
         } catch (confirmError) {
-          console.error('⚠️ Backend confirmation failed:', confirmError);
+          console.error('⚠️ Backend confirmation error:', confirmError);
         }
         
         onSuccess(paymentIntent.id);
