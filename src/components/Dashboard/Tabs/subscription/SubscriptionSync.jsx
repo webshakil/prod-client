@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-//import { checkEligibility } from '../redux/api/election/electionApi';
-// import { 
-//   setSubscriptionType,
-//   setIsSubscribed,
-//   setElectionCreationLimit,
-//   setCurrentElectionsCount
-// } from '../redux/slices/authSlice';
+
 import { checkEligibility } from '../../../../redux/api/election/electionApi';
 import { setCurrentElectionsCount, setElectionCreationLimit, setIsSubscribed, setSubscriptionType } from '../../../../redux/slices/authSlice';
 
