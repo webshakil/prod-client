@@ -21,13 +21,30 @@ export const lotteryDrawApi = createApi({
     baseUrl: VOTING_SERVICE_URL,
     prepareHeaders: (headers) => {
       const userData = getUserData();
+      
       if (userData) {
+        // ✅ Set x-user-data with full user object (matching electionApi)
+        headers.set('x-user-data', JSON.stringify({
+          userId: userData.userId,
+          email: userData.email,
+          phone: userData.phone || null,
+          username: userData.username || null,
+          roles: (userData.roles || ['Voter']).map(role => 
+            role === 'ContentCreator' ? 'Content_Creator' : role
+          ),
+          subscriptionType: userData.subscriptionType || 'Free',
+          isSubscribed: userData.isSubscribed || false
+        }));
+        
+        // Also set x-user-id for backward compatibility
         headers.set('x-user-id', userData.userId);
       }
+      
       const token = localStorage.getItem('accessToken');
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
+      
       return headers;
     },
   }),
