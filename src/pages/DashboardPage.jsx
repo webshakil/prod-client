@@ -157,7 +157,7 @@ export default function DashboardPage() {
     if (canCreateElections) {
       tabsList.push({
         id: 'creator-wallet',
-        label: 'Creator Earnings',
+        label: 'Creator Wallet',
         icon: '💵',
         component: CreatorWallet,
       });

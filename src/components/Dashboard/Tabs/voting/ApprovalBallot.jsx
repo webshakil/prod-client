@@ -1,175 +1,190 @@
 // src/components/Dashboard/Tabs/voting/ApprovalBallot.jsx
-// ✨ Approval Voting - Multiple Selection
+// ✅ Clean Approval Ballot - No embedded pie chart
 import React from 'react';
-/*eslint-disable*/
-import { motion } from 'framer-motion';
-import { Check, AlertCircle } from 'lucide-react';
 
 export default function ApprovalBallot({ 
   ballot,
   answers,
   onAnswersChange,
   disabled = false,
+  /*eslint-disable*/
   validationErrors = [],
+  electionId,
 }) {
-  const handleOptionToggle = (questionId, optionId) => {
+  const question = ballot?.questions?.[0];
+  const candidates = question?.options || [];
+  const questionId = question?.id;
+  
+  const approvals = answers[questionId] || {};
+
+  const handleApprovalSelect = (candidateId, approval) => {
     if (disabled) return;
 
-    const currentSelections = answers[questionId] || [];
-    
-    let newSelections;
-    if (currentSelections.includes(optionId)) {
-      // Remove selection
-      newSelections = currentSelections.filter(id => id !== optionId);
-    } else {
-      // Add selection
-      newSelections = [...currentSelections, optionId];
-    }
+    const newApprovals = {
+      ...approvals,
+      [candidateId]: approval,
+    };
 
     onAnswersChange({
-      ...answers,
-      [questionId]: newSelections,
+      [questionId]: newApprovals,
     });
   };
 
+  if (!question) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <p className="text-yellow-800 font-semibold">No ballot questions available</p>
+      </div>
+    );
+  }
+
+  const approvedCount = Object.values(approvals).filter(v => v === 'yes').length;
+
   return (
-    <div className="space-y-8">
-      {ballot?.questions?.map((question, qIndex) => {
-        const selectedOptions = answers[question.id] || [];
-        const hasError = validationErrors.some(err => err.questionId === question.id);
+    <div className="bg-white rounded-lg border-3 border-gray-400 shadow-lg overflow-hidden">
+      <div className="bg-gray-100 border-b-3 border-gray-400 px-6 py-4">
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-1">
+          Approval Voting
+        </h2>
+        <p className="text-center text-gray-700 font-medium">
+          {question.question_text}
+        </p>
+      </div>
 
-        return (
-          <motion.div
-            key={question.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: qIndex * 0.1 }}
-            className={`bg-white rounded-2xl shadow-lg p-6 border-2 ${
-              hasError ? 'border-red-300' : 'border-gray-200'
-            }`}
-          >
-            {/* Question Header */}
-            <div className="mb-6">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {qIndex + 1}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    {question.question_text}
-                  </h3>
-                  {question.description && (
-                    <p className="text-gray-600 text-sm">{question.description}</p>
-                  )}
-                  <p className="text-green-600 text-sm font-semibold mt-2">
-                    ✅ Select ALL options you approve of
-                  </p>
-                  {question.is_required && (
-                    <span className="inline-block mt-2 text-xs font-semibold text-red-600">
-                      * Required (at least one)
-                    </span>
-                  )}
-                </div>
-              </div>
+      <div className="bg-green-50 border-b-2 border-green-200 px-6 py-3">
+        <p className="text-sm text-green-900 font-semibold text-center">
+          Vote for as many candidates as you like.
+        </p>
+      </div>
 
-              {/* Error Message */}
-              {hasError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 mt-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">
-                    {validationErrors.find(err => err.questionId === question.id)?.message}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Options */}
-            <div className="space-y-3">
-              {question.options?.map((option, oIndex) => {
-                const isSelected = selectedOptions.includes(option.id);
-
-                return (
-                  <motion.button
-                    key={option.id}
-                    whileHover={{ scale: disabled ? 1 : 1.02 }}
-                    whileTap={{ scale: disabled ? 1 : 0.98 }}
-                    onClick={() => handleOptionToggle(question.id, option.id)}
-                    disabled={disabled}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      isSelected
-                        ? 'bg-green-50 border-green-600 shadow-md'
-                        : 'bg-gray-50 border-gray-200 hover:border-green-300'
-                    } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      {/* Checkbox */}
-                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                        isSelected ? 'border-green-600 bg-green-600' : 'border-gray-300'
-                      }`}>
-                        {isSelected && <Check className="w-4 h-4 text-white" />}
-                      </div>
-
-                      {/* Option Content */}
-                      <div className="flex-1">
-                        <p className={`font-semibold ${
-                          isSelected ? 'text-green-900' : 'text-gray-800'
-                        }`}>
-                          {option.option_text}
-                        </p>
-                        {option.description && (
-                          <p className="text-gray-600 text-sm mt-1">
-                            {option.description}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Option Letter */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        isSelected 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {String.fromCharCode(65 + oIndex)}
-                      </div>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-200 border-b-2 border-gray-400">
+            <th className="text-left px-6 py-3 font-bold text-gray-800 border-r border-gray-300 text-base">
+              Candidate
+            </th>
+            <th className="text-center px-4 py-3 font-bold text-gray-800 border-r border-gray-300 w-20 text-base">
+              Yes
+            </th>
+            <th className="text-center px-4 py-3 font-bold text-gray-800 w-20 text-base">
+              No
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {candidates.map((candidate, index) => {
+            const approval = approvals[candidate.id];
+            const isYes = approval === 'yes';
+            const isNo = approval === 'no';
+            const candidateLetter = String.fromCharCode(65 + index);
+            
+            return (
+              <tr 
+                key={candidate.id}
+                className={`border-b border-gray-300 transition-colors ${
+                  isYes ? 'bg-green-50' : isNo ? 'bg-red-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <td className="px-6 py-4 border-r border-gray-300">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
+                      isYes 
+                        ? 'bg-green-600 text-white' 
+                        : isNo 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-gray-700 text-white'
+                    }`}>
+                      {candidateLetter}
                     </div>
-                  </motion.button>
+                    
+                    <div>
+                      <p className="font-semibold text-gray-900 text-base">
+                        {candidate.option_text}
+                      </p>
+                      {approval && (
+                        <p className={`text-xs font-semibold mt-1 ${
+                          isYes ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {isYes ? '✓ Approved' : '✗ Not Approved'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4 border-r border-gray-300 text-center">
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleApprovalSelect(candidate.id, 'yes')}
+                      disabled={disabled}
+                      className={`w-10 h-10 rounded-full border-3 flex items-center justify-center font-bold text-xl transition-all ${
+                        isYes
+                          ? 'border-green-600 bg-green-600 text-white shadow-lg'
+                          : 'border-gray-400 bg-white hover:border-green-400 hover:bg-green-50 text-gray-400'
+                      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      {isYes && '●'}
+                    </button>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4 text-center">
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleApprovalSelect(candidate.id, 'no')}
+                      disabled={disabled}
+                      className={`w-10 h-10 rounded-full border-3 flex items-center justify-center font-bold text-xl transition-all ${
+                        isNo
+                          ? 'border-red-600 bg-red-600 text-white shadow-lg'
+                          : 'border-gray-400 bg-white hover:border-red-400 hover:bg-red-50 text-gray-400'
+                      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      {isNo && '●'}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div className="bg-gray-50 border-t-2 border-gray-300 px-6 py-3">
+        <p className="text-xs text-gray-700 text-center italic">
+          The candidate with the most votes wins.
+        </p>
+      </div>
+
+      <div className="bg-green-50 border-t-2 border-green-300 px-6 py-3">
+        <p className="text-green-900 font-bold text-center mb-2 text-sm">
+          Approved: {approvedCount} of {candidates.length}
+        </p>
+        {approvedCount > 0 && (
+          <div className="flex flex-wrap justify-center gap-2">
+            {Object.entries(approvals)
+              .filter(([_, approval]) => approval === 'yes')
+              .map(([candidateId]) => {
+                const candidate = candidates.find(c => c.id === parseInt(candidateId));
+                return (
+                  <span 
+                    key={candidateId}
+                    className="bg-green-200 text-green-900 px-2 py-1 rounded-full text-xs font-semibold"
+                  >
+                    ✓ {candidate?.option_text}
+                  </span>
                 );
               })}
-            </div>
+          </div>
+        )}
+      </div>
 
-            {/* Selection Summary */}
-            {selectedOptions.length > 0 && (
-              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800 font-semibold mb-2 text-sm">
-                  ✓ Approved Options ({selectedOptions.length}/{question.options?.length}):
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedOptions.map(optionId => {
-                    const option = question.options.find(o => o.id === optionId);
-                    return (
-                      <span 
-                        key={optionId}
-                        className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
-                      >
-                        {option?.option_text}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* No Selection Warning */}
-            {selectedOptions.length === 0 && question.is_required && (
-              <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-yellow-800 text-sm">
-                  ⚠️ Please select at least one option to proceed
-                </p>
-              </div>
-            )}
-          </motion.div>
-        );
-      })}
+      {approvedCount === 0 && question.is_required && (
+        <div className="bg-orange-50 border-t-2 border-orange-300 px-6 py-3">
+          <p className="text-orange-800 font-semibold text-center text-sm">
+            ⚠️ Please approve at least one candidate
+          </p>
+        </div>
+      )}
     </div>
   );
 }

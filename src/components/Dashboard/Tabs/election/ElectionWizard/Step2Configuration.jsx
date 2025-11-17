@@ -6,14 +6,7 @@ import {
   FaInfoCircle
 } from 'react-icons/fa';
 
-// Import sub-components
-// import CategorySelection from './Step2Configuration/CategorySelection';
-// import AccessControl from './Step2Configuration/AccessControl';
-// import BiometricAuth from './Step2Configuration/BiometricAuth';
-// import PricingConfiguration from './Step2Configuration/PricingConfiguration';
-// import LotteryConfiguration from './Step2Configuration/LotteryConfiguration';
-// import PreviewSettings from './Step2Configuration/PreviewSettings';
-// import ResultsFeatures from './Step2Configuration/ResultsFeatures';
+
 import { AccessControl, BiometricAuth, CategorySelection } from '../../../../election/Step2Configuration/Step2Configuration-Part1';
 import PricingConfiguration from '../../../../election/Step2Configuration/Step2Configuration-Part2';
 import LotteryConfiguration from '../../../../election/Step2Configuration/Step2Configuration-Part3-LotteryFull';
