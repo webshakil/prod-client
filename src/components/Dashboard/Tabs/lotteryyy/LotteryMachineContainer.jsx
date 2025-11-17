@@ -133,22 +133,22 @@ export default function LotteryMachineContainer({
   }, [finalElectionId, refetchTicket, refetchLottery]);
 
   // ✨ NEW: Listen for election end
-  useEffect(() => {
-    const handleElectionEnd = async (event) => {
-      if (event.detail.electionId === finalElectionId) {
-        console.log(' Election ended! Auto-triggering draw...');
+  // useEffect(() => {
+  //   const handleElectionEnd = async (event) => {
+  //     if (event.detail.electionId === finalElectionId) {
+  //       console.log(' Election ended! Auto-triggering draw...');
         
-        // Wait a moment for dramatic effect
-        await new Promise(resolve => setTimeout(resolve, 2000));
+  //       // Wait a moment for dramatic effect
+  //       await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Trigger draw
-        handleDrawLottery();
-      }
-    };
+  //       // Trigger draw
+  //       handleDrawLottery();
+  //     }
+  //   };
 
-    window.addEventListener('election-ended', handleElectionEnd);
-    return () => window.removeEventListener('election-ended', handleElectionEnd);
-  }, [finalElectionId]);
+  //   window.addEventListener('election-ended', handleElectionEnd);
+  //   return () => window.removeEventListener('election-ended', handleElectionEnd);
+  // }, [finalElectionId]);
 
   // Handle manual lottery draw (admin only)
   const handleDrawLottery = async () => {

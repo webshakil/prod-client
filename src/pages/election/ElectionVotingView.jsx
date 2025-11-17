@@ -193,24 +193,24 @@ export default function ElectionVotingView() {
   };
 
   // ✨ Auto-check election end for automatic draw (UNCHANGED - EXISTING CODE)
-  useEffect(() => {
-    if (!ballotData?.election?.endDate) return;
+  // useEffect(() => {
+  //   if (!ballotData?.election?.endDate) return;
 
-    const checkElectionEnd = setInterval(() => {
-      const now = new Date();
-      const endDate = new Date(ballotData.election.endDate);
+  //   const checkElectionEnd = setInterval(() => {
+  //     const now = new Date();
+  //     const endDate = new Date(ballotData.election.endDate);
       
-      if (now >= endDate && ballotData.lotteryEnabled) {
-        console.log('🎰 Election ended! Triggering automatic draw...');
-        window.dispatchEvent(new CustomEvent('election-ended', {
-          detail: { electionId }
-        }));
-        clearInterval(checkElectionEnd);
-      }
-    }, 5000);
+  //     if (now >= endDate && ballotData.lotteryEnabled) {
+  //       console.log('🎰 Election ended! Triggering automatic draw...');
+  //       window.dispatchEvent(new CustomEvent('election-ended', {
+  //         detail: { electionId }
+  //       }));
+  //       clearInterval(checkElectionEnd);
+  //     }
+  //   }, 5000);
 
-    return () => clearInterval(checkElectionEnd);
-  }, [ballotData, electionId]);
+  //   return () => clearInterval(checkElectionEnd);
+  // }, [ballotData, electionId]);
 
   // ✅ Loading state (UNCHANGED - EXISTING CODE)
   if (isLoading) {
