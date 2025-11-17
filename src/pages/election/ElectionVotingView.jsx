@@ -12,7 +12,7 @@ import VoteToBallAnimation from '../../components/Dashboard/Tabs/lotteryyy/VoteT
 import VideoWatchProgress from '../../components/Dashboard/Tabs/voting/VideoWatchProgress';
 import AnonymousVoteToggle from '../../components/Dashboard/Tabs/voting/AnonymousVoteToggle';
 import { useAuth } from '../../redux/hooks';
-import { Loader, CheckCircle, AlertCircle, Sparkles, ArrowLeft } from 'lucide-react';
+import { Loader, CheckCircle, AlertCircle, Sparkles, ArrowLeft, UserX, Shield, Copy, Check, X } from 'lucide-react';
 import CompactLiveResults from '../../components/Dashboard/Tabs/voting/CompactLiveResults';
 
 export default function ElectionVotingView() {
@@ -21,198 +21,219 @@ export default function ElectionVotingView() {
   const dispatch = useDispatch();
   const auth = useAuth();
 
-  // ✅ CHANGE #1: ADDED - Video completion state
   const [videoCompleted, setVideoCompleted] = useState(false);
-
-  // ✅ State management (UNCHANGED - EXISTING CODE)
   const answers = useSelector(state => state.votingNew?.answers || {});
-  const anonymous = useSelector(state => state.votingNew?.anonymous || false);
 
-  // ✨ Animation state (UNCHANGED - EXISTING CODE)
-  /*eslint-disable*/
+  // ⭐ NEW: State for vote confirmation and token
+  const [voteSubmitted, setVoteSubmitted] = useState(false);
+  const [voteToken, setVoteToken] = useState(null);
+  const [receiptData, setReceiptData] = useState(null);
+  const [tokenCopied, setTokenCopied] = useState(false);
+  
+  // ⭐ NEW: Abstention modal state
+  const [showAbstentionModal, setShowAbstentionModal] = useState(false);
+/*eslint-disable*/
   const [showFlyingBallot, setShowFlyingBallot] = useState(false);
   const [flyingBallNumber, setFlyingBallNumber] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ API queries (UNCHANGED - EXISTING CODE)
   const { data: ballotData, isLoading, error } = useGetBallotQuery(electionId);
   const [castVote, { isLoading: submitting }] = useCastVoteMutation();
 
-  // ✅ Get voting type from API response (UNCHANGED - EXISTING CODE)
   const votingTypeToUse = ballotData?.votingType || 
                           ballotData?.voting_type || 
                           'approval';
 
+  // ⭐ ADDED: Check if election is anonymous
+  const isAnonymousElection = ballotData?.anonymousVotingEnabled === true;
+
   console.log('🔍 Ballot data:', ballotData);
   console.log('🔍 Voting type:', votingTypeToUse);
+  console.log('🔐 Is Anonymous Election:', isAnonymousElection);
   console.log('📝 Current answers:', answers);
 
-  // ✅ CHANGE #2: ADDED - Check if user already completed video
   useEffect(() => {
     if (ballotData?.videoWatchRequired && ballotData?.videoProgress) {
       const isAlreadyCompleted = ballotData.videoProgress.completed || 
                                   parseFloat(ballotData.videoProgress.watch_percentage) >= (ballotData.minimumWatchPercentage || 80);
       
-      console.log('📹 Checking existing video progress:', {
-        completed: ballotData.videoProgress.completed,
-        percentage: ballotData.videoProgress.watch_percentage,
-        required: ballotData.minimumWatchPercentage,
-        isAlreadyCompleted
-      });
-
       if (isAlreadyCompleted) {
-        console.log('✅ User already completed video, skipping requirement');
         setVideoCompleted(true);
       }
     } else if (!ballotData?.videoWatchRequired) {
-      // If video not required at all, mark as completed
       setVideoCompleted(true);
     }
   }, [ballotData]);
 
-  // ✅ UNCHANGED - EXISTING CODE
   const handleAnswersChange = (newAnswers) => {
     console.log('📝 Answers updated:', newAnswers);
     dispatch(setAllAnswers(newAnswers));
   };
 
-  // ✨ ENHANCED: Vote submission with ballot flying animation (UNCHANGED - EXISTING CODE)
+  // ⭐ FIXED: Handle abstention WITHOUT window.confirm
+  const handleAbstention = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const result = await castVote({
+        electionId,
+        answers: {},
+        isAbstention: true,
+      }).unwrap();
+
+      console.log('✅ Abstention recorded:', result);
+      
+      toast.success('✅ Blank ballot submitted successfully!', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+
+      setShowAbstentionModal(false);
+      setTimeout(() => {
+        setVoteSubmitted(true);
+      }, 1500);
+
+    } catch (error) {
+      console.error('❌ Abstention error:', error);
+      toast.error(error.data?.error || 'Failed to submit blank ballot', {
+        position: 'top-center',
+        autoClose: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ⭐ MODIFIED: Enhanced vote submission
   const handleSubmitVote = async () => {
     console.log('========== VOTE SUBMISSION DEBUG ==========');
     console.log('🗳️ Answers:', JSON.stringify(answers, null, 2));
     console.log('🗳️ Election ID:', electionId);
-    console.log('🗳️ Anonymous:', anonymous);
-    console.log('🗳️ User ID:', auth.userId);
+    console.log('🔐 Is Anonymous:', isAnonymousElection);
     
     if (!answers || Object.keys(answers).length === 0) {
-      console.log('❌ No answers provided');
-      toast.error('Please select at least one option before submitting');
+      toast.error('Please select at least one option before submitting', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
       return;
     }
 
-    console.log('✅ Validation passed, starting submission...');
     setIsSubmitting(true);
 
     try {
-      // ✨ STEP 1: Show ballot flying animation FIRST (if lottery enabled)
+      // Show animation if lottery enabled
       if (ballotData?.lotteryEnabled) {
-        console.log('🎰 Starting ballot flying animation...');
-        
-        // Generate a temporary ball number for animation
         const tempBallNumber = Math.floor(Math.random() * 999999);
-        console.log('🎲 Generated ballot number:', tempBallNumber);
         setFlyingBallNumber(tempBallNumber);
-        
-        // Small delay to ensure state update
         await new Promise(resolve => setTimeout(resolve, 50));
-        
-        console.log('🚀 Triggering ballot animation...');
         setShowFlyingBallot(true);
-        
-        // Wait for animation to complete (4.5 seconds for extra slow animation)
         await new Promise(resolve => setTimeout(resolve, 4500));
-        console.log('✅ Animation completed');
-        
-        // Hide ballot
         setShowFlyingBallot(false);
-        
-        // Trigger pulse on lottery machine when ballot arrives
-        setTimeout(() => {
-          const machineElement = document.getElementById('lottery-machine-3d');
-          if (machineElement) {
-            console.log('✅ Adding pulse to lottery machine');
-            machineElement.classList.add('lottery-machine-pulse');
-            setTimeout(() => {
-              machineElement.classList.remove('lottery-machine-pulse');
-            }, 1200);
-          }
-        }, 100);
       }
 
-      // ✨ STEP 2: Call API
-      console.log('📤 Calling castVote mutation...');
-      
+      // Call API
       const result = await castVote({
         electionId,
         answers,
-        anonymous,
       }).unwrap();
 
       console.log('✅ Vote cast result:', result);
 
-      // Get the actual ball number from API response
-      const ballNumber = result.ticket?.ball_number || result.ticket?.ballNumber;
-      console.log('🎲 Actual ballot number from API:', ballNumber);
-      if (ballNumber) {
-        setFlyingBallNumber(ballNumber);
+      // Handle anonymous vs normal vote response
+      if (result.anonymous) {
+        console.log('🔐 Anonymous vote submitted, storing token:', result.voteToken);
+        setVoteToken(result.voteToken);
+        setReceiptData({
+          receiptId: result.receiptId,
+          voteHash: result.voteHash,
+          verificationCode: result.verificationCode,
+        });
+        
+        toast.success('🔐 Anonymous vote submitted! Save your verification token.', {
+          position: 'top-center',
+          autoClose: 6000,
+        });
+      } else {
+        setReceiptData({
+          receiptId: result.receiptId,
+          voteHash: result.voteHash,
+          verificationCode: result.verificationCode,
+          votingId: result.votingId,
+        });
+        
+        toast.success(
+          ballotData?.lotteryEnabled 
+            ? '🎉 Vote submitted! Your lottery ticket has been created!' 
+            : '✅ Vote submitted successfully!',
+          {
+            position: 'top-center',
+            autoClose: 5000,
+          }
+        );
       }
 
-      // ✨ STEP 3: Update Redux with ticket data
+      // Update Redux with ticket data
       if (result.ticket && ballotData?.lotteryEnabled) {
         dispatch(setMyTicket(result.ticket));
       }
 
-      // ✨ STEP 4: Dispatch custom event for lottery container
-      window.dispatchEvent(new CustomEvent('vote-cast', {
-        detail: {
-          electionId,
-          ticket: result.ticket,
-          ballNumber: ballNumber,
-        }
-      }));
+      // Show confirmation screen
+      setVoteSubmitted(true);
 
-      // ✨ STEP 5: Success feedback
-      toast.success(
-        ballotData?.lotteryEnabled 
-          ? '🎉 Vote submitted! Your lottery ticket has been created!' 
-          : '✅ Vote submitted successfully!',
-        { autoClose: 5000 }
-      );
-
-      // ✨ STEP 6: Scroll to lottery machine
+      // Scroll to lottery machine if enabled
       if (ballotData?.lotteryEnabled) {
         setTimeout(() => {
-          const targetElement = document.getElementById('lottery-machine-3d') || document.getElementById('lottery-machine-full');
+          const targetElement = document.getElementById('lottery-machine-full');
           if (targetElement) {
-            targetElement.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'center',
-            });
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }, 500);
       }
       
     } catch (error) {
       console.error('❌ Vote submission error:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
-      toast.error(error.data?.error || 'Failed to submit vote');
+      
+      if (error.data?.error === 'You have already voted in this election') {
+        toast.error('⚠️ You have already voted in this election!', {
+          position: 'top-center',
+          autoClose: 5000,
+          icon: '🗳️',
+        });
+      } else {
+        toast.error(error.data?.error || 'Failed to submit vote. Please try again.', {
+          position: 'top-center',
+          autoClose: 5000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
       setShowFlyingBallot(false);
     }
   };
 
-  // ✨ Auto-check election end for automatic draw (UNCHANGED - EXISTING CODE)
-  // useEffect(() => {
-  //   if (!ballotData?.election?.endDate) return;
+  // Copy functions
+  const copyTokenToClipboard = () => {
+    if (voteToken) {
+      navigator.clipboard.writeText(voteToken);
+      setTokenCopied(true);
+      toast.success('Token copied to clipboard!', {
+        position: 'top-center',
+        autoClose: 2000,
+      });
+      setTimeout(() => setTokenCopied(false), 3000);
+    }
+  };
 
-  //   const checkElectionEnd = setInterval(() => {
-  //     const now = new Date();
-  //     const endDate = new Date(ballotData.election.endDate);
-      
-  //     if (now >= endDate && ballotData.lotteryEnabled) {
-  //       console.log('🎰 Election ended! Triggering automatic draw...');
-  //       window.dispatchEvent(new CustomEvent('election-ended', {
-  //         detail: { electionId }
-  //       }));
-  //       clearInterval(checkElectionEnd);
-  //     }
-  //   }, 5000);
+  const copyReceiptToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!', {
+      position: 'top-center',
+      autoClose: 2000,
+    });
+  };
 
-  //   return () => clearInterval(checkElectionEnd);
-  // }, [ballotData, electionId]);
-
-  // ✅ Loading state (UNCHANGED - EXISTING CODE)
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
@@ -224,11 +245,10 @@ export default function ElectionVotingView() {
     );
   }
 
-  // ✅ Error state (UNCHANGED - EXISTING CODE)
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Dashboard Button - Error State */}
         <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
           <button
             onClick={() => navigate('/dashboard')}
@@ -250,11 +270,10 @@ export default function ElectionVotingView() {
     );
   }
 
-  // ✅ Already voted state (SHOWS LOTTERY MACHINE) (UNCHANGED - EXISTING CODE)
-  if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
+  // Vote confirmation screen (after successful vote)
+  if (voteSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-        {/* Dashboard Button - Already Voted State */}
         <div className="max-w-4xl mx-auto pb-4">
           <button
             onClick={() => navigate('/dashboard')}
@@ -267,52 +286,127 @@ export default function ElectionVotingView() {
 
         <div className="max-w-4xl mx-auto space-y-8 py-4">
           
-          {/* Success Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-center mb-4">Vote Recorded Successfully!</h2>
-            <p className="text-gray-600 text-center mb-6">
-              Your vote has been securely recorded and encrypted.
-            </p>
-            
-            {ballotData?.receiptId && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <p className="text-sm text-gray-600 mb-1">Receipt ID:</p>
-                <p className="font-mono text-sm font-bold break-all">{ballotData.receiptId}</p>
+          {isAnonymousElection ? (
+            // ANONYMOUS VOTE CONFIRMATION
+            <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-500">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Shield className="w-16 h-16 text-purple-600" />
+                <CheckCircle className="w-16 h-16 text-green-600" />
               </div>
-            )}
+              
+              <h2 className="text-3xl font-bold text-center mb-4 text-purple-900">
+                🔐 Anonymous Vote Submitted!
+              </h2>
+              
+              <p className="text-gray-700 text-center mb-6">
+                Your vote has been recorded anonymously. Your identity is protected.
+              </p>
 
-            {ballotData?.lotteryEnabled && (
-              <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
-                <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
-                <p className="text-purple-700 text-sm mb-3">
-                  Your lottery ticket has been created. Scroll down to see your ball in the 3D lottery machine!
-                </p>
-                <button
-                  onClick={() => {
-                    document.getElementById('lottery-machine-full')?.scrollIntoView({ 
-                      behavior: 'smooth',
-                      block: 'center',
-                    });
-                  }}
-                  className="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
-                >
-                  View Lottery Machine 🎰
-                </button>
-              </div>
-            )}
+              {voteToken && (
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-3 border-purple-400 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <UserX className="text-purple-700" size={24} />
+                    <h3 className="text-lg font-bold text-purple-900">⚠️ SAVE THIS VERIFICATION TOKEN</h3>
+                  </div>
+                  
+                  <p className="text-purple-800 text-sm mb-4">
+                    This is your ONLY way to verify your vote. We cannot recover it if lost!
+                  </p>
 
-            <div className="flex gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-purple-300 mb-3">
+                    <p className="text-xs text-gray-600 mb-2">Verification Token:</p>
+                    <p className="font-mono text-sm font-bold break-all text-purple-900 mb-3">
+                      {voteToken}
+                    </p>
+                    
+                    <button
+                      onClick={copyTokenToClipboard}
+                      className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-2"
+                    >
+                      {tokenCopied ? (
+                        <><Check size={20} /> Copied!</>
+                      ) : (
+                        <><Copy size={20} /> Copy Token</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {receiptData && (
+                <div className="space-y-3 mb-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 mb-1">Receipt ID:</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-sm font-bold flex-1 break-all">{receiptData.receiptId}</p>
+                      <button
+                        onClick={() => copyReceiptToClipboard(receiptData.receiptId)}
+                        className="p-2 hover:bg-gray-200 rounded transition"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {ballotData?.lotteryEnabled && (
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
+                  <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+                  <p className="text-purple-700 text-sm">
+                    You're entered in the lottery draw. Winners will be notified after the election ends.
+                  </p>
+                </div>
+              )}
+
               <button
-                onClick={() => window.history.back()}
-                className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
+                onClick={() => navigate('/dashboard')}
+                className="w-full bg-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-purple-700 transition shadow-lg"
               >
-                Back to Elections
+                Return to Dashboard
               </button>
             </div>
-          </div>
+          ) : (
+            // NORMAL VOTE CONFIRMATION
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-center mb-4">Vote Recorded Successfully!</h2>
+              <p className="text-gray-600 text-center mb-6">
+                Your vote has been securely recorded and encrypted.
+              </p>
+              
+              {receiptData && (
+                <>
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-gray-600 mb-1">Receipt ID:</p>
+                    <p className="font-mono text-sm font-bold break-all">{receiptData.receiptId}</p>
+                  </div>
 
-          {/* Show Live Results if enabled */}
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-gray-600 mb-1">Verification Code:</p>
+                    <p className="font-mono text-lg font-bold">{receiptData.verificationCode}</p>
+                  </div>
+                </>
+              )}
+
+              {ballotData?.lotteryEnabled && (
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
+                  <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+                  <p className="text-purple-700 text-sm mb-3">
+                    Your lottery ticket has been created!
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          )}
+
           {ballotData?.liveResults && (
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold mb-4">Live Results</h3>
@@ -324,7 +418,6 @@ export default function ElectionVotingView() {
             </div>
           )}
 
-          {/* ✅ SHOW FULL LOTTERY MACHINE (Even after voting) */}
           {ballotData?.lotteryEnabled && (
             <div id="lottery-machine-full">
               <LotteryMachineContainer
@@ -338,12 +431,45 @@ export default function ElectionVotingView() {
     );
   }
 
-  // ✅ MAIN VOTING VIEW (UNCHANGED - EXISTING CODE)
+  // Already voted state
+  if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+        <div className="max-w-4xl mx-auto pb-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+          >
+            <ArrowLeft size={20} />
+            Go to Dashboard
+          </button>
+        </div>
+
+        <div className="max-w-4xl mx-auto space-y-8 py-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-center mb-4">You Have Already Voted!</h2>
+            <p className="text-gray-600 text-center mb-6">
+              Thank you for participating in this election.
+            </p>
+            
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MAIN VOTING VIEW
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4">
         
-        {/* ✅ DASHBOARD BUTTON - ALWAYS VISIBLE AT TOP (UNCHANGED - EXISTING CODE) */}
         <div className="max-w-4xl mx-auto mb-6">
           <button
             onClick={() => navigate('/dashboard')}
@@ -354,30 +480,9 @@ export default function ElectionVotingView() {
           </button>
         </div>
 
-        {/* ✅ COMMENTED OUT - FLOATING LOTTERY MACHINE */}
-        {/* {ballotData?.lotteryEnabled && (
-          <div className="hidden xl:block fixed top-20 right-4 w-[400px] h-[550px] z-40">
-            <div className="bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border-4 border-purple-500 h-full">
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2">
-                <p className="text-white font-bold text-center flex items-center justify-center gap-2">
-                  <Sparkles size={20} />
-                  Live Gamify Machine
-                </p>
-              </div>
-              <div id="lottery-machine-3d" className="w-full" style={{ height: 'calc(100% - 48px)' }}>
-                <LotteryMachineContainer
-                  electionId={electionId}
-                  userRoles={auth.roles}
-                  compact={true}
-                />
-              </div>
-            </div>
-          </div>
-        )} */}
-
         <div className="max-w-4xl mx-auto space-y-8">
           
-          {/* Election Header (UNCHANGED - EXISTING CODE) */}
+          {/* Election Header */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -395,7 +500,6 @@ export default function ElectionVotingView() {
               </div>
             </div>
 
-            {/* Election Info Grid (UNCHANGED - EXISTING CODE) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="bg-blue-50 rounded-lg p-3">
                 <p className="text-xs text-blue-600 font-semibold mb-1">Start Date</p>
@@ -425,7 +529,6 @@ export default function ElectionVotingView() {
               </div>
             </div>
 
-            {/* Lottery Badge (UNCHANGED - EXISTING CODE) */}
             {ballotData?.lotteryEnabled && (
               <div className="mt-4 bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4">
                 <div className="flex items-center gap-3">
@@ -441,8 +544,45 @@ export default function ElectionVotingView() {
             )}
           </div>
 
-          {/* ✅ CHANGE #3: MODIFIED - Video Watch Section */}
-          {/* Show video player ONLY if video required AND not yet completed */}
+          {/* ⭐ ANONYMOUS VOTING BANNER */}
+          {isAnonymousElection && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-lg p-6 shadow-lg">
+              <div className="flex items-start gap-4">
+                <Shield className="w-12 h-12 text-purple-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-purple-900 mb-2 flex items-center gap-2">
+                    🔐 Anonymous Voting Enabled
+                  </h3>
+                  <p className="text-purple-800 mb-3">
+                    This election uses anonymous ballot casting. Your vote choices will NOT be linked to your identity.
+                  </p>
+                  <div className="bg-white/60 rounded-lg p-3 border border-purple-200">
+                    <p className="text-sm text-purple-900 font-semibold mb-2">ℹ️ What this means:</p>
+                    <ul className="text-sm text-purple-800 space-y-1">
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600 mt-0.5">•</span>
+                        <span>Your vote will be recorded without linking it to your identity</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600 mt-0.5">•</span>
+                        <span>You'll receive a verification token to confirm your vote was counted</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600 mt-0.5">•</span>
+                        <span>Lottery eligibility is NOT affected</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600 mt-0.5">•</span>
+                        <span>Save your token - we cannot recover it if lost</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Video Watch Section */}
           {ballotData?.videoWatchRequired && !videoCompleted && (
             <VideoWatchProgress
               electionId={electionId}
@@ -450,13 +590,11 @@ export default function ElectionVotingView() {
               minimumWatchPercentage={ballotData.minimumWatchPercentage || 80}
               required={true}
               onComplete={() => {
-                console.log('✅ Video watch completed! Allowing vote...');
                 setVideoCompleted(true);
               }}
             />
           )}
 
-          {/* ✅ CHANGE #4: ADDED - Show "Already Completed" message for returning users */}
           {ballotData?.videoWatchRequired && videoCompleted && (
             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6">
               <div className="flex items-center gap-4">
@@ -466,22 +604,15 @@ export default function ElectionVotingView() {
                     ✓ Video Requirement Completed!
                   </h3>
                   <p className="text-green-700">
-                    You've already watched the required video. You can proceed to vote below.
+                    You can proceed to vote below.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Anonymous Toggle (UNCHANGED - EXISTING CODE) */}
-          {ballotData?.anonymousVotingEnabled && (
-            <AnonymousVoteToggle />
-          )}
-
-          {/* Ballot Renderer (UNCHANGED - EXISTING CODE) */}
-          {/* Ballot Renderer + Live Results Side-by-Side - PDF #10 Format */}
+          {/* Ballot Renderer */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Ballot (2/3 width) */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <BallotRenderer
@@ -493,7 +624,6 @@ export default function ElectionVotingView() {
               </div>
             </div>
 
-            {/* Right: Compact Live Results (1/3 width) - PDF #10 */}
             {ballotData?.liveResults && (
               <div className="lg:col-span-1">
                 <div className="sticky top-24">
@@ -505,63 +635,65 @@ export default function ElectionVotingView() {
               </div>
             )}
           </div>
-          {/* <div className="bg-white rounded-2xl shadow-lg p-6">
-            <BallotRenderer
-              electionId={electionId}
-              ballot={ballotData}
-              votingType={votingTypeToUse}
-              onAnswersChange={handleAnswersChange}
-            />
-          </div> */}
 
-          {/* ✅ CHANGE #5: MODIFIED - Submit Button (added video requirement check) */}
-          <div className="sticky bottom-4 z-10">
-            <button
-              id="submit-vote-button"
-              onClick={handleSubmitVote}
-              disabled={isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)}
-              className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform ${
-                isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:scale-[1.02] hover:shadow-2xl'
-              }`}
-            >
-              {isSubmitting || submitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader className="animate-spin" size={20} />
-                  {ballotData?.lotteryEnabled ? '🎰 Submitting Vote...' : '⏳ Submitting...'}
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  {ballotData?.videoWatchRequired && !videoCompleted ? (
-                    <>📹 Watch Video First to Continue</>
-                  ) : (
-                    <>
-                      🗳️ Submit Vote 
-                      {ballotData?.lotteryEnabled && ' & Enter Gamify'}
-                    </>
-                  )}
-                </span>
-              )}
-            </button>
-
-            {/* Answer Count (UNCHANGED - EXISTING CODE) */}
-            <div className="text-center mt-2">
-              <p className="text-sm text-gray-600">
-                {Object.keys(answers).length > 0 ? (
-                  <span className="text-green-600 font-semibold">
-                    ✓ {Object.keys(answers).length} question{Object.keys(answers).length !== 1 ? 's' : ''} answered
+          {/* Submit Buttons */}
+          <div className="space-y-3">
+            <div className="sticky bottom-4 z-10">
+              <button
+                id="submit-vote-button"
+                onClick={handleSubmitVote}
+                disabled={isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)}
+                className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform ${
+                  isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:scale-[1.02] hover:shadow-2xl'
+                }`}
+              >
+                {isSubmitting || submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader className="animate-spin" size={20} />
+                    {ballotData?.lotteryEnabled ? '🎰 Submitting Vote...' : '⏳ Submitting...'}
                   </span>
                 ) : (
-                  <span className="text-orange-600 font-semibold">
-                    ⚠ Please select your answers above
+                  <span className="flex items-center justify-center gap-2">
+                    {ballotData?.videoWatchRequired && !videoCompleted ? (
+                      <>📹 Watch Video First</>
+                    ) : (
+                      <>
+                        {isAnonymousElection && '🔐 '}
+                        🗳️ Submit Vote 
+                        {ballotData?.lotteryEnabled && ' & Enter Gamify'}
+                      </>
+                    )}
                   </span>
                 )}
-              </p>
+              </button>
+
+              <div className="text-center mt-2">
+                <p className="text-sm text-gray-600">
+                  {Object.keys(answers).length > 0 ? (
+                    <span className="text-green-600 font-semibold">
+                      ✓ {Object.keys(answers).length} question{Object.keys(answers).length !== 1 ? 's' : ''} answered
+                    </span>
+                  ) : (
+                    <span className="text-orange-600 font-semibold">
+                      ⚠ Select your answers above
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
+
+            {/* Abstention Button */}
+            <button
+              onClick={() => setShowAbstentionModal(true)}
+              disabled={isSubmitting || submitting}
+              className="w-full py-3 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              📝 Submit Blank Ballot (Abstain)
+            </button>
           </div>
 
-          {/* Live Results (UNCHANGED - EXISTING CODE) */}
           {ballotData?.liveResults && (
             <LiveResultsChart
               electionId={electionId}
@@ -570,7 +702,6 @@ export default function ElectionVotingView() {
             />
           )}
 
-          {/* Lottery Machine (Mobile/Tablet - Full View) (UNCHANGED - EXISTING CODE) */}
           {ballotData?.lotteryEnabled && (
             <div id="lottery-machine-full" className="xl:hidden">
               <LotteryMachineContainer
@@ -582,82 +713,712 @@ export default function ElectionVotingView() {
         </div>
       </div>
 
-      {/* ✅ COMMENTED OUT - FLYING BALLOT PAPER ANIMATION */}
-      {/* {showFlyingBallot && ballotData?.lotteryEnabled && (() => {
-        const button = document.getElementById('submit-vote-button');
-        const buttonRect = button?.getBoundingClientRect();
-        const machine = document.getElementById('lottery-machine-3d');
-        const machineRect = machine?.getBoundingClientRect();
-        
-        if (!buttonRect) return null;
-        
-        const deltaX = machineRect ? (machineRect.left + machineRect.width / 2 - buttonRect.left - buttonRect.width / 2) : 1000;
-        const deltaY = machineRect ? (machineRect.top + machineRect.height / 2 - buttonRect.top - buttonRect.height / 2) : -100;
-        
-        return (
-          <>
-            <style>{`
-              @keyframes flyBallotExtraSlow {
-                0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
-                8% { transform: translate(${deltaX * 0.06}px, ${deltaY * 0.08}px) scale(1.03) rotate(120deg); opacity: 1; }
-                18% { transform: translate(${deltaX * 0.15}px, ${deltaY * 0.2}px) scale(1.06) rotate(288deg); opacity: 1; }
-                30% { transform: translate(${deltaX * 0.28}px, ${deltaY * 0.35}px) scale(1.05) rotate(504deg); opacity: 0.99; }
-                45% { transform: translate(${deltaX * 0.44}px, ${deltaY * 0.52}px) scale(1.0) rotate(792deg); opacity: 0.98; }
-                60% { transform: translate(${deltaX * 0.62}px, ${deltaY * 0.7}px) scale(0.92) rotate(1152deg); opacity: 0.96; }
-                75% { transform: translate(${deltaX * 0.78}px, ${deltaY * 0.84}px) scale(0.78) rotate(1584deg); opacity: 0.9; }
-                88% { transform: translate(${deltaX * 0.92}px, ${deltaY * 0.95}px) scale(0.55) rotate(2016deg); opacity: 0.75; }
-                96% { transform: translate(${deltaX * 0.98}px, ${deltaY * 0.99}px) scale(0.35) rotate(2376deg); opacity: 0.45; }
-                100% { transform: translate(${deltaX}px, ${deltaY}px) scale(0.12) rotate(2520deg); opacity: 0; }
-              }
-              .flying-ballot-extra-slow {
-                animation: flyBallotExtraSlow 4.5s cubic-bezier(0.22, 0.08, 0.28, 0.99) forwards !important;
-              }
-            `}</style>
-            
-            <div 
-              className="flying-ballot flying-ballot-extra-slow"
-              style={{
-                position: 'fixed',
-                left: `${buttonRect.left + (buttonRect.width / 2) - 40}px`,
-                top: `${buttonRect.top + (buttonRect.height / 2) - 50}px`,
-                width: '80px',
-                height: '100px',
-                background: 'linear-gradient(135deg, #ffffff, #f0f0f0)',
-                border: '3px solid #4f46e5',
-                borderRadius: '8px',
-                zIndex: 99999,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                color: '#4f46e5',
-                boxShadow: '0 8px 24px rgba(79, 70, 229, 0.6)',
-                padding: '8px',
-              }}
-            >
-              <div style={{ fontSize: '28px', marginBottom: '4px' }}>🗳️</div>
-              <div style={{ textAlign: 'center', lineHeight: '1.2' }}>
-                VOTE
-                <br />
-                #{flyingBallNumber}
-              </div>
-              <div style={{
-                position: 'absolute',
-                top: '-12px',
-                right: '-12px',
-                fontSize: '18px',
-              }}>
-                ✨
-              </div>
+      {/* ⭐ ABSTENTION MODAL (replaces window.confirm) */}
+      {showAbstentionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-12 h-12 text-orange-500" />
+              <h3 className="text-xl font-bold text-gray-900">Submit Blank Ballot?</h3>
             </div>
-          </>
-        );
-      })()} */}
+            
+            <p className="text-gray-700 mb-4">
+              You are about to submit a blank ballot (abstention). This will count as participation but will not influence the election results.
+            </p>
+
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> This action cannot be undone. You will still be eligible for the lottery draw (if enabled).
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAbstentionModal(false)}
+                disabled={isSubmitting}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAbstention}
+                disabled={isSubmitting}
+                className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <><Loader className="animate-spin" size={18} /> Submitting...</>
+                ) : (
+                  'Confirm Abstention'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+//last workable code just to implement anonymous vote and abastantia vote above code
+// import React, { useState, useEffect } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { useGetBallotQuery, useCastVoteMutation } from '../../redux/api/voting/votingApi';
+// import { setAllAnswers } from '../../redux/slices/votingNewSlice';
+// import {  setMyTicket } from '../../redux/slices/lotteryySlice';
+// import { toast } from 'react-toastify';
+// import BallotRenderer from '../../components/Dashboard/Tabs/voting/BallotRenderer';
+// import LiveResultsChart from '../../components/Dashboard/Tabs/voting/LiveResultsChart';
+// import LotteryMachineContainer from '../../components/Dashboard/Tabs/lotteryyy/LotteryMachineContainer';
+// import VoteToBallAnimation from '../../components/Dashboard/Tabs/lotteryyy/VoteToBallAnimation';
+// import VideoWatchProgress from '../../components/Dashboard/Tabs/voting/VideoWatchProgress';
+// import AnonymousVoteToggle from '../../components/Dashboard/Tabs/voting/AnonymousVoteToggle';
+// import { useAuth } from '../../redux/hooks';
+// import { Loader, CheckCircle, AlertCircle, Sparkles, ArrowLeft } from 'lucide-react';
+// import CompactLiveResults from '../../components/Dashboard/Tabs/voting/CompactLiveResults';
+
+// export default function ElectionVotingView() {
+//   const { electionId } = useParams();
+//   const navigate = useNavigate();
+//   const dispatch = useDispatch();
+//   const auth = useAuth();
+
+//   // ✅ CHANGE #1: ADDED - Video completion state
+//   const [videoCompleted, setVideoCompleted] = useState(false);
+
+//   // ✅ State management (UNCHANGED - EXISTING CODE)
+//   const answers = useSelector(state => state.votingNew?.answers || {});
+//   const anonymous = useSelector(state => state.votingNew?.anonymous || false);
+
+//   // ✨ Animation state (UNCHANGED - EXISTING CODE)
+//   /*eslint-disable*/
+//   const [showFlyingBallot, setShowFlyingBallot] = useState(false);
+//   const [flyingBallNumber, setFlyingBallNumber] = useState(null);
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+
+//   // ✅ API queries (UNCHANGED - EXISTING CODE)
+//   const { data: ballotData, isLoading, error } = useGetBallotQuery(electionId);
+//   const [castVote, { isLoading: submitting }] = useCastVoteMutation();
+
+//   // ✅ Get voting type from API response (UNCHANGED - EXISTING CODE)
+//   const votingTypeToUse = ballotData?.votingType || 
+//                           ballotData?.voting_type || 
+//                           'approval';
+
+//   console.log('🔍 Ballot data:', ballotData);
+//   console.log('🔍 Voting type:', votingTypeToUse);
+//   console.log('📝 Current answers:', answers);
+
+//   // ✅ CHANGE #2: ADDED - Check if user already completed video
+//   useEffect(() => {
+//     if (ballotData?.videoWatchRequired && ballotData?.videoProgress) {
+//       const isAlreadyCompleted = ballotData.videoProgress.completed || 
+//                                   parseFloat(ballotData.videoProgress.watch_percentage) >= (ballotData.minimumWatchPercentage || 80);
+      
+//       console.log('📹 Checking existing video progress:', {
+//         completed: ballotData.videoProgress.completed,
+//         percentage: ballotData.videoProgress.watch_percentage,
+//         required: ballotData.minimumWatchPercentage,
+//         isAlreadyCompleted
+//       });
+
+//       if (isAlreadyCompleted) {
+//         console.log('✅ User already completed video, skipping requirement');
+//         setVideoCompleted(true);
+//       }
+//     } else if (!ballotData?.videoWatchRequired) {
+//       // If video not required at all, mark as completed
+//       setVideoCompleted(true);
+//     }
+//   }, [ballotData]);
+
+//   // ✅ UNCHANGED - EXISTING CODE
+//   const handleAnswersChange = (newAnswers) => {
+//     console.log('📝 Answers updated:', newAnswers);
+//     dispatch(setAllAnswers(newAnswers));
+//   };
+
+//   // ✨ ENHANCED: Vote submission with ballot flying animation (UNCHANGED - EXISTING CODE)
+//   const handleSubmitVote = async () => {
+//     console.log('========== VOTE SUBMISSION DEBUG ==========');
+//     console.log('🗳️ Answers:', JSON.stringify(answers, null, 2));
+//     console.log('🗳️ Election ID:', electionId);
+//     console.log('🗳️ Anonymous:', anonymous);
+//     console.log('🗳️ User ID:', auth.userId);
+    
+//     if (!answers || Object.keys(answers).length === 0) {
+//       console.log('❌ No answers provided');
+//       toast.error('Please select at least one option before submitting');
+//       return;
+//     }
+
+//     console.log('✅ Validation passed, starting submission...');
+//     setIsSubmitting(true);
+
+//     try {
+//       // ✨ STEP 1: Show ballot flying animation FIRST (if lottery enabled)
+//       if (ballotData?.lotteryEnabled) {
+//         console.log('🎰 Starting ballot flying animation...');
+        
+//         // Generate a temporary ball number for animation
+//         const tempBallNumber = Math.floor(Math.random() * 999999);
+//         console.log('🎲 Generated ballot number:', tempBallNumber);
+//         setFlyingBallNumber(tempBallNumber);
+        
+//         // Small delay to ensure state update
+//         await new Promise(resolve => setTimeout(resolve, 50));
+        
+//         console.log('🚀 Triggering ballot animation...');
+//         setShowFlyingBallot(true);
+        
+//         // Wait for animation to complete (4.5 seconds for extra slow animation)
+//         await new Promise(resolve => setTimeout(resolve, 4500));
+//         console.log('✅ Animation completed');
+        
+//         // Hide ballot
+//         setShowFlyingBallot(false);
+        
+//         // Trigger pulse on lottery machine when ballot arrives
+//         setTimeout(() => {
+//           const machineElement = document.getElementById('lottery-machine-3d');
+//           if (machineElement) {
+//             console.log('✅ Adding pulse to lottery machine');
+//             machineElement.classList.add('lottery-machine-pulse');
+//             setTimeout(() => {
+//               machineElement.classList.remove('lottery-machine-pulse');
+//             }, 1200);
+//           }
+//         }, 100);
+//       }
+
+//       // ✨ STEP 2: Call API
+//       console.log('📤 Calling castVote mutation...');
+      
+//       const result = await castVote({
+//         electionId,
+//         answers,
+//         anonymous,
+//       }).unwrap();
+
+//       console.log('✅ Vote cast result:', result);
+
+//       // Get the actual ball number from API response
+//       const ballNumber = result.ticket?.ball_number || result.ticket?.ballNumber;
+//       console.log('🎲 Actual ballot number from API:', ballNumber);
+//       if (ballNumber) {
+//         setFlyingBallNumber(ballNumber);
+//       }
+
+//       // ✨ STEP 3: Update Redux with ticket data
+//       if (result.ticket && ballotData?.lotteryEnabled) {
+//         dispatch(setMyTicket(result.ticket));
+//       }
+
+//       // ✨ STEP 4: Dispatch custom event for lottery container
+//       window.dispatchEvent(new CustomEvent('vote-cast', {
+//         detail: {
+//           electionId,
+//           ticket: result.ticket,
+//           ballNumber: ballNumber,
+//         }
+//       }));
+
+//       // ✨ STEP 5: Success feedback
+//       toast.success(
+//         ballotData?.lotteryEnabled 
+//           ? '🎉 Vote submitted! Your lottery ticket has been created!' 
+//           : '✅ Vote submitted successfully!',
+//         { autoClose: 5000 }
+//       );
+
+//       // ✨ STEP 6: Scroll to lottery machine
+//       if (ballotData?.lotteryEnabled) {
+//         setTimeout(() => {
+//           const targetElement = document.getElementById('lottery-machine-3d') || document.getElementById('lottery-machine-full');
+//           if (targetElement) {
+//             targetElement.scrollIntoView({ 
+//               behavior: 'smooth',
+//               block: 'center',
+//             });
+//           }
+//         }, 500);
+//       }
+      
+//     } catch (error) {
+//       console.error('❌ Vote submission error:', error);
+//       console.error('❌ Error details:', JSON.stringify(error, null, 2));
+//       toast.error(error.data?.error || 'Failed to submit vote');
+//     } finally {
+//       setIsSubmitting(false);
+//       setShowFlyingBallot(false);
+//     }
+//   };
+
+//   // ✨ Auto-check election end for automatic draw (UNCHANGED - EXISTING CODE)
+//   // useEffect(() => {
+//   //   if (!ballotData?.election?.endDate) return;
+
+//   //   const checkElectionEnd = setInterval(() => {
+//   //     const now = new Date();
+//   //     const endDate = new Date(ballotData.election.endDate);
+      
+//   //     if (now >= endDate && ballotData.lotteryEnabled) {
+//   //       console.log('🎰 Election ended! Triggering automatic draw...');
+//   //       window.dispatchEvent(new CustomEvent('election-ended', {
+//   //         detail: { electionId }
+//   //       }));
+//   //       clearInterval(checkElectionEnd);
+//   //     }
+//   //   }, 5000);
+
+//   //   return () => clearInterval(checkElectionEnd);
+//   // }, [ballotData, electionId]);
+
+//   // ✅ Loading state (UNCHANGED - EXISTING CODE)
+//   if (isLoading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+//         <div className="text-center">
+//           <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+//           <p className="text-gray-600 font-medium">Loading ballot...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // ✅ Error state (UNCHANGED - EXISTING CODE)
+//   if (error) {
+//     return (
+//       <div className="min-h-screen bg-gray-50">
+//         {/* Dashboard Button - Error State */}
+//         <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
+//           <button
+//             onClick={() => navigate('/dashboard')}
+//             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+//           >
+//             <ArrowLeft size={20} />
+//             Go to Dashboard
+//           </button>
+//         </div>
+        
+//         <div className="flex items-center justify-center px-4">
+//           <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+//             <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+//             <p className="text-red-800 font-bold text-center mb-2">Error Loading Ballot</p>
+//             <p className="text-red-600 text-sm text-center">{error.data?.error || 'Unknown error'}</p>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // ✅ Already voted state (SHOWS LOTTERY MACHINE) (UNCHANGED - EXISTING CODE)
+//   if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+//         {/* Dashboard Button - Already Voted State */}
+//         <div className="max-w-4xl mx-auto pb-4">
+//           <button
+//             onClick={() => navigate('/dashboard')}
+//             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+//           >
+//             <ArrowLeft size={20} />
+//             Go to Dashboard
+//           </button>
+//         </div>
+
+//         <div className="max-w-4xl mx-auto space-y-8 py-4">
+          
+//           {/* Success Card */}
+//           <div className="bg-white rounded-2xl shadow-xl p-8">
+//             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+//             <h2 className="text-2xl font-bold text-center mb-4">Vote Recorded Successfully!</h2>
+//             <p className="text-gray-600 text-center mb-6">
+//               Your vote has been securely recorded and encrypted.
+//             </p>
+            
+//             {ballotData?.receiptId && (
+//               <div className="bg-gray-50 rounded-lg p-4 mb-4">
+//                 <p className="text-sm text-gray-600 mb-1">Receipt ID:</p>
+//                 <p className="font-mono text-sm font-bold break-all">{ballotData.receiptId}</p>
+//               </div>
+//             )}
+
+//             {ballotData?.lotteryEnabled && (
+//               <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
+//                 <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+//                 <p className="text-purple-700 text-sm mb-3">
+//                   Your lottery ticket has been created. Scroll down to see your ball in the 3D lottery machine!
+//                 </p>
+//                 <button
+//                   onClick={() => {
+//                     document.getElementById('lottery-machine-full')?.scrollIntoView({ 
+//                       behavior: 'smooth',
+//                       block: 'center',
+//                     });
+//                   }}
+//                   className="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
+//                 >
+//                   View Lottery Machine 🎰
+//                 </button>
+//               </div>
+//             )}
+
+//             <div className="flex gap-3">
+//               <button
+//                 onClick={() => window.history.back()}
+//                 className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
+//               >
+//                 Back to Elections
+//               </button>
+//             </div>
+//           </div>
+
+//           {/* Show Live Results if enabled */}
+//           {ballotData?.liveResults && (
+//             <div className="bg-white rounded-2xl shadow-lg p-6">
+//               <h3 className="text-2xl font-bold mb-4">Live Results</h3>
+//               <LiveResultsChart
+//                 electionId={electionId}
+//                 liveResultsVisible={true}
+//                 votingType={votingTypeToUse}
+//               />
+//             </div>
+//           )}
+
+//           {/* ✅ SHOW FULL LOTTERY MACHINE (Even after voting) */}
+//           {ballotData?.lotteryEnabled && (
+//             <div id="lottery-machine-full">
+//               <LotteryMachineContainer
+//                 electionId={electionId}
+//                 userRoles={auth.roles}
+//               />
+//             </div>
+//           )}
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // ✅ MAIN VOTING VIEW (UNCHANGED - EXISTING CODE)
+//   return (
+//     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8">
+//       <div className="max-w-7xl mx-auto px-4">
+        
+//         {/* ✅ DASHBOARD BUTTON - ALWAYS VISIBLE AT TOP (UNCHANGED - EXISTING CODE) */}
+//         <div className="max-w-4xl mx-auto mb-6">
+//           <button
+//             onClick={() => navigate('/dashboard')}
+//             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+//           >
+//             <ArrowLeft size={20} />
+//             Go to Dashboard
+//           </button>
+//         </div>
+
+//         {/* ✅ COMMENTED OUT - FLOATING LOTTERY MACHINE */}
+//         {/* {ballotData?.lotteryEnabled && (
+//           <div className="hidden xl:block fixed top-20 right-4 w-[400px] h-[550px] z-40">
+//             <div className="bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border-4 border-purple-500 h-full">
+//               <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2">
+//                 <p className="text-white font-bold text-center flex items-center justify-center gap-2">
+//                   <Sparkles size={20} />
+//                   Live Gamify Machine
+//                 </p>
+//               </div>
+//               <div id="lottery-machine-3d" className="w-full" style={{ height: 'calc(100% - 48px)' }}>
+//                 <LotteryMachineContainer
+//                   electionId={electionId}
+//                   userRoles={auth.roles}
+//                   compact={true}
+//                 />
+//               </div>
+//             </div>
+//           </div>
+//         )} */}
+
+//         <div className="max-w-4xl mx-auto space-y-8">
+          
+//           {/* Election Header (UNCHANGED - EXISTING CODE) */}
+//           <div className="bg-white rounded-2xl shadow-lg p-6">
+//             <div className="flex items-start justify-between mb-4">
+//               <div className="flex-1">
+//                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
+//                   {ballotData?.election?.title}
+//                 </h1>
+//                 {ballotData?.election?.description && (
+//                   <p className="text-gray-600">{ballotData.election.description}</p>
+//                 )}
+//               </div>
+//               <div className="ml-4">
+//                 <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+//                   ✅ Active
+//                 </span>
+//               </div>
+//             </div>
+
+//             {/* Election Info Grid (UNCHANGED - EXISTING CODE) */}
+//             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+//               <div className="bg-blue-50 rounded-lg p-3">
+//                 <p className="text-xs text-blue-600 font-semibold mb-1">Start Date</p>
+//                 <p className="text-sm font-bold text-blue-900">
+//                   {new Date(ballotData?.election?.startDate).toLocaleDateString()}
+//                 </p>
+//               </div>
+//               <div className="bg-purple-50 rounded-lg p-3">
+//                 <p className="text-xs text-purple-600 font-semibold mb-1">End Date</p>
+//                 <p className="text-sm font-bold text-purple-900">
+//                   {new Date(ballotData?.election?.endDate).toLocaleDateString()}
+//                 </p>
+//               </div>
+//               <div className="bg-green-50 rounded-lg p-3">
+//                 <p className="text-xs text-green-600 font-semibold mb-1">Voting Type</p>
+//                 <p className="text-sm font-bold text-green-900 capitalize">
+//                   {votingTypeToUse.replace('_', ' ')}
+//                 </p>
+//               </div>
+//               <div className="bg-orange-50 rounded-lg p-3">
+//                 <p className="text-xs text-orange-600 font-semibold mb-1">Fee</p>
+//                 <p className="text-sm font-bold text-orange-900">
+//                   {ballotData?.paymentRequired 
+//                     ? `$${ballotData?.participationFee?.toFixed(2)}` 
+//                     : 'Free'}
+//                 </p>
+//               </div>
+//             </div>
+
+//             {/* Lottery Badge (UNCHANGED - EXISTING CODE) */}
+//             {ballotData?.lotteryEnabled && (
+//               <div className="mt-4 bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4">
+//                 <div className="flex items-center gap-3">
+//                   <span className="text-3xl">🎰</span>
+//                   <div>
+//                     <p className="font-bold text-purple-900">Lottery Draw Enabled!</p>
+//                     <p className="text-sm text-purple-700">
+//                       Your vote automatically enters you into the lottery draw
+//                     </p>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+
+//           {/* ✅ CHANGE #3: MODIFIED - Video Watch Section */}
+//           {/* Show video player ONLY if video required AND not yet completed */}
+//           {ballotData?.videoWatchRequired && !videoCompleted && (
+//             <VideoWatchProgress
+//               electionId={electionId}
+//               videoUrl={ballotData.election?.videoUrl}
+//               minimumWatchPercentage={ballotData.minimumWatchPercentage || 80}
+//               required={true}
+//               onComplete={() => {
+//                 console.log('✅ Video watch completed! Allowing vote...');
+//                 setVideoCompleted(true);
+//               }}
+//             />
+//           )}
+
+//           {/* ✅ CHANGE #4: ADDED - Show "Already Completed" message for returning users */}
+//           {ballotData?.videoWatchRequired && videoCompleted && (
+//             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6">
+//               <div className="flex items-center gap-4">
+//                 <CheckCircle className="w-12 h-12 text-green-600 flex-shrink-0" />
+//                 <div>
+//                   <h3 className="text-xl font-bold text-green-900 mb-1">
+//                     ✓ Video Requirement Completed!
+//                   </h3>
+//                   <p className="text-green-700">
+//                     You've already watched the required video. You can proceed to vote below.
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+//           )}
+
+//           {/* Anonymous Toggle (UNCHANGED - EXISTING CODE) */}
+//           {ballotData?.anonymousVotingEnabled && (
+//             <AnonymousVoteToggle />
+//           )}
+
+//           {/* Ballot Renderer (UNCHANGED - EXISTING CODE) */}
+//           {/* Ballot Renderer + Live Results Side-by-Side - PDF #10 Format */}
+//           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+//             {/* Left: Ballot (2/3 width) */}
+//             <div className="lg:col-span-2">
+//               <div className="bg-white rounded-2xl shadow-lg p-6">
+//                 <BallotRenderer
+//                   electionId={electionId}
+//                   ballot={ballotData}
+//                   votingType={votingTypeToUse}
+//                   onAnswersChange={handleAnswersChange}
+//                 />
+//               </div>
+//             </div>
+
+//             {/* Right: Compact Live Results (1/3 width) - PDF #10 */}
+//             {ballotData?.liveResults && (
+//               <div className="lg:col-span-1">
+//                 <div className="sticky top-24">
+//                   <CompactLiveResults
+//                     electionId={electionId}
+//                     questionId={ballotData?.questions?.[0]?.id}
+//                   />
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//           {/* <div className="bg-white rounded-2xl shadow-lg p-6">
+//             <BallotRenderer
+//               electionId={electionId}
+//               ballot={ballotData}
+//               votingType={votingTypeToUse}
+//               onAnswersChange={handleAnswersChange}
+//             />
+//           </div> */}
+
+//           {/* ✅ CHANGE #5: MODIFIED - Submit Button (added video requirement check) */}
+//           <div className="sticky bottom-4 z-10">
+//             <button
+//               id="submit-vote-button"
+//               onClick={handleSubmitVote}
+//               disabled={isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)}
+//               className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform ${
+//                 isSubmitting || submitting || Object.keys(answers).length === 0 || (ballotData?.videoWatchRequired && !videoCompleted)
+//                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+//                   : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:scale-[1.02] hover:shadow-2xl'
+//               }`}
+//             >
+//               {isSubmitting || submitting ? (
+//                 <span className="flex items-center justify-center gap-2">
+//                   <Loader className="animate-spin" size={20} />
+//                   {ballotData?.lotteryEnabled ? '🎰 Submitting Vote...' : '⏳ Submitting...'}
+//                 </span>
+//               ) : (
+//                 <span className="flex items-center justify-center gap-2">
+//                   {ballotData?.videoWatchRequired && !videoCompleted ? (
+//                     <>📹 Watch Video First to Continue</>
+//                   ) : (
+//                     <>
+//                       🗳️ Submit Vote 
+//                       {ballotData?.lotteryEnabled && ' & Enter Gamify'}
+//                     </>
+//                   )}
+//                 </span>
+//               )}
+//             </button>
+
+//             {/* Answer Count (UNCHANGED - EXISTING CODE) */}
+//             <div className="text-center mt-2">
+//               <p className="text-sm text-gray-600">
+//                 {Object.keys(answers).length > 0 ? (
+//                   <span className="text-green-600 font-semibold">
+//                     ✓ {Object.keys(answers).length} question{Object.keys(answers).length !== 1 ? 's' : ''} answered
+//                   </span>
+//                 ) : (
+//                   <span className="text-orange-600 font-semibold">
+//                     ⚠ Please select your answers above
+//                   </span>
+//                 )}
+//               </p>
+//             </div>
+//           </div>
+
+//           {/* Live Results (UNCHANGED - EXISTING CODE) */}
+//           {ballotData?.liveResults && (
+//             <LiveResultsChart
+//               electionId={electionId}
+//               liveResultsVisible={true}
+//               votingType={votingTypeToUse}
+//             />
+//           )}
+
+//           {/* Lottery Machine (Mobile/Tablet - Full View) (UNCHANGED - EXISTING CODE) */}
+//           {ballotData?.lotteryEnabled && (
+//             <div id="lottery-machine-full" className="xl:hidden">
+//               <LotteryMachineContainer
+//                 electionId={electionId}
+//                 userRoles={auth.roles}
+//               />
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* ✅ COMMENTED OUT - FLYING BALLOT PAPER ANIMATION */}
+//       {/* {showFlyingBallot && ballotData?.lotteryEnabled && (() => {
+//         const button = document.getElementById('submit-vote-button');
+//         const buttonRect = button?.getBoundingClientRect();
+//         const machine = document.getElementById('lottery-machine-3d');
+//         const machineRect = machine?.getBoundingClientRect();
+        
+//         if (!buttonRect) return null;
+        
+//         const deltaX = machineRect ? (machineRect.left + machineRect.width / 2 - buttonRect.left - buttonRect.width / 2) : 1000;
+//         const deltaY = machineRect ? (machineRect.top + machineRect.height / 2 - buttonRect.top - buttonRect.height / 2) : -100;
+        
+//         return (
+//           <>
+//             <style>{`
+//               @keyframes flyBallotExtraSlow {
+//                 0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+//                 8% { transform: translate(${deltaX * 0.06}px, ${deltaY * 0.08}px) scale(1.03) rotate(120deg); opacity: 1; }
+//                 18% { transform: translate(${deltaX * 0.15}px, ${deltaY * 0.2}px) scale(1.06) rotate(288deg); opacity: 1; }
+//                 30% { transform: translate(${deltaX * 0.28}px, ${deltaY * 0.35}px) scale(1.05) rotate(504deg); opacity: 0.99; }
+//                 45% { transform: translate(${deltaX * 0.44}px, ${deltaY * 0.52}px) scale(1.0) rotate(792deg); opacity: 0.98; }
+//                 60% { transform: translate(${deltaX * 0.62}px, ${deltaY * 0.7}px) scale(0.92) rotate(1152deg); opacity: 0.96; }
+//                 75% { transform: translate(${deltaX * 0.78}px, ${deltaY * 0.84}px) scale(0.78) rotate(1584deg); opacity: 0.9; }
+//                 88% { transform: translate(${deltaX * 0.92}px, ${deltaY * 0.95}px) scale(0.55) rotate(2016deg); opacity: 0.75; }
+//                 96% { transform: translate(${deltaX * 0.98}px, ${deltaY * 0.99}px) scale(0.35) rotate(2376deg); opacity: 0.45; }
+//                 100% { transform: translate(${deltaX}px, ${deltaY}px) scale(0.12) rotate(2520deg); opacity: 0; }
+//               }
+//               .flying-ballot-extra-slow {
+//                 animation: flyBallotExtraSlow 4.5s cubic-bezier(0.22, 0.08, 0.28, 0.99) forwards !important;
+//               }
+//             `}</style>
+            
+//             <div 
+//               className="flying-ballot flying-ballot-extra-slow"
+//               style={{
+//                 position: 'fixed',
+//                 left: `${buttonRect.left + (buttonRect.width / 2) - 40}px`,
+//                 top: `${buttonRect.top + (buttonRect.height / 2) - 50}px`,
+//                 width: '80px',
+//                 height: '100px',
+//                 background: 'linear-gradient(135deg, #ffffff, #f0f0f0)',
+//                 border: '3px solid #4f46e5',
+//                 borderRadius: '8px',
+//                 zIndex: 99999,
+//                 display: 'flex',
+//                 flexDirection: 'column',
+//                 alignItems: 'center',
+//                 justifyContent: 'center',
+//                 fontSize: '10px',
+//                 fontWeight: 'bold',
+//                 color: '#4f46e5',
+//                 boxShadow: '0 8px 24px rgba(79, 70, 229, 0.6)',
+//                 padding: '8px',
+//               }}
+//             >
+//               <div style={{ fontSize: '28px', marginBottom: '4px' }}>🗳️</div>
+//               <div style={{ textAlign: 'center', lineHeight: '1.2' }}>
+//                 VOTE
+//                 <br />
+//                 #{flyingBallNumber}
+//               </div>
+//               <div style={{
+//                 position: 'absolute',
+//                 top: '-12px',
+//                 right: '-12px',
+//                 fontSize: '18px',
+//               }}>
+//                 ✨
+//               </div>
+//             </div>
+//           </>
+//         );
+//       })()} */}
+//     </div>
+//   );
+// }
 //last workable code
 // import React, { useState, useEffect } from 'react';
 // import { useParams, useNavigate } from 'react-router-dom';
