@@ -92,6 +92,14 @@ export const votingApi = createApi({
       }),
     }),
 
+    getVoteAuditLogs: builder.query({
+      query: ({ electionId, page = 1, limit = 50 }) => ({
+        url: `/voting/elections/${electionId}/audit-logs`,
+        params: { page, limit },
+      }),
+      providesTags: ['VoteAudit'],
+    }),
+
   }),
 });
 
@@ -101,5 +109,6 @@ export const {
   useGetUserVoteQuery,
   useUpdateVideoProgressMutation,
   useRecordAbstentionMutation,
-  useGetVotingHistoryQuery
+  useGetVotingHistoryQuery,
+  useGetVoteAuditLogsQuery
 } = votingApi;
