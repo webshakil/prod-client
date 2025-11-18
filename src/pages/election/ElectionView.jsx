@@ -161,7 +161,8 @@ export default function ElectionView() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <button
-            onClick={() => navigate('/dashboard?tab=all-elections')}
+            // onClick={() => navigate('/dashboard?tab=all-elections')}
+            onClick={() => navigate('/dashboard/all-elections')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
           >
             <FaArrowLeft /> Back to Elections
@@ -585,7 +586,7 @@ export default function ElectionView() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaShare className="text-pink-600" />
-                  URLs & Links
+                  URLs & Links 
                 </h3>
                 <div className="space-y-3">
                   <div>

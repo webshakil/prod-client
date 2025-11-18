@@ -9,7 +9,7 @@ export default function PublicBulletin() {
   const [loadingElections, setLoadingElections] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3006/api';
+  const API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
   useEffect(() => {
     fetchElections();
@@ -99,78 +99,7 @@ const fetchElections = async () => {
   }
 };
 
-//   const fetchElections = async () => {
-//     setLoadingElections(true);
-//     let fetchedElections = [];
 
-//     try {
-//       // Get user data
-//       const persistRoot = localStorage.getItem('persist:vottery-root');
-//       if (!persistRoot) {
-//         console.log('No user data found');
-//         setLoadingElections(false);
-//         return;
-//       }
-
-//       const parsed = JSON.parse(persistRoot);
-      
-//       // Get user ID
-//       const authData = parsed.auth ? JSON.parse(parsed.auth) : {};
-//       const userId = authData.userData?.userId;
-
-//       if (!userId) {
-//         console.log('No user ID found');
-//         setLoadingElections(false);
-//         return;
-//       }
-
-//       console.log('👤 Fetching elections for user:', userId);
-
-//       // Fetch user's voting history to get elections they voted in
-//       const response = await fetch(`${API_URL}/votes/history?userId=${userId}&page=1&limit=100`);
-//       const data = await response.json();
-
-//       console.log('📥 Voting history response:', data);
-
-//       if (data.success && data.data.votes) {
-//         // Extract unique elections from voting history
-//         const votedElections = data.data.votes;
-        
-//         // Create election list with unique elections
-//         const uniqueElections = [];
-//         const seenIds = new Set();
-        
-//         votedElections.forEach(vote => {
-//           if (!seenIds.has(vote.election_id)) {
-//             seenIds.add(vote.election_id);
-//             uniqueElections.push({
-//               id: vote.election_id,
-//               title: vote.election_title || `Election #${vote.election_id}`,
-//               description: `You voted on ${new Date(vote.created_at).toLocaleDateString()}`,
-//               start_date: vote.created_at,
-//               end_date: vote.created_at,
-//               status: vote.election_status || 'completed',
-//               voted_at: vote.created_at,
-//             });
-//           }
-//         });
-
-//         fetchedElections = uniqueElections;
-//         console.log(`✅ Found ${fetchedElections.length} elections user has voted in`);
-//       }
-
-//     } catch (error) {
-//       console.error('Error fetching user voting history:', error);
-//     }
-
-//     setElections(fetchedElections);
-//     setLoadingElections(false);
-
-//     // Auto-select first election
-//     if (fetchedElections.length > 0) {
-//       fetchBulletinBoard(fetchedElections[0].id);
-//     }
-//   };
 
   const fetchBulletinBoard = async (electionId) => {
     setLoading(true);
