@@ -324,16 +324,19 @@ const handlePublish = async () => {
         status: 'published'
       },
       
-      questions: data.questions.map((q, idx) => ({
-        question_text: q.question_text,
-        question_type: q.type === 'mcq' ? 'multiple_choice' : q.type === 'text' ? 'open_text' : q.type === 'image' ? 'image_based' : 'comparison',
-        question_order: idx + 1,
-        is_required: q.required !== undefined ? q.required : true,
-        options: (q.answers || []).filter(a => a?.trim()).map((a, i) => ({
-          option_text: a,
-          option_order: i + 1
-        }))
-      }))
+     questions: data.questions.map((q, idx) => ({
+  question_text: q.question_text,
+  question_type: 'multiple_choice', // ✅ ALWAYS multiple_choice for voting
+  question_order: idx + 1,
+  is_required: q.is_required !== undefined ? q.is_required : true,
+  max_selections: q.max_selections || 1,
+  options: (q.options || [])
+    .filter(opt => opt.option_text && opt.option_text.trim())
+    .map((opt, i) => ({
+      option_text: opt.option_text.trim(),
+      option_order: i + 1
+    }))
+}))
     };
 
     // Add regional pricing if applicable
