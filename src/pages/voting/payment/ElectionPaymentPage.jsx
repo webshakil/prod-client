@@ -4,12 +4,15 @@
 import React, { useState } from 'react';
 /*eslint-disable*/
 import { useSelector } from 'react-redux';
-import { usePayForElectionMutation } from '../../../redux/api/walllet/electionPaymentApi';
-import { useGetWalletQuery } from '../../../redux/api/walllet/wallletApi';
+// import { 
+//   usePayForElectionMutation, 
+//   useConfirmElectionPaymentMutation 
+// } from '../../../redux/api/walllet/walletApi';
+//import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
 import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import axios from 'axios';
+import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
 
 // ✅ FIXED: Use correct environment variable
 const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLIC_KEY);
@@ -92,7 +95,10 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
+  
+  // ✅ Use Redux mutations
   const [payForElection] = usePayForElectionMutation();
+  const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
   const { refetch: refetchWallet } = useGetWalletQuery();
 
   const handleSubmit = async (e) => {
@@ -108,7 +114,7 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
     try {
       console.log('💳 Step 1: Creating payment intent...');
       
-      // ✅ STEP 1: Create payment intent
+      // ✅ STEP 1: Create payment intent via Redux
       const result = await payForElection({
         electionId,
         regionCode: regionCode || 'region_1_us_canada',
@@ -152,49 +158,30 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
       if (paymentIntent.status === 'succeeded') {
         console.log('✅ Payment succeeded! Payment Intent ID:', paymentIntent.id);
         
-        // ✅ STEP 3: Confirm in backend to update wallet balances
+        // ✅ STEP 3: Confirm in backend via Redux mutation
         try {
-          const token = localStorage.getItem('accessToken');
-          const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+          console.log('🔵 Step 3: Confirming payment in backend via Redux...');
           
-          console.log('🔵 Step 3: Confirming payment in backend...');
+          const confirmResult = await confirmElectionPayment({
+            paymentIntentId: paymentIntent.id,
+            electionId: electionId
+          }).unwrap();
           
-          const confirmResponse = await axios.post(
-            `${import.meta.env.VITE_WALLET_SERVICE_URL || 'http://localhost:3008/api'}/wallet/election-payment/confirm`,
-            {
-              paymentIntentId: paymentIntent.id,
-              electionId: electionId
-            },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'x-user-data': JSON.stringify({
-                  userId: userData.userId,
-                  email: userData.email,
-                  roles: userData.roles || ['Voter']
-                })
-              }
-            }
-          );
+          console.log('✅ Backend confirmation successful:', confirmResult);
           
-          if (confirmResponse.status === 200) {
-            console.log('✅ Backend confirmation successful:', confirmResponse.data);
-            
-            // ✅ Refetch wallet to show updated balances
-            await refetchWallet();
-            console.log('✅ Wallet data refreshed');
-            
-            setProcessing(false);
-            onSuccess(paymentIntent.id);
-          } else {
-            console.error('❌ Backend confirmation failed:', confirmResponse.data);
-            onError('Payment succeeded but wallet update failed. Please contact support.');
-            setProcessing(false);
-          }
+          // ✅ Refetch wallet to show updated balances
+          await refetchWallet();
+          console.log('✅ Wallet data refreshed');
+          
+          setProcessing(false);
+          onSuccess(paymentIntent.id);
+          
         } catch (confirmError) {
           console.error('❌ Backend confirmation error:', confirmError);
-          onError('Payment succeeded but wallet update failed. Please contact support.');
+          
+          // Even if backend confirmation fails, payment succeeded
+          // Show success but with warning
+          onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
           setProcessing(false);
         }
         
