@@ -16,12 +16,14 @@ import { useGetMyElectionsQuery } from '../../../../redux/api/election/electionA
 import WithdrawalModal from './WithdrawalModal';
 import TransactionDetailsModal from './TransactionDetailsModal';
 import { useGetCreatorTransactionsQuery, useGetCreatorWalletQuery, useGetWalletAnalyticsQuery } from '../../../../redux/api/walllet/wallletApi';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function CreatorWallet() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedElection, setSelectedElection] = useState(null);
+  const navigate =useNavigate();
 
   // Fetch creator wallet data
   const { data: walletData, isLoading: walletLoading } = useGetCreatorWalletQuery();
@@ -241,9 +243,10 @@ export default function CreatorWallet() {
         {myElections.length === 0 ? (
           <div className="text-center py-12">
             <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-600">You haven't created any elections yet</p>
+            <p className="text-gray-600">You haven't created any elections yet shakil</p>
             <button
-              onClick={() => window.location.href = '/dashboard?tab=create-election'}
+              // onClick={() => window.location.href = '/dashboard?tab=create-election'}
+               onClick={() => navigate('/dashboard/create-election')}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               Create Your First Election
