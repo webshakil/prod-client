@@ -1,5 +1,5 @@
 // src/hooks/useNotificationMonitor.js
-// ✅ PRODUCTION READY - Uses environment variables
+// ✅ PRODUCTION READY - Connects to Election Service, Voting Service, and handles Wallet notifications
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addNotification } from '../redux/slices/notificationSlice';
@@ -7,7 +7,7 @@ import { io } from 'socket.io-client';
 
 /**
  * Hook to connect to WebSocket and receive real-time notifications
- * Uses environment variables for production deployment
+ * Connects to multiple backend services
  */
 export function useNotificationMonitor() {
   const dispatch = useDispatch();
@@ -15,6 +15,7 @@ export function useNotificationMonitor() {
   const currentUserId = auth.userId;
   
   const electionSocketRef = useRef(null);
+  const votingSocketRef = useRef(null); // ✅ NEW: Added for voting service
 
   useEffect(() => {
     if (!currentUserId) {
@@ -22,14 +23,17 @@ export function useNotificationMonitor() {
       return;
     }
 
-    // ✅ Use environment variable or fallback to localhost
-    //const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
+    // ✅ EXISTING: Election Service (UNCHANGED)
     const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_WSOCKET_URL || 'http://localhost:3005';
     
+    // ✅ NEW: Voting Service URL
+    const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_WSOCKET_URL || 'http://localhost:3007';
+    
     console.log('🔌 Connecting to Election Service WebSocket at:', ELECTION_SERVICE_URL);
+    console.log('🔌 Connecting to Voting Service WebSocket at:', VOTING_SERVICE_URL);
 
     // ========================================
-    // CONNECT TO ELECTION SERVICE
+    // ELECTION SERVICE CONNECTION (UNCHANGED - ALREADY WORKING)
     // ========================================
     const electionSocket = io(ELECTION_SERVICE_URL, {
       transports: ['websocket', 'polling'],
@@ -59,31 +63,71 @@ export function useNotificationMonitor() {
     electionSocketRef.current = electionSocket;
 
     // ========================================
+    // ✅ NEW: VOTING SERVICE CONNECTION
+    // ========================================
+    const votingSocket = io(VOTING_SERVICE_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    });
+
+    votingSocket.on('connect', () => {
+      console.log('✅ Connected to Voting Service WebSocket');
+      votingSocket.emit('join-notifications', currentUserId);
+    });
+
+    votingSocket.on('notification', (notification) => {
+      console.log('🗳️ Received notification from Voting Service:', notification);
+      dispatch(addNotification(notification));
+    });
+
+    votingSocket.on('disconnect', () => {
+      console.log('❌ Disconnected from Voting Service WebSocket');
+    });
+
+    votingSocket.on('error', (error) => {
+      console.error('❌ Voting Service WebSocket error:', error);
+    });
+
+    votingSocketRef.current = votingSocket;
+
+    // ========================================
     // CLEANUP ON UNMOUNT
     // ========================================
     return () => {
       console.log('🔌 Cleaning up WebSocket connections...');
       
+      // Election Service cleanup (UNCHANGED)
       if (electionSocketRef.current) {
         electionSocketRef.current.emit('leave-notifications', currentUserId);
         electionSocketRef.current.disconnect();
       }
+
+      // ✅ NEW: Voting Service cleanup
+      if (votingSocketRef.current) {
+        votingSocketRef.current.emit('leave-notifications', currentUserId);
+        votingSocketRef.current.disconnect();
+      }
     };
   }, [currentUserId, dispatch]);
 
-  // Return socket instance for manual usage if needed
+  // Return socket instances for manual usage if needed
   return {
     electionSocket: electionSocketRef.current,
+    votingSocket: votingSocketRef.current, // ✅ NEW: Return voting socket
   };
 }
 
 /**
  * Helper hook to manually trigger notifications (for local actions)
+ * ✅ ENHANCED: Added payment and voting notification helpers
  */
 export function useNotifications() {
   const dispatch = useDispatch();
 
   const notify = {
+    // ===== EXISTING: Election notifications (UNCHANGED) =====
     newUser: (userData) => {
       dispatch(addNotification({
         type: 'new_user',
@@ -152,12 +196,86 @@ export function useNotifications() {
         link,
       }));
     },
+
+    // ===== ✅ NEW: Payment notifications =====
+    paymentInitiated: (paymentData) => {
+      dispatch(addNotification({
+        type: 'payment_initiated',
+        title: 'Payment Processing',
+        message: `Processing payment of $${paymentData.amount} for "${paymentData.electionTitle}"...`,
+        link: `/election/${paymentData.electionId}`,
+        data: paymentData,
+      }));
+    },
+
+    paymentSuccess: (paymentData) => {
+      dispatch(addNotification({
+        type: 'payment_success',
+        title: '✅ Payment Successful',
+        message: `Payment of $${paymentData.amount} completed! You can now vote.`,
+        link: `/election/${paymentData.electionId}/vote`,
+        data: paymentData,
+      }));
+    },
+
+    paymentFailed: (paymentData) => {
+      dispatch(addNotification({
+        type: 'payment_failed',
+        title: '❌ Payment Failed',
+        message: `Payment of $${paymentData.amount} failed. Please try again.`,
+        link: `/election/${paymentData.electionId}`,
+        data: paymentData,
+      }));
+    },
+
+    // ===== ✅ NEW: Vote notifications =====
+    voteCast: (voteData) => {
+      dispatch(addNotification({
+        type: 'vote_cast',
+        title: '🗳️ Vote Recorded',
+        message: `Your vote in "${voteData.electionTitle}" has been recorded successfully!`,
+        link: `/election/${voteData.electionId}/results`,
+        data: voteData,
+      }));
+    },
+
+    voteUpdated: (voteData) => {
+      dispatch(addNotification({
+        type: 'vote_updated',
+        title: '📝 Vote Updated',
+        message: `Your vote in "${voteData.electionTitle}" has been updated.`,
+        link: `/election/${voteData.electionId}/results`,
+        data: voteData,
+      }));
+    },
+
+    // ===== ✅ NEW: Lottery notifications =====
+    lotteryTicket: (lotteryData) => {
+      dispatch(addNotification({
+        type: 'lottery_ticket_created',
+        title: '🎫 Lottery Ticket Created',
+        message: `You've been entered into the lottery for "${lotteryData.electionTitle}"!`,
+        link: `/election/${lotteryData.electionId}/lottery`,
+        data: lotteryData,
+      }));
+    },
+
+    lotteryWinner: (winnerData) => {
+      dispatch(addNotification({
+        type: 'lottery_winner',
+        title: '🏆 Congratulations! You Won!',
+        message: `You won the lottery in "${winnerData.electionTitle}"!`,
+        link: '/dashboard/wallet',
+        data: winnerData,
+      }));
+    },
   };
 
   return notify;
 }
+//last workable code just to add voting service an wallet service above code
 // // src/hooks/useNotificationMonitor.js
-// // ✅ TEMPORARY VERSION - Only Election Service
+// // ✅ PRODUCTION READY - Uses environment variables
 // import { useEffect, useRef } from 'react';
 // import { useDispatch, useSelector } from 'react-redux';
 // import { addNotification } from '../redux/slices/notificationSlice';
@@ -165,7 +283,7 @@ export function useNotifications() {
 
 // /**
 //  * Hook to connect to WebSocket and receive real-time notifications
-//  * TEMPORARY: Only connecting to Election Service
+//  * Uses environment variables for production deployment
 //  */
 // export function useNotificationMonitor() {
 //   const dispatch = useDispatch();
@@ -180,12 +298,16 @@ export function useNotifications() {
 //       return;
 //     }
 
-//     console.log('🔌 Connecting to Election Service WebSocket...');
+//     // ✅ Use environment variable or fallback to localhost
+//     //const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
+//     const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_WSOCKET_URL || 'http://localhost:3005';
+    
+//     console.log('🔌 Connecting to Election Service WebSocket at:', ELECTION_SERVICE_URL);
 
 //     // ========================================
-//     // CONNECT TO ELECTION SERVICE (Port 3005)
+//     // CONNECT TO ELECTION SERVICE
 //     // ========================================
-//     const electionSocket = io('http://localhost:3005', {
+//     const electionSocket = io(ELECTION_SERVICE_URL, {
 //       transports: ['websocket', 'polling'],
 //       reconnection: true,
 //       reconnectionDelay: 1000,
