@@ -23,7 +23,8 @@ export function useNotificationMonitor() {
     }
 
     // ✅ Use environment variable or fallback to localhost
-    const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_SERVICE_URL || 'http://localhost:3005';
+    //const ELECTION_SERVICE_URL = import.meta.env.VITE_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
+    const ELECTION_SERVICE_URL = import.meta.env.VITE_REACT_APP_ELECTION_SERVICE_URL || 'http://localhost:3005/api';
     
     console.log('🔌 Connecting to Election Service WebSocket at:', ELECTION_SERVICE_URL);
 
