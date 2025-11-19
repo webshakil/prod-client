@@ -130,6 +130,35 @@ export const wallletApi = createApi({
       invalidatesTags: ['Wallet', 'Transactions'],
     }),
 
+    // Create lottery deposit checkout
+createLotteryDepositCheckout: builder.mutation({
+  query: ({ electionId, amount }) => ({
+    url: `/wallet/lottery-deposit/${electionId}/checkout`,
+    method: 'POST',
+    body: { amount },
+  }),
+  invalidatesTags: ['CreatorWallet'],
+}),
+
+// Confirm lottery deposit
+confirmLotteryDeposit: builder.mutation({
+  query: ({ sessionId }) => ({
+    url: `/wallet/lottery-deposit/confirm`,
+    method: 'POST',
+    body: { sessionId },
+  }),
+  invalidatesTags: ['CreatorWallet', 'CreatorElections'],
+}),
+
+// Get all escrow deposits
+getEscrowDeposits: builder.query({
+  query: () => {
+    console.log('🔵 Getting all escrow deposits');
+    return `/wallet/creator/escrow-deposits`;
+  },
+  providesTags: ['CreatorWallet'],
+}),
+
     requestWithdrawal: builder.mutation({
       query: (data) => ({
         url: `/wallet/withdraw`,
@@ -138,6 +167,15 @@ export const wallletApi = createApi({
       }),
       invalidatesTags: ['Wallet', 'Withdrawals', 'Transactions', 'CreatorWallet'],
     }),
+    getLotteryDepositStatus: builder.query({
+  query: (electionId) => {
+    console.log('🔵 Getting lottery deposit status for election:', electionId);
+    return `/wallet/lottery-deposit/${electionId}/status`;
+  },
+  providesTags: (result, error, electionId) => [
+    { type: 'CreatorWallet', id: `deposit-${electionId}` }
+  ],
+}),
 
     getWithdrawalRequests: builder.query({
       query: ({ status } = {}) => {
@@ -330,6 +368,10 @@ export const {
   useGetElectionRevenueQuery,
   useGetCreatorWalletQuery,
   useGetCreatorTransactionsQuery,
+   useGetLotteryDepositStatusQuery,
+  useCreateLotteryDepositCheckoutMutation,
+  useConfirmLotteryDepositMutation,
+  useGetEscrowDepositsQuery,
 } = wallletApi;
 
 export default wallletApi;
