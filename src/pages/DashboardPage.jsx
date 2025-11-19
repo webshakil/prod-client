@@ -1,4 +1,4 @@
-// src/pages/DashboardPage.jsx - COMPLETE WITH ALL ADMIN SECTIONS
+// src/pages/DashboardPage.jsx - UPDATED WITH NOTIFICATION BELL
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAppDispatch } from '../redux/hooks';
@@ -6,14 +6,20 @@ import { logout } from '../redux/slices/authSlice';
 import { useGetProfileMutation } from '../redux/api/user/userApi';
 import { useAuth } from '../redux/hooks';
 import { Loader } from 'lucide-react';
-
 import { useGetUserRolesQuery } from '../redux/api/role/roleApi';
+
+// ✅ Import Notification Components
+import NotificationBell from '../components/notifications/NotificationBell';
+import { useNotificationMonitor } from '../hooks/useNotificationMonitor';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
   const auth = useAuth();
+
+  // ✅ Initialize notification monitoring
+  useNotificationMonitor();
 
   const { data: liveRolesData } = useGetUserRolesQuery(auth.userId, {
     skip: !auth.userId,
@@ -195,7 +201,6 @@ export default function DashboardPage() {
     }
   }, [auth.userId, profileLoaded, getProfile]);
 
-  // ✅✅✅ NEW: HANDLE REDIRECT TO SPECIFIC TAB ✅✅✅
   useEffect(() => {
     if (location.state?.activeTab) {
       console.log('🔄 Navigation request to tab:', location.state.activeTab);
@@ -270,7 +275,10 @@ export default function DashboardPage() {
             </button>
             <h1 className="text-2xl font-bold text-blue-600">Vottery</h1>
           </div>
-          <div className="flex gap-4 items-center">
+          
+          {/* ✅ RIGHT SIDE: User Info + Notification Bell + Profile + Logout */}
+          <div className="flex gap-2 sm:gap-4 items-center">
+            {/* User Avatar & Name */}
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                 {currentUser?.user_firstname?.[0] || 'U'}
@@ -279,15 +287,22 @@ export default function DashboardPage() {
                 {currentUser?.user_firstname || 'User'}
               </span>
             </div>
+
+            {/* ✅ NOTIFICATION BELL */}
+            <NotificationBell />
+            
+            {/* Profile Button */}
             <button
               onClick={handleGoToProfile}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded transition text-sm"
+              className="px-3 sm:px-4 py-2 text-gray-700 hover:bg-gray-100 rounded transition text-sm"
             >
-              Profile
+              Profile 
             </button>
+            
+            {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+              className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
             >
               Logout
             </button>
@@ -672,6 +687,681 @@ export default function DashboardPage() {
     </div>
   );
 }
+//last workable perfect code. just to add notificatin above code
+// // src/pages/DashboardPage.jsx - COMPLETE WITH ALL ADMIN SECTIONS
+// import React, { useState, useEffect, useMemo } from 'react';
+// import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+// import { useAppDispatch } from '../redux/hooks';
+// import { logout } from '../redux/slices/authSlice';
+// import { useGetProfileMutation } from '../redux/api/user/userApi';
+// import { useAuth } from '../redux/hooks';
+// import { Loader } from 'lucide-react';
+
+// import { useGetUserRolesQuery } from '../redux/api/role/roleApi';
+
+// export default function DashboardPage() {
+//   const navigate = useNavigate();
+//   const location = useLocation();
+//   const dispatch = useAppDispatch();
+//   const auth = useAuth();
+
+//   const { data: liveRolesData } = useGetUserRolesQuery(auth.userId, {
+//     skip: !auth.userId,
+//   });
+  
+//   const [sidebarOpen, setSidebarOpen] = useState(false);
+//   const [profileLoaded, setProfileLoaded] = useState(false);
+//   /*eslint-disable*/
+//   const [profileError, setProfileError] = useState(null);
+
+//   const [getProfile, { isLoading: profileLoading, data: profileData }] = useGetProfileMutation();
+
+//   const currentUser = useMemo(() => {
+//     const profile = profileData?.profile || {};
+//     const liveRoles = liveRolesData?.data?.map(r => r.role_name) || [];
+    
+//     return {
+//       user_firstname: profile.user_firstname || auth.firstName || 'User',
+//       user_lastname: profile.user_lastname || auth.lastName || '',
+//       user_email: profile.user_email || auth.email || '',
+//       user_id: profile.user_id || auth.userId,
+//       roles: liveRoles.length > 0 ? liveRoles : (profile.roles || auth.roles || ['Voter']),
+//     };
+//   }, [profileData, liveRolesData, auth]);
+
+//   const isAdminRoute = location.pathname.includes('/dashboard/admin');
+
+//   const tabs = useMemo(() => {
+//     let roles = currentUser?.roles || ['Voter'];
+
+//     if (!Array.isArray(roles)) {
+//       roles = Object.values(roles);
+//     }
+
+//     const normalizedRoles = roles.map((r) => String(r).toLowerCase().trim().replace(/\s+/g, ''));
+
+//     const isManager = normalizedRoles.includes('manager');
+//     const isAdmin = normalizedRoles.includes('admin');
+//     /*eslint-disable*/
+//     const isContentCreator = normalizedRoles.includes('contentcreator');
+//     const isModerator = normalizedRoles.includes('moderator');
+    
+//     const canCreateElections = normalizedRoles.some(role => 
+//       role.includes('electioncreator') ||
+//       role.includes('organizationelectioncreator') ||
+//       role.includes('contentcreator')
+//     );
+
+//     const tabsList = [];
+
+//     tabsList.push({
+//       path: '/dashboard',
+//       label: 'Dashboard',
+//       icon: '📊',
+//     });
+    
+//     tabsList.push({
+//       path: '/dashboard/public-bulletin',
+//       label: 'Public Bulletin',
+//       icon: '🌐',
+//     });
+
+//     tabsList.push({
+//       path: '/dashboard/vote-now',
+//       label: 'Vote Now',
+//       icon: '🗳️',
+//     });
+
+//     tabsList.push({
+//       path: '/dashboard/vote-history',
+//       label: 'My Votes',
+//       icon: '📜',
+//     });
+
+//     tabsList.push({
+//       path: '/dashboard/all-elections',
+//       label: 'All Elections',
+//       icon: '📋',
+//     });
+
+//     if (canCreateElections) {
+//       tabsList.push({
+//         path: '/dashboard/my-elections',
+//         label: 'My Elections',
+//         icon: '📁',
+//       });
+//     }
+
+//     tabsList.push({
+//       path: '/dashboard/wallet',
+//       label: 'My Wallet',
+//       icon: '💰',
+//     });
+
+//     if (canCreateElections) {
+//       tabsList.push({
+//         path: '/dashboard/creator-wallet',
+//         label: 'Creator Wallet',
+//         icon: '💵',
+//       });
+//     }
+
+//     tabsList.push({
+//       path: '/dashboard/lottery',
+//       label: 'Gamified Election Tickets',
+//       icon: '🎰',
+//     });
+
+//     tabsList.push({
+//       path: '/dashboard/subscription',
+//       label: 'Subscriptions',
+//       icon: '💳',
+//     });
+
+//     tabsList.push({
+//       path: '/dashboard/create-election',
+//       label: 'Create Election',
+//       icon: '➕',
+//     });
+
+//     if (isModerator || isAdmin || isManager) {
+//       tabsList.push({
+//         path: '/dashboard/verify-votes',
+//         label: 'Verify Votes',
+//         icon: '✓',
+//       });
+//     }
+
+//     if (isAdmin || isManager) {
+//       tabsList.push({
+//         path: '/dashboard/user-management',
+//         label: 'User Management',
+//         icon: '👥',
+//       });
+
+//       tabsList.push({
+//         path: '/dashboard/audit-trail',
+//         label: 'Audit Trail',
+//         icon: '📝',
+//       });
+//     }
+
+//     return tabsList;
+//   }, [currentUser?.roles]);
+
+//   useEffect(() => {
+//     const accessToken = localStorage.getItem('accessToken');
+//     const userId = localStorage.getItem('userId');
+    
+//     const isAuthenticated = auth.isAuthenticated || (accessToken && userId);
+    
+//     if (!isAuthenticated) {
+//       console.log('❌ Not authenticated, redirecting to auth');
+//       navigate('/auth', { replace: true });
+//       return;
+//     }
+//     console.log('✅ User authenticated:', { 
+//       reduxAuth: auth.isAuthenticated,
+//       hasTokenInStorage: !!accessToken,
+//       userId: userId || auth.userId,
+//       email: auth.email 
+//     });
+//   }, [auth.isAuthenticated, navigate, auth.userId, auth.email]);
+
+//   useEffect(() => {
+//     if (auth.userId && !profileLoaded) {
+//       console.log('📤 Loading user profile for userId:', auth.userId);
+//       getProfile(auth.userId)
+//         .then((result) => {
+//           console.log('✅ Profile loaded:', result);
+//           setProfileLoaded(true);
+//           setProfileError(null);
+//         })
+//         .catch((error) => {
+//           console.error('❌ Profile load error:', error);
+//           setProfileError(error?.data?.message || 'Failed to load profile');
+//           setProfileLoaded(true);
+//         });
+//     }
+//   }, [auth.userId, profileLoaded, getProfile]);
+
+//   // ✅✅✅ NEW: HANDLE REDIRECT TO SPECIFIC TAB ✅✅✅
+//   useEffect(() => {
+//     if (location.state?.activeTab) {
+//       console.log('🔄 Navigation request to tab:', location.state.activeTab);
+      
+//       const tabPathMap = {
+//         'creator-wallet': '/dashboard/creator-wallet',
+//         'wallet': '/dashboard/wallet',
+//         'my-wallet': '/dashboard/wallet',
+//         'my-elections': '/dashboard/my-elections',
+//         'dashboard': '/dashboard',
+//       };
+
+//       const targetPath = tabPathMap[location.state.activeTab];
+      
+//       if (targetPath) {
+//         console.log('✅ Navigating to:', targetPath);
+        
+//         navigate(targetPath, { 
+//           replace: true,
+//           state: {
+//             highlightElection: location.state.highlightElection,
+//             depositRequired: location.state.depositRequired,
+//             depositAmount: location.state.depositAmount
+//           }
+//         });
+//       } else {
+//         console.warn('⚠️ Unknown tab:', location.state.activeTab);
+//       }
+//     }
+//   }, [location.state, navigate]);
+
+//   const handleLogout = () => {
+//     dispatch(logout());
+//     navigate('/auth', { replace: true });
+//   };
+
+//   const handleGoToProfile = () => {
+//     navigate('/profile');
+//   };
+
+//   if (!profileLoaded && profileLoading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center bg-gray-100">
+//         <div className="text-center">
+//           <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+//           <p className="text-gray-600">Loading your profile...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   let roles = currentUser?.roles || ['Voter'];
+//   if (!Array.isArray(roles)) {
+//     roles = Object.values(roles);
+//   }
+//   const normalizedRoles = roles.map((r) => String(r).toLowerCase().trim());
+//   const isManager = normalizedRoles.includes('manager');
+//   const isAdmin = normalizedRoles.includes('admin');
+//   const isAuditor = normalizedRoles.includes('auditor');
+
+//   return (
+//     <div className="min-h-screen bg-gray-100">
+//       {/* Header/Navbar */}
+//       <nav className="bg-white shadow sticky top-0 z-50">
+//         <div className="px-4 py-3 flex justify-between items-center">
+//           <div className="flex items-center gap-4">
+//             <button
+//               onClick={() => setSidebarOpen(!sidebarOpen)}
+//               className="md:hidden px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition"
+//             >
+//               ☰
+//             </button>
+//             <h1 className="text-2xl font-bold text-blue-600">Vottery</h1>
+//           </div>
+//           <div className="flex gap-4 items-center">
+//             <div className="hidden sm:flex items-center gap-2">
+//               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+//                 {currentUser?.user_firstname?.[0] || 'U'}
+//               </div>
+//               <span className="text-sm font-medium hidden md:inline">
+//                 {currentUser?.user_firstname || 'User'}
+//               </span>
+//             </div>
+//             <button
+//               onClick={handleGoToProfile}
+//               className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded transition text-sm"
+//             >
+//               Profile 
+//             </button>
+//             <button
+//               onClick={handleLogout}
+//               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+//             >
+//               Logout
+//             </button>
+//           </div>
+//         </div>
+//       </nav>
+
+//       <div className="flex h-[calc(100vh-64px)]">
+//         {/* Sidebar */}
+//         <aside
+//           className={`${
+//             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+//           } md:translate-x-0 transition-transform w-64 bg-white border-r border-gray-200 overflow-y-auto fixed md:relative z-40 h-full`}
+//         >
+//           {/* User Card */}
+//           <div className="p-4 border-b border-gray-200">
+//             <div className="text-center">
+//               <div className="w-16 h-16 mx-auto mb-2 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+//                 {currentUser?.user_firstname?.[0] || 'U'}
+//                 {currentUser?.user_lastname?.[0] || ''}
+//               </div>
+//               <h3 className="font-bold text-sm">
+//                 {currentUser?.user_firstname} {currentUser?.user_lastname}
+//               </h3>
+//               <p className="text-xs text-gray-600 truncate">{currentUser?.user_email}</p>
+//               <div className="mt-2 flex flex-wrap gap-1 justify-center">
+//                 {currentUser?.roles && Object.values(currentUser.roles).map((role) => (
+//                   <span key={role} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+//                     {role}
+//                   </span>
+//                 ))}
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Navigation Tabs */}
+//           <nav className="p-4 space-y-2">
+//             {tabs.map((tab) => {
+//               const isActive = location.pathname === tab.path;
+              
+//               return (
+//                 <button
+//                   key={tab.path}
+//                   onClick={() => {
+//                     navigate(tab.path);
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     isActive
+//                       ? 'bg-blue-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">{tab.icon}</span>
+//                   <span className="text-sm md:text-base">{tab.label}</span>
+//                 </button>
+//               );
+//             })}
+//           </nav>
+
+//           {/* ✅ ADMIN Section */}
+//           {isManager && (
+//             <>
+//               <div className="mt-6 pt-4 px-4 border-t border-gray-200">
+//                 <p className="text-xs text-gray-400 font-semibold uppercase">Admin</p>
+//               </div>
+//               <nav className="p-4 space-y-2">
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/subscription');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/subscription'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">⚙️</span>
+//                   <span className="text-sm md:text-base">Subscription Admin</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/roles');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/roles'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🛡️</span>
+//                   <span className="text-sm md:text-base">Role Management</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/permissions');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/permissions'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🔐</span>
+//                   <span className="text-sm md:text-base">Permissions</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/user-roles');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/user-roles'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">👤</span>
+//                   <span className="text-sm md:text-base">User Roles</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/role-history');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/role-history'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">📋</span>
+//                   <span className="text-sm md:text-base">Role History</span>
+//                 </button>
+//               </nav>
+//             </>
+//           )}
+
+//           {/* ✅ SECURITY & AUDIT Section */}
+//           {(isManager || isAdmin || isAuditor) && (
+//             <>
+//               <div className="mt-6 pt-4 px-4 border-t border-gray-200">
+//                 <p className="text-xs text-gray-400 font-semibold uppercase">Security & Audit</p>
+//               </div>
+//               <nav className="p-4 space-y-2">
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/vote-audit');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/vote-audit'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🔍</span>
+//                   <span className="text-sm md:text-base">Vote Audit</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/security-logs');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/security-logs'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🔐</span>
+//                   <span className="text-sm md:text-base">Security Logs</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/system-audit');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/system-audit'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">📝</span>
+//                   <span className="text-sm md:text-base">System Audit</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/encryption-status');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/encryption-status'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🛡️</span>
+//                   <span className="text-sm md:text-base">Encryption Status</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/verification-tools');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/verification-tools'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">✓</span>
+//                   <span className="text-sm md:text-base">Verification Tools</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/compliance-reports');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/compliance-reports'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">📊</span>
+//                   <span className="text-sm md:text-base">Compliance Reports</span>
+//                 </button>
+//               </nav>
+//             </>
+//           )}
+
+//           {/* ✅ FINANCIAL MANAGEMENT Section */}
+//           {isManager && (
+//             <>
+//               <div className="mt-6 pt-4 px-4 border-t border-gray-200">
+//                 <p className="text-xs text-gray-400 font-semibold uppercase">Financial Management</p>
+//               </div>
+//               <nav className="p-4 space-y-2">
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/payment-gateways');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/payment-gateways'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">💳</span>
+//                   <span className="text-sm md:text-base">Payment Gateways</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/transaction-monitoring');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/transaction-monitoring'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">💰</span>
+//                   <span className="text-sm md:text-base">Transaction Monitoring</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/revenue-analytics');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/revenue-analytics'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">📈</span>
+//                   <span className="text-sm md:text-base">Revenue Analytics</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/prize-distribution');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/prize-distribution'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🎁</span>
+//                   <span className="text-sm md:text-base">Prize Distribution</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/regional-pricing');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/regional-pricing'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">🌍</span>
+//                   <span className="text-sm md:text-base">Regional Pricing</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/refund-management');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/refund-management'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">↩️</span>
+//                   <span className="text-sm md:text-base">Refund Management</span>
+//                 </button>
+//                 <button
+//                   onClick={() => {
+//                     navigate('/dashboard/admin/financial-reports');
+//                     setSidebarOpen(false);
+//                   }}
+//                   className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+//                     location.pathname === '/dashboard/admin/financial-reports'
+//                       ? 'bg-purple-600 text-white font-semibold'
+//                       : 'text-gray-700 hover:bg-gray-100'
+//                   }`}
+//                 >
+//                   <span className="text-lg">📊</span>
+//                   <span className="text-sm md:text-base">Financial Reports</span>
+//                 </button>
+//               </nav>
+//             </>
+//           )}
+
+//           {/* Stats Section */}
+//           <div className="p-4 border-t border-gray-200 space-y-3">
+//             <div className="bg-blue-50 p-3 rounded-lg">
+//               <p className="text-xs text-gray-600">Total Votes</p>
+//               <p className="text-2xl font-bold text-blue-600">24</p>
+//             </div>
+//             <div className="bg-green-50 p-3 rounded-lg">
+//               <p className="text-xs text-gray-600">Elections Created</p>
+//               <p className="text-2xl font-bold text-green-600">3</p>
+//             </div>
+//           </div>
+//         </aside>
+
+//         {/* Main Content */}
+//         <main className="flex-1 overflow-y-auto">
+//           <div className="p-4 md:p-8">
+//             {profileError && (
+//               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+//                 <p className="text-yellow-800">
+//                   Warning: {profileError}. Continuing with basic user data.
+//                 </p>
+//               </div>
+//             )}
+            
+//             <Outlet />
+//           </div>
+//         </main>
+//       </div>
+
+//       {/* Mobile overlay */}
+//       {sidebarOpen && (
+//         <div
+//           className="fixed inset-0 bg-black bg-opacity-50 md:hidden z-30"
+//           onClick={() => setSidebarOpen(false)}
+//         />
+//       )}
+//     </div>
+//   );
+// }
 //last workable code
 // // src/pages/DashboardPage.jsx - COMPLETE WITH ALL ADMIN SECTIONS
 // import React, { useState, useEffect, useMemo } from 'react';

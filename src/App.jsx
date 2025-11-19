@@ -75,8 +75,10 @@ import FinancialReportsPage from './pages/superAdmin/FinancialReportsPage';
 // Data Loaders
 import { loadSubscriptionData } from './utils/loadSubscriptionData';
 import { loadElectionData } from './utils/loadElectionData';
+import { useNotificationMonitor } from './hooks/useNotificationMonitor';
 
 export default function App() {
+  useNotificationMonitor();
   const auth = useAuth();
   useUserData();
   useUserRoles();

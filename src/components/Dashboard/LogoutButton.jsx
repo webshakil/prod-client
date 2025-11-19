@@ -36,7 +36,7 @@ export default function LogoutButton() {
       disabled={isLoading}
       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400"
     >
-      {isLoading ? 'Logging out...' : 'Logout'}
+      {isLoading ? 'Logging out...' : 'Logout '}
     </button>
   );
 }
