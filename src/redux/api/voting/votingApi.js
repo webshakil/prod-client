@@ -68,6 +68,7 @@ export const votingApi = createApi({
       query: (electionId) => `/voting/elections/${electionId}/my-vote`,
       providesTags: ['Vote'],
     }),
+    
     getVotingHistory: builder.query({
   query: ({ page = 1, limit = 10 }) => `/voting/history?page=${page}&limit=${limit}`,
   providesTags: ['VoteHistory'],
