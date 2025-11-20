@@ -64,11 +64,13 @@ export default function PluralityBallot({
                 <tr key={candidate.id} className="border-t border-gray-200">
                   <td className="py-3 pr-4">
                     <div className="text-sm text-gray-700">
-                      <span className="font-semibold">Candidate #{index + 1} ({candidateLetter})</span>
+                      <span className="font-semibold">
+                        Candidate #{index + 1} ({candidateLetter}) - {candidate.option_text}
+                      </span>
                     </div>
                   </td>
                   {ranks.map((rank, rankIndex) => {
-                    const isSelected = selectedCandidateId === candidate.id && rankIndex === 0;
+                    const isSelected = selectedCandidateId === candidate.id;
                     
                     return (
                       <td key={rank} className="text-center py-3 px-2">
@@ -79,8 +81,7 @@ export default function PluralityBallot({
                                 ? 'border-gray-800 bg-gray-800' 
                                 : 'border-gray-400 bg-white hover:border-gray-600'
                             }`}
-                            onClick={() => rankIndex === 0 && handleCandidateSelect(candidate.id)}
-                            style={{ cursor: rankIndex === 0 ? 'pointer' : 'default' }}
+                            onClick={() => handleCandidateSelect(candidate.id)}
                           >
                           </div>
                         </div>
