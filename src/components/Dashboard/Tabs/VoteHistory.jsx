@@ -126,25 +126,56 @@ export default function VoteHistoryTab() {
     });
   };
 
-  const handleVerifyAnonymousVote = async () => {
-    const { receiptId, voteToken, verificationCode } = anonymousVerification;
-    
-    if (!receiptId || !voteToken || !verificationCode) {
-      alert('Please fill in all fields');
-      return;
-    }
+const handleVerifyAnonymousVote = async () => {
+  const { receiptId, voteToken, verificationCode } = anonymousVerification;
+  
+  if (!receiptId || !voteToken || !verificationCode) {
+    alert('Please fill in all fields');
+    return;
+  }
 
-    try {
-      setShowVerificationResult(false);
-      await verifyAnonymous({
-        receiptId: receiptId.trim(),
-        voteToken: voteToken.trim(),
-        verificationCode: verificationCode.trim()
-      }).unwrap();
-    } catch (error) {
-      console.error('Anonymous verification error:', error);
-    }
-  };
+  console.log('🔐 Starting anonymous verification...');
+  console.log('📋 Receipt ID:', receiptId);
+  console.log('🎫 Vote Token:', voteToken.substring(0, 10) + '...');
+  console.log('🔢 Verification Code:', verificationCode);
+
+  try {
+    setShowVerificationResult(false);
+    console.log('📡 Calling API...');
+    
+    const result = await verifyAnonymous({
+      receiptId: receiptId.trim(),
+      voteToken: voteToken.trim(),
+      verificationCode: verificationCode.trim()
+    }).unwrap();
+    
+    console.log('✅ API Response:', result);
+    
+  } catch (error) {
+    console.error('❌ Verification failed:', error);
+    console.error('Error details:', error.data || error.message);
+  }
+};
+
+  // const handleVerifyAnonymousVote = async () => {
+  //   const { receiptId, voteToken, verificationCode } = anonymousVerification;
+    
+  //   if (!receiptId || !voteToken || !verificationCode) {
+  //     alert('Please fill in all fields');
+  //     return;
+  //   }
+
+  //   try {
+  //     setShowVerificationResult(false);
+  //     await verifyAnonymous({
+  //       receiptId: receiptId.trim(),
+  //       voteToken: voteToken.trim(),
+  //       verificationCode: verificationCode.trim()
+  //     }).unwrap();
+  //   } catch (error) {
+  //     console.error('Anonymous verification error:', error);
+  //   }
+  // };
 
   const resetVerification = () => {
     // ✅ Reset all states
