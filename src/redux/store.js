@@ -71,6 +71,7 @@ import { auditTrailApi } from './api/verification/auditTrailApi.js';
 // ========================================
 import { analyticsApi } from './api/analytics/analyticsApi.js';
 import wallletApi from './api/walllet/wallletApi.js';
+import { electionStatsApi } from './api/admin/electionStatsApi.js';
 
 // ========================================
 // PERSIST CONFIGURATION
@@ -131,6 +132,7 @@ const rootReducer = combineReducers({
   [roleApi.reducerPath]: roleApi.reducer,
   [permissionApi.reducerPath]: permissionApi.reducer,
   [assignmentApi.reducerPath]: assignmentApi.reducer,
+  [electionStatsApi.reducerPath]: electionStatsApi.reducer,
   
   // ========================================
   //  NEW VOTING API REDUCERS (ADDED)
@@ -292,6 +294,7 @@ export const store = configureStore({
       .concat(lotteryyApi.middleware)
       .concat(lotteryDrawApi.middleware)
       .concat(lotteryTicketApi.middleware)
+      .concat(electionStatsApi.middleware)
       // ========================================
       //  NEW WALLET API MIDDLEWARE (ADDED)
       // ========================================

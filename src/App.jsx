@@ -76,6 +76,7 @@ import FinancialReportsPage from './pages/superAdmin/FinancialReportsPage';
 import { loadSubscriptionData } from './utils/loadSubscriptionData';
 import { loadElectionData } from './utils/loadElectionData';
 import { useNotificationMonitor } from './hooks/useNotificationMonitor';
+import ElectionStatsPage from './pages/superAdmin/ElectionStatsPage';
 
 export default function App() {
   useNotificationMonitor();
@@ -217,6 +218,14 @@ export default function App() {
           ))}
 
           {/* ✅ NEW ADMIN ROUTES - Security & Audit */}
+           <Route
+            path="admin/election-stats"
+            element={
+              <AdminRoute requiredRoles={['Manager', 'Admin', 'Auditor']}>
+                <ElectionStatsPage />
+              </AdminRoute>
+            }
+          />
           <Route
             path="admin/vote-audit"
             element={

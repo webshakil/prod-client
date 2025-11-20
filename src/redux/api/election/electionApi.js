@@ -472,42 +472,7 @@ getMyElections: builder.query({
   },
   providesTags: ['Elections'],
 }),
-// getMyElections: builder.query({
-//   query: ({ page = 1, limit = 10, status = null } = {}) => {
-//     let url = `/elections/my-elections?page=${page}&limit=${limit}`;
-//     if (status && status !== 'all') {
-//       url += `&status=${status}`;
-//     }
-//     return url;
-//   },
-//   transformResponse: (response) => {
-//     console.log('🔍 RTK Query - Raw API Response:', response);
-//     console.log('🔍 Elections array:', response?.elections);
-//     console.log('🔍 Elections count:', response?.elections?.length || 0);
-    
-//     if (response?.elections && response.elections.length > 0) {
-//       console.log('📦 First election sample:', response.elections[0]);
-//       console.log('🎁 Lottery enabled?', response.elections[0]?.lottery_enabled);
-//       console.log('💰 Prize pool?', response.elections[0]?.lottery_total_prize_pool);
-//       console.log('💳 Funding source?', response.elections[0]?.lottery_prize_funding_source);
-//     } else {
-//       console.warn('⚠️ NO ELECTIONS RETURNED FROM API');
-//     }
-    
-//     return response;
-//   },
-//   providesTags: ['Elections'],
-// }),
-    // getMyElections: builder.query({
-    //   query: ({ page = 1, limit = 10, status = null } = {}) => {
-    //     let url = `/elections/my-elections?page=${page}&limit=${limit}`;
-    //     if (status && status !== 'all') {
-    //       url += `&status=${status}`;
-    //     }
-    //     return url;
-    //   },
-    //   providesTags: ['Elections'],
-    // }),
+
 
   }),
 });

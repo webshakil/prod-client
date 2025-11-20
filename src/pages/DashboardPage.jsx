@@ -466,6 +466,15 @@ export default function DashboardPage() {
                   <span className="text-sm md:text-base">Vote Audit</span>
                 </button>
                 <button
+  onClick={() => { navigate('/dashboard/admin/election-stats'); setSidebarOpen(false); }}
+  className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 ${
+    location.pathname === '/dashboard/admin/election-stats' ? 'bg-purple-600 text-white font-semibold' : 'text-gray-700 hover:bg-gray-100'
+  }`}
+>
+  <span className="text-lg">📊</span>
+  <span className="text-sm md:text-base">Election Stats</span>
+</button>
+                <button
                   onClick={() => {
                     navigate('/dashboard/admin/security-logs');
                     setSidebarOpen(false);
