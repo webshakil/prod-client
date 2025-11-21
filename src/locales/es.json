@@ -3,7 +3,7 @@
     "welcome": "Bienvenido",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "register": "Caja registradora",
+    "register": "Registrarse",
     "submit": "Enviar",
     "cancel": "Cancelar",
     "save": "Guardar",
@@ -15,24 +15,125 @@
     "previous": "Anterior",
     "loading": "Cargando...",
     "error": "Error",
-    "success": "Realizado con éxito",
+    "success": "Éxito",
     "confirm": "Confirmar",
     "search": "Buscar",
-    "filter": "Filtro",
+    "filter": "Filtrar",
     "sort": "Ordenar",
-    "view": "Visualización",
+    "view": "Ver",
     "download": "Descargar",
-    "upload": "Cargar",
+    "upload": "Subir",
     "select": "Seleccionar",
-    "clear": "Borrar",
+    "clear": "Limpiar",
     "apply": "Aplicar",
-    "reset": "Reiniciar",
-    "getStarted": "Comencemos",
-    "logoutAndStartAgain": "Cerrar sesión y empezar de nuevo"
+    "reset": "Restablecer",
+    "getStarted": "Comenzar",
+    "logoutAndStartAgain": "Cerrar sesión y comenzar de nuevo"
   },
   "nav": {
     "home": "Inicio",
-    "pricing": "Precio",
-    "about": "Sobre Nosotros"
+    "pricing": "Precios",
+    "about": "Acerca de"
+  },
+  "landing": {
+    "hero": {
+      "trustedBy": "Confiado por más de 10,000 organizaciones",
+      "title": "Votación",
+      "titleHighlight": "Democrática",
+      "titleEnd": "Simplificada",
+      "subtitle": "Cree elecciones seguras y transparentes en minutos. Desde clubes locales hasta organizaciones globales, Vottery empodera la toma de decisiones democráticas a cualquier escala.",
+      "getStartedFree": "Comenzar Gratis",
+      "viewPricing": "Ver Precios",
+      "noCreditCard": "No se requiere tarjeta de crédito",
+      "freePlan": "Plan gratuito para siempre",
+      "uptime": "Tiempo de actividad",
+      "activeVoters": "Votantes Activos"
+    },
+    "stats": {
+      "electionsCreated": "Elecciones Creadas",
+      "votesCast": "Votos Emitidos",
+      "countries": "Países",
+      "uptime": "Tiempo de Actividad"
+    },
+    "features": {
+      "title": "Todo lo que Necesitas para Votación Democrática",
+      "subtitle": "Características poderosas diseñadas para hacer sus elecciones seguras, transparentes y accesibles para todos.",
+      "secureVoting": {
+        "title": "Votación Segura",
+        "description": "El cifrado de extremo a extremo garantiza que sus votos sean privados y a prueba de manipulaciones."
+      },
+      "lightningFast": {
+        "title": "Ultrarrápido",
+        "description": "Cree y lance elecciones en minutos con nuestra plataforma intuitiva."
+      },
+      "realTimeAnalytics": {
+        "title": "Análisis en Tiempo Real",
+        "description": "Realice un seguimiento de votos y participación con potentes paneles de análisis."
+      },
+      "flexiblePricing": {
+        "title": "Precios Flexibles",
+        "description": "Pago por uso o suscripción. Elija lo que mejor le funcione."
+      },
+      "globalReach": {
+        "title": "Alcance Global",
+        "description": "Precios regionales y soporte de múltiples monedas para usuarios en todo el mundo."
+      },
+      "support": {
+        "title": "Soporte 24/7",
+        "description": "Nuestro equipo de soporte dedicado está siempre aquí para ayudarlo a tener éxito."
+      }
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona",
+      "subtitle": "Comience con Vottery en tres simples pasos",
+      "step1": {
+        "title": "Crear Cuenta",
+        "description": "Regístrese en segundos con verificación de correo electrónico y autenticación de dos factores para máxima seguridad."
+      },
+      "step2": {
+        "title": "Elija Su Plan",
+        "description": "Seleccione entre opciones de precios flexibles: pago por uso o suscripción para funciones avanzadas."
+      },
+      "step3": {
+        "title": "Lanzar Elección",
+        "description": "Cree su elección, invite votantes y observe los resultados en tiempo real de forma segura."
+      },
+      "startFirstElection": "Iniciar Su Primera Elección"
+    },
+    "testimonials": {
+      "title": "Confiado por Organizaciones en Todo el Mundo",
+      "subtitle": "Vea lo que dicen nuestros clientes",
+      "testimonial1": {
+        "quote": "Vottery transformó la forma en que realizamos nuestras elecciones anuales. La plataforma es increíblemente intuitiva y a nuestros miembros les encanta lo fácil que es votar.",
+        "name": "Juan Pérez",
+        "role": "CEO, Startup Tecnológica"
+      },
+      "testimonial2": {
+        "quote": "Las características de seguridad nos dieron total tranquilidad. Nuestros 5,000+ miembros votaron sin ningún problema. ¡Muy recomendado!",
+        "name": "Sara Martínez",
+        "role": "Directora, Organización Sin Fines de Lucro"
+      },
+      "testimonial3": {
+        "quote": "Los análisis e informes en tiempo real hicieron que el seguimiento de los resultados de nuestras elecciones fuera sencillo. La mejor plataforma de votación que hemos usado.",
+        "name": "Miguel López",
+        "role": "Presidente, Unión de Estudiantes"
+      }
+    },
+    "cta": {
+      "title": "¿Listo para Transformar Sus Elecciones?",
+      "subtitle": "Únase a miles de organizaciones que usan Vottery para realizar elecciones seguras y transparentes.",
+      "getStartedFree": "Comenzar Gratis",
+      "viewPricing": "Ver Precios",
+      "footer": "No se requiere tarjeta de crédito • Plan gratuito disponible para siempre • Cancele en cualquier momento"
+    }
+  },
+  "footer": {
+    "brand": {"tagline": "Votación segura y transparente simplificada para organizaciones de todo el mundo."},
+    "product": {"title": "Producto", "pricing": "Precios", "features": "Características", "security": "Seguridad", "enterprise": "Empresa"},
+    "company": {"title": "Empresa", "about": "Acerca de", "careers": "Carreras", "blog": "Blog", "contact": "Contacto"},
+    "legal": {"title": "Legal", "privacy": "Política de Privacidad", "terms": "Términos de Servicio", "cookies": "Política de Cookies"},
+    "copyright": "Todos los derechos reservados."
   }
+
+
 }

@@ -1,38 +1,137 @@
 {
   "common": {
     "welcome": "Bem-vindo",
-    "login": "Senha de Entrada",
-    "logout": "Terminar sessão",
-    "register": "Registo",
-    "submit": "Apresentar",
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Registrar",
+    "submit": "Enviar",
     "cancel": "Cancelar",
     "save": "Salvar",
     "delete": "Excluir",
     "edit": "Editar",
     "close": "Fechar",
-    "back": "Retroceder",
-    "next": "Seguinte",
+    "back": "Voltar",
+    "next": "Próximo",
     "previous": "Anterior",
-    "loading": "A carregar ...",
+    "loading": "Carregando...",
     "error": "Erro",
-    "success": "Operação concluída com êxito",
-    "confirm": "Confirme",
-    "search": "Pesquisar",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "search": "Buscar",
     "filter": "Filtrar",
-    "sort": "Organizar",
+    "sort": "Ordenar",
     "view": "Ver",
     "download": "Baixar",
-    "upload": "Carregar",
+    "upload": "Enviar",
     "select": "Selecionar",
     "clear": "Limpar",
-    "apply": "Aderir",
-    "reset": "Repor",
+    "apply": "Aplicar",
+    "reset": "Redefinir",
     "getStarted": "Começar",
-    "logoutAndStartAgain": "Sair e recomeçar"
+    "logoutAndStartAgain": "Sair e começar novamente"
   },
   "nav": {
     "home": "Início",
     "pricing": "Preços",
-    "about": "Quem Somos"
+    "about": "Sobre Nós"
+  },
+  "landing": {
+    "hero": {
+      "trustedBy": "Confiado por mais de 10.000 organizações",
+      "title": "Votação",
+      "titleHighlight": "Democrática",
+      "titleEnd": "Simplificada",
+      "subtitle": "Crie eleições seguras e transparentes em minutos. De clubes locais a organizações globais, Vottery capacita a tomada de decisões democráticas em qualquer escala.",
+      "getStartedFree": "Começar Gratuitamente",
+      "viewPricing": "Ver Preços",
+      "noCreditCard": "Não é necessário cartão de crédito",
+      "freePlan": "Plano gratuito para sempre",
+      "uptime": "Tempo de Atividade",
+      "activeVoters": "Eleitores Ativos"
+    },
+    "stats": {
+      "electionsCreated": "Eleições Criadas",
+      "votesCast": "Votos Expressos",
+      "countries": "Países",
+      "uptime": "Tempo de Atividade"
+    },
+    "features": {
+      "title": "Tudo que Você Precisa para Votação Democrática",
+      "subtitle": "Recursos poderosos projetados para tornar suas eleições seguras, transparentes e acessíveis a todos.",
+      "secureVoting": {
+        "title": "Votação Segura",
+        "description": "A criptografia de ponta a ponta garante que seus votos sejam privados e à prova de adulteração."
+      },
+      "lightningFast": {
+        "title": "Extremamente Rápido",
+        "description": "Crie e lance eleições em minutos com nossa plataforma intuitiva."
+      },
+      "realTimeAnalytics": {
+        "title": "Análise em Tempo Real",
+        "description": "Acompanhe votos e engajamento com painéis de análise poderosos."
+      },
+      "flexiblePricing": {
+        "title": "Preços Flexíveis",
+        "description": "Pague conforme usa ou assine. Escolha o que funciona melhor para você."
+      },
+      "globalReach": {
+        "title": "Alcance Global",
+        "description": "Preços regionais e suporte a múltiplas moedas para usuários em todo o mundo."
+      },
+      "support": {
+        "title": "Suporte 24/7",
+        "description": "Nossa equipe de suporte dedicada está sempre aqui para ajudá-lo a ter sucesso."
+      }
+    },
+    "howItWorks": {
+      "title": "Como Funciona",
+      "subtitle": "Comece com Vottery em três passos simples",
+      "step1": {
+        "title": "Criar Conta",
+        "description": "Inscreva-se em segundos com verificação de e-mail e autenticação de dois fatores para máxima segurança."
+      },
+      "step2": {
+        "title": "Escolha Seu Plano",
+        "description": "Selecione entre opções de preços flexíveis - pague conforme usa ou assine para recursos avançados."
+      },
+      "step3": {
+        "title": "Lançar Eleição",
+        "description": "Crie sua eleição, convide eleitores e acompanhe resultados em tempo real com segurança."
+      },
+      "startFirstElection": "Iniciar Sua Primeira Eleição"
+    },
+    "testimonials": {
+      "title": "Confiado por Organizações em Todo o Mundo",
+      "subtitle": "Veja o que nossos clientes dizem",
+      "testimonial1": {
+        "quote": "Vottery transformou como realizamos nossas eleições anuais. A plataforma é incrivelmente intuitiva e nossos membros adoram como é fácil votar.",
+        "name": "João Silva",
+        "role": "CEO, Startup de Tecnologia"
+      },
+      "testimonial2": {
+        "quote": "Os recursos de segurança nos deram total tranquilidade. Nossos 5.000+ membros votaram sem nenhum problema. Altamente recomendado!",
+        "name": "Maria Santos",
+        "role": "Diretora, Organização Sem Fins Lucrativos"
+      },
+      "testimonial3": {
+        "quote": "Análises e relatórios em tempo real tornaram o acompanhamento dos resultados eleitorais sem esforço. A melhor plataforma de votação que já usamos.",
+        "name": "Pedro Costa",
+        "role": "Presidente, União de Estudantes"
+      }
+    },
+    "cta": {
+      "title": "Pronto para Transformar Suas Eleições?",
+      "subtitle": "Junte-se a milhares de organizações usando Vottery para realizar eleições seguras e transparentes.",
+      "getStartedFree": "Começar Gratuitamente",
+      "viewPricing": "Ver Preços",
+      "footer": "Não é necessário cartão de crédito • Plano gratuito disponível para sempre • Cancele a qualquer momento"
+    }
+  },
+    "footer": {
+    "brand": {"tagline": "Votação segura e transparente simplificada para organizações em todo o mundo."},
+    "product": {"title": "Produto", "pricing": "Preços", "features": "Recursos", "security": "Segurança", "enterprise": "Empresa"},
+    "company": {"title": "Empresa", "about": "Sobre Nós", "careers": "Carreiras", "blog": "Blog", "contact": "Contato"},
+    "legal": {"title": "Legal", "privacy": "Política de Privacidade", "terms": "Termos de Serviço", "cookies": "Política de Cookies"},
+    "copyright": "Todos os direitos reservados."
   }
 }

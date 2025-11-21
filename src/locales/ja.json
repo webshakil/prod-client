@@ -3,7 +3,7 @@
     "welcome": "ようこそ",
     "login": "ログイン",
     "logout": "ログアウト",
-    "register": "新規登録",
+    "register": "登録",
     "submit": "送信",
     "cancel": "キャンセル",
     "save": "保存",
@@ -13,26 +13,125 @@
     "back": "戻る",
     "next": "次へ",
     "previous": "前へ",
-    "loading": "読み込み中・・・",
+    "loading": "読み込み中...",
     "error": "エラー",
     "success": "成功",
     "confirm": "確認",
     "search": "検索",
-    "filter": "フィルタ",
-    "sort": "並び替え",
-    "view": "ビュー",
+    "filter": "フィルター",
+    "sort": "並べ替え",
+    "view": "表示",
     "download": "ダウンロード",
     "upload": "アップロード",
     "select": "選択",
-    "clear": "消去",
+    "clear": "クリア",
     "apply": "適用",
     "reset": "リセット",
-    "getStarted": "使い始める",
-    "logoutAndStartAgain": "ログアウトしてやり直す"
+    "getStarted": "始める",
+    "logoutAndStartAgain": "ログアウトして最初から"
   },
   "nav": {
     "home": "ホーム",
-    "pricing": "価格設定",
-    "about": "会社概要"
+    "pricing": "料金",
+    "about": "について"
+  },
+  "landing": {
+    "hero": {
+      "trustedBy": "10,000以上の組織に信頼されています",
+      "title": "民主的な",
+      "titleHighlight": "投票",
+      "titleEnd": "をシンプルに",
+      "subtitle": "数分で安全で透明性の高い選挙を作成できます。地域のクラブからグローバル組織まで、Votteryはあらゆる規模で民主的な意思決定を可能にします。",
+      "getStartedFree": "無料で始める",
+      "viewPricing": "料金を見る",
+      "noCreditCard": "クレジットカード不要",
+      "freePlan": "永久無料プラン",
+      "uptime": "稼働率",
+      "activeVoters": "アクティブな投票者"
+    },
+    "stats": {
+      "electionsCreated": "作成された選挙",
+      "votesCast": "投じられた票",
+      "countries": "国",
+      "uptime": "稼働率"
+    },
+    "features": {
+      "title": "民主的な投票に必要なすべて",
+      "subtitle": "あなたの選挙を安全で透明性が高く、すべての人がアクセスできるようにする強力な機能。",
+      "secureVoting": {
+        "title": "安全な投票",
+        "description": "エンドツーエンドの暗号化により、投票が非公開で改ざん防止されることを保証します。"
+      },
+      "lightningFast": {
+        "title": "超高速",
+        "description": "直感的なプラットフォームで数分で選挙を作成して開始できます。"
+      },
+      "realTimeAnalytics": {
+        "title": "リアルタイム分析",
+        "description": "強力な分析ダッシュボードで投票とエンゲージメントを追跡します。"
+      },
+      "flexiblePricing": {
+        "title": "柔軟な料金",
+        "description": "従量課金またはサブスクリプション。最適なものを選択してください。"
+      },
+      "globalReach": {
+        "title": "グローバルリーチ",
+        "description": "世界中のユーザー向けの地域別価格設定と複数通貨サポート。"
+      },
+      "support": {
+        "title": "24時間365日サポート",
+        "description": "専任のサポートチームが常にあなたの成功をサポートします。"
+      }
+    },
+    "howItWorks": {
+      "title": "使い方",
+      "subtitle": "3つの簡単なステップでVotteryを始めましょう",
+      "step1": {
+        "title": "アカウント作成",
+        "description": "メール認証と二要素認証で数秒で登録し、最大限のセキュリティを確保します。"
+      },
+      "step2": {
+        "title": "プランを選択",
+        "description": "柔軟な価格オプションから選択 - 従量課金制または高度な機能のサブスクリプション。"
+      },
+      "step3": {
+        "title": "選挙を開始",
+        "description": "選挙を作成し、投票者を招待し、安全にリアルタイムの結果を確認します。"
+      },
+      "startFirstElection": "最初の選挙を始める"
+    },
+    "testimonials": {
+      "title": "世界中の組織に信頼されています",
+      "subtitle": "お客様の声をご覧ください",
+      "testimonial1": {
+        "quote": "Votteryは私たちの年次選挙の実施方法を変革しました。プラットフォームは非常に直感的で、メンバーは投票がいかに簡単かを気に入っています。",
+        "name": "田中太郎",
+        "role": "CEO、テクノロジースタートアップ"
+      },
+      "testimonial2": {
+        "quote": "セキュリティ機能により完全な安心感が得られました。5,000人以上のメンバーが問題なく投票しました。強くお勧めします！",
+        "name": "佐藤花子",
+        "role": "ディレクター、非営利団体"
+      },
+      "testimonial3": {
+        "quote": "リアルタイムの分析とレポートにより、選挙結果の追跡が簡単になりました。これまでに使用した中で最高の投票プラットフォームです。",
+        "name": "鈴木一郎",
+        "role": "学生会長"
+      }
+    },
+    "cta": {
+      "title": "選挙を変革する準備はできていますか？",
+      "subtitle": "安全で透明性の高い選挙を実施するためにVotteryを使用している何千もの組織に参加しましょう。",
+      "getStartedFree": "無料で始める",
+      "viewPricing": "料金を見る",
+      "footer": "クレジットカード不要 • 永久無料プラン利用可能 • いつでもキャンセル可能"
+    }
+  },
+    "footer": {
+    "brand": {"tagline": "世界中の組織のための安全で透明な投票を簡素化。"},
+    "product": {"title": "製品", "pricing": "料金", "features": "機能", "security": "セキュリティ", "enterprise": "エンタープライズ"},
+    "company": {"title": "会社", "about": "会社概要", "careers": "採用情報", "blog": "ブログ", "contact": "お問い合わせ"},
+    "legal": {"title": "法的事項", "privacy": "プライバシーポリシー", "terms": "利用規約", "cookies": "Cookie ポリシー"},
+    "copyright": "全著作権所有。"
   }
 }

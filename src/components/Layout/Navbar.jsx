@@ -9,9 +9,7 @@ import LanguageSelector from '../Common/LanguageSelector';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
-  console.log('Current language:', i18n.language);
-console.log('Available languages:', Object.keys(i18n.options.resources));
-console.log('Home translation:', t('nav.home'));
+
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();

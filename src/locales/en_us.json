@@ -35,5 +35,126 @@
     "home": "Home",
     "pricing": "Pricing",
     "about": "About Us"
+  },
+
+
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Trusted by 10,000+ organizations",
+      "title": "Democratic",
+      "titleHighlight": "Voting",
+      "titleEnd": "Made Simple",
+      "subtitle": "Create secure, transparent elections in minutes. From local clubs to global organizations, Vottery empowers democratic decision-making at any scale.",
+      "getStartedFree": "Get Started Free",
+      "viewPricing": "View Pricing",
+      "noCreditCard": "No credit card required",
+      "freePlan": "Free forever plan",
+      "uptime": "Uptime",
+      "activeVoters": "Active Voters"
+    },
+    "stats": {
+      "electionsCreated": "Elections Created",
+      "votesCast": "Votes Cast",
+      "countries": "Countries",
+      "uptime": "Uptime"
+    },
+    "features": {
+      "title": "Everything You Need for Democratic Voting",
+      "subtitle": "Powerful features designed to make your elections secure, transparent, and accessible to everyone.",
+      "secureVoting": {
+        "title": "Secure Voting",
+        "description": "End-to-end encryption ensures your votes are private and tamper-proof."
+      },
+      "lightningFast": {
+        "title": "Lightning Fast",
+        "description": "Create and launch elections in minutes with our intuitive platform."
+      },
+      "realTimeAnalytics": {
+        "title": "Real-time Analytics",
+        "description": "Track votes and engagement with powerful analytics dashboards."
+      },
+      "flexiblePricing": {
+        "title": "Flexible Pricing",
+        "description": "Pay-as-you-go or subscribe. Choose what works best for you."
+      },
+      "globalReach": {
+        "title": "Global Reach",
+        "description": "Regional pricing and multi-currency support for users worldwide."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Our dedicated support team is always here to help you succeed."
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "subtitle": "Get started with Vottery in three simple steps",
+      "step1": {
+        "title": "Create Account",
+        "description": "Sign up in seconds with email verification and two-factor authentication for maximum security."
+      },
+      "step2": {
+        "title": "Choose Your Plan",
+        "description": "Select from flexible pricing options - pay-as-you-go or subscribe for advanced features."
+      },
+      "step3": {
+        "title": "Launch Election",
+        "description": "Create your election, invite voters, and watch real-time results come in securely."
+      },
+      "startFirstElection": "Start Your First Election"
+    },
+    "testimonials": {
+      "title": "Trusted by Organizations Worldwide",
+      "subtitle": "See what our customers have to say",
+      "testimonial1": {
+        "quote": "Vottery transformed how we conduct our annual elections. The platform is incredibly intuitive, and our members love how easy it is to vote.",
+        "name": "John Doe",
+        "role": "CEO, Tech Startup"
+      },
+      "testimonial2": {
+        "quote": "The security features gave us complete peace of mind. Our 5,000+ members voted without a single issue. Highly recommended!",
+        "name": "Sarah Miller",
+        "role": "Director, Non-Profit Org"
+      },
+      "testimonial3": {
+        "quote": "Real-time analytics and reporting made tracking our election results effortless. The best voting platform we've ever used.",
+        "name": "Michael Johnson",
+        "role": "President, Student Union"
+      }
+    },
+    "cta": {
+      "title": "Ready to Transform Your Elections?",
+      "subtitle": "Join thousands of organizations using Vottery to conduct secure, transparent elections.",
+      "getStartedFree": "Get Started Free",
+      "viewPricing": "View Pricing",
+      "footer": "No credit card required • Free forever plan available • Cancel anytime"
+    }
+  },
+    "footer": {
+    "brand": {
+      "tagline": "YOUR TRANSLATION HERE"
+    },
+    "product": {
+      "title": "Product",
+      "pricing": "Pricing",
+      "features": "Features",
+      "security": "Security",
+      "enterprise": "Enterprise"
+    },
+    "company": {
+      "title": "Company",
+      "about": "About Us",
+      "careers": "Careers",
+      "blog": "Blog",
+      "contact": "Contact"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    },
+    "copyright": "All rights reserved."
   }
 }
