@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "환영합니다",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "register": "회원가입",
+    "submit": "제출",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "loading": "로드 중...",
+    "error": "오류",
+    "success": "성공",
+    "confirm": "확인",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "view": "보기",
+    "download": "다운로드",
+    "upload": "업로드",
+    "select": "선택",
+    "clear": "책임",
+    "apply": "적용",
+    "reset": "초기화",
+    "getStarted": "시작하기",
+    "logoutAndStartAgain": "로그아웃 후 다시 시작"
+  },
+  "nav": {
+    "home": "홈",
+    "pricing": "가격",
+    "about": "회사 소개"
+  }
+}

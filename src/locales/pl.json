@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Witaj",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj",
+    "register": "Zarejestruj się",
+    "submit": "Wyślij",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Delete",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "back": "Cofnij",
+    "next": "Następne",
+    "previous": "Poprzednie",
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Udało się",
+    "confirm": "Potwierdź",
+    "search": "Szukaj",
+    "filter": "Filtr",
+    "sort": "Sortuj",
+    "view": "Wyświetl",
+    "download": "Pobierz",
+    "upload": "Prześlij",
+    "select": "Wybierz",
+    "clear": "Clear",
+    "apply": "Zastosuj",
+    "reset": "Zresetuj",
+    "getStarted": "Rozpocznij",
+    "logoutAndStartAgain": "Wyloguj się i zacznij od nowa"
+  },
+  "nav": {
+    "home": "Strona główna",
+    "pricing": "Cennik",
+    "about": "O Centrum"
+  }
+}

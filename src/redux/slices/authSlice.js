@@ -132,22 +132,6 @@ export const authSlice = createSlice({
       console.log('🔄 Redux: Email OTP verified, session:', state.sessionId);
     },
 
-    // ✅ SMS OTP VERIFIED - KEEP SESSION ID
-    // setSMSOTPVerified: (state) => {
-    //   state.phoneVerified = true;
-    //   state.completedAuthSteps.smsOTP = true;
-
-    //   if (state.isFirstTimeUser) {
-    //     state.currentAuthStep = 4;
-    //     console.log('🔄 Redux: SMS OTP verified (first-time), step 4, session:', state.sessionId);
-    //   } else {
-    //     state.currentAuthStep = 7;
-    //     console.log('🔄 Redux: SMS OTP verified (returning), completing, session:', state.sessionId);
-    //   }
-
-    //   state.loading = false;
-    //   state.error = null;
-    // },
 
     setSMSOTPVerified: (state) => {
   state.phoneVerified = true;

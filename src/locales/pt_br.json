@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Bem-vindo",
+    "login": "Senha de Entrada",
+    "logout": "Terminar sessão",
+    "register": "Registo",
+    "submit": "Apresentar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "close": "Fechar",
+    "back": "Retroceder",
+    "next": "Seguinte",
+    "previous": "Anterior",
+    "loading": "A carregar ...",
+    "error": "Erro",
+    "success": "Operação concluída com êxito",
+    "confirm": "Confirme",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "sort": "Organizar",
+    "view": "Ver",
+    "download": "Baixar",
+    "upload": "Carregar",
+    "select": "Selecionar",
+    "clear": "Limpar",
+    "apply": "Aderir",
+    "reset": "Repor",
+    "getStarted": "Começar",
+    "logoutAndStartAgain": "Sair e recomeçar"
+  },
+  "nav": {
+    "home": "Início",
+    "pricing": "Preços",
+    "about": "Quem Somos"
+  }
+}

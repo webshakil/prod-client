@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "مرحباً",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "register": "السجل",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تحرير",
+    "close": "مغلق",
+    "back": "العودة",
+    "next": "التالي",
+    "previous": "السابق",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "ناجح",
+    "confirm": "أكّد العملية",
+    "search": "--",
+    "filter": "عامل التصفية",
+    "sort": "الفرز",
+    "view": "عرض",
+    "download": "التحميل",
+    "upload": "تحميل",
+    "select": "الاختيار",
+    "clear": "واضح",
+    "apply": "تطبيق",
+    "reset": "إعادة ضبط",
+    "getStarted": "البدء في تعلم القيادة",
+    "logoutAndStartAgain": "تسجيل الخروج والبدء من جديد"
+  },
+  "nav": {
+    "home": "المنزل",
+    "pricing": "الأسعار",
+    "about": "نبذة عنّا"
+  }
+}

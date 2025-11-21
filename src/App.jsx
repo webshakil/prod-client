@@ -1,4 +1,5 @@
 // src/App.jsx - FIXED VERSION (No Missing Imports)
+import './i18n';
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';

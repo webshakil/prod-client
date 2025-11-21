@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Ti diamo il benvenuto",
+    "login": "Login",
+    "logout": "Esci",
+    "register": "Registra",
+    "submit": "Invia",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "close": "Chiusa",
+    "back": "Indietro",
+    "next": "Prossimo",
+    "previous": "Precedente",
+    "loading": "Caricamento in corso...",
+    "error": "Errore",
+    "success": "Successo",
+    "confirm": "Confermare",
+    "search": "Ricerca",
+    "filter": "Filtro",
+    "sort": "Ordina",
+    "view": "Vista",
+    "download": "Download",
+    "upload": "Caricare",
+    "select": "Seleziona",
+    "clear": "Cancella",
+    "apply": "Applicare",
+    "reset": "Reset",
+    "getStarted": "Inizia",
+    "logoutAndStartAgain": "Esci e ricomincia"
+  },
+  "nav": {
+    "home": "Home",
+    "pricing": "Tariffe",
+    "about": "Chi siamo"
+  }
+}

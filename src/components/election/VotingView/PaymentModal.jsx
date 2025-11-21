@@ -457,7 +457,7 @@ export default function PaymentModal({
 
         {/* Info Note */}
         <div className="mt-4 text-xs text-gray-500 text-center">
-          <p>🔒 Secure payment powered by Stripe & Paddle</p>
+          <p>🔒 Secure payment powered by Stripe & Paddle </p>
           <p className="mt-1">Your vote will be cast immediately after successful payment</p>
         </div>
       </div>

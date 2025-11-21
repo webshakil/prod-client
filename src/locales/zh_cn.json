@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "欢迎！",
+    "login": "登录",
+    "logout": "注销",
+    "register": "注册",
+    "submit": "提交",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "修改",
+    "close": "关闭",
+    "back": "返回大厅",
+    "next": "下一頁",
+    "previous": "上一頁",
+    "loading": "正在載入...",
+    "error": "错误",
+    "success": "成功",
+    "confirm": "確認",
+    "search": "搜索",
+    "filter": "籂選",
+    "sort": "整理",
+    "view": "查看",
+    "download": "下载",
+    "upload": "上传",
+    "select": "选择",
+    "clear": "清楚",
+    "apply": "确认",
+    "reset": "洗 点",
+    "getStarted": "开始",
+    "logoutAndStartAgain": "注销并重新开始"
+  },
+  "nav": {
+    "home": "主場",
+    "pricing": "价格",
+    "about": "公司简介"
+  }
+}

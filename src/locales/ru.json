@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Привет",
+    "login": "Войти",
+    "logout": "Выйти",
+    "register": "Регистр",
+    "submit": "Отправить",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Правка",
+    "close": "Закрыть",
+    "back": "Назад",
+    "next": "След.",
+    "previous": "Предыдущий",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "confirm": "Подтвердить",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "sort": "Sort",
+    "view": "Просмотр",
+    "download": "Скачать",
+    "upload": "Загрузить",
+    "select": "Выбрать",
+    "clear": "Очистить",
+    "apply": "Готово",
+    "reset": "Reset (сброс - уст 0)",
+    "getStarted": "Начало работы",
+    "logoutAndStartAgain": "Выйти и начать заново"
+  },
+  "nav": {
+    "home": "Домой",
+    "pricing": "Ценообразование",
+    "about": "О нас"
+  }
+}
