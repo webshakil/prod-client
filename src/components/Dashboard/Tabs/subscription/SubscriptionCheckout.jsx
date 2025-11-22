@@ -229,7 +229,7 @@ const handleProceedToPayment = async () => {
             <button onClick={handleBack} className="hover:opacity-80 transition-opacity">
               <ArrowLeft size={24} />
             </button>
-            <h1 className="text-2xl font-bold">Complete Your Subscription</h1>
+            <h1 className="text-2xl font-bold">Complete Your Subscription </h1>
           </div>
           <p className="text-indigo-100 capitalize">{selectedPlan.plan_name} Plan</p>
         </div>
@@ -462,7 +462,7 @@ const handleProceedToPayment = async () => {
           {/* Security Notice */}
           <div className="text-center text-sm text-gray-500">
             <p>🔒 Secure checkout powered by {selectedGateway === 'stripe' ? 'Stripe' : 'Paddle'}</p>
-            <p className="mt-1">Your payment information is encrypted and secure</p>
+            <p className="mt-1">Your payment information is encrypted and secure </p>
           </div>
         </div>
       </div>
