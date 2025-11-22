@@ -62,10 +62,31 @@ i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng;
 });
 
-// ONLY 20 WORKING LANGUAGES (plus en_us = 21 total)
+// 20 LANGUAGES (keeping your original 10 + adding 10 new)
 const languageCodes = [
-  'es', 'fr', 'de', 'pt_br', 'it', 'ru', 'ja', 'zh_cn', 'ar', 'hi',
-  'ko', 'tr', 'nl', 'pl', 'id', 'th', 'vi', 'uk', 'ro', 'no'
+  // YOUR EXISTING 10:
+  'es',      // Spanish
+  'fr',      // French
+  'de',      // German
+  'pt_br',   // Portuguese (Brazil)
+  'it',      // Italian
+  'ru',      // Russian
+  'ja',      // Japanese
+  'zh_cn',   // Chinese (Simplified)
+  'ar',      // Arabic
+  'hi',      // Hindi
+  
+  // KEEPING THESE (from your original code):
+  'ko',      // Korean
+  'tr',      // Turkish
+  'nl',      // Dutch
+  'pl',      // Polish
+  'id',      // Indonesian
+  'th',      // Thai
+  'vi',      // Vietnamese
+  'uk',      // Ukrainian
+  'ro',      // Romanian ✅ KEPT
+  'no',      // Norwegian ✅ KEPT
 ];
 
 async function loadAllLanguages() {
@@ -92,7 +113,7 @@ document.documentElement.lang = currentLang;
 loadAllLanguages();
 
 export default i18n;
-//last workable perfect code
+//last successfull 10 lanugages
 // import i18n from 'i18next';
 // import { initReactI18next } from 'react-i18next';
 // import en_us from './locales/en_us.json';
@@ -157,10 +178,10 @@ export default i18n;
 //   document.documentElement.lang = lng;
 // });
 
-// // Load all other languages AFTER initialization
+// // ONLY 20 WORKING LANGUAGES (plus en_us = 21 total)
 // const languageCodes = [
-//   'es', 'fr', 'de', 'it', 'pt_br', 'nl', 'pl', 'ru', 'ja', 'ko', 
-//   'zh_cn', 'ar', 'hi', 'tr', 'sv', 'da', 'fi', 'no', 'cs', 'hu'
+//   'es', 'fr', 'de', 'pt_br', 'it', 'ru', 'ja', 'zh_cn', 'ar', 'hi',
+//   'ko', 'tr', 'nl', 'pl', 'id', 'th', 'vi', 'uk', 'ro', 'no'
 // ];
 
 // async function loadAllLanguages() {
@@ -168,7 +189,6 @@ export default i18n;
 //     try {
 //       const trans = await loadLang(code);
 //       if (trans) {
-//         // Add language WITHOUT overwriting
 //         i18n.addResourceBundle(code, 'translation', trans, false, false);
 //         console.log(`✅ Loaded ${code}`);
 //       }

@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Velkommen",
+    "login": "Logg inn",
+    "logout": "Logg ut",
+    "register": "Registrer",
+    "submit": "Send inn",
+    "cancel": "Avbryt",
+    "save": "Lagre",
+    "delete": "Slett",
+    "edit": "Rediger",
+    "close": "Lukk",
+    "back": "Tilbake",
+    "next": "Neste",
+    "previous": "Forrige",
+    "loading": "Laster...",
+    "error": "Feil",
+    "success": "Suksess",
+    "confirm": "Bekreft",
+    "search": "Søk",
+    "filter": "Filtrer",
+    "sort": "Sorter",
+    "view": "Vis",
+    "download": "Last ned",
+    "upload": "Last opp",
+    "select": "Velg",
+    "clear": "Tøm",
+    "apply": "Bruk",
+    "reset": "Tilbakestill",
+    "getStarted": "Kom i gang",
+    "logoutAndStartAgain": "Logg ut og start på nytt",
+    "or": "eller"
+  },
+  
+  "nav": {
+    "home": "Hjem",
+    "pricing": "Priser",
+    "about": "Om oss"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Velkommen! Vennligst bekreft at du er fra Sngine",
+    "emailLabel": "E-postadresse",
+    "emailPlaceholder": "Skriv inn e-posten din",
+    "phoneLabel": "Telefonnummer (Valgfritt)",
+    "phonePlaceholder": "+4712345678",
+    "addPhoneButton": "Legg til telefonnummer",
+    "continueButton": "Fortsett",
+    "noAccount": "Har du ikke en Sngine-konto?",
+    "registerLink": "Registrer deg på Sngine først",
+    "errors": {
+      "emailOrPhone": "Vennligst skriv inn e-post eller telefonnummer",
+      "checkFailed": "Brukerverifisering mislyktes"
+    },
+    "success": {
+      "verified": "Bruker verifisert"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Klarert av over 10 000 organisasjoner",
+      "title": "Demokratisk",
+      "titleHighlight": "Avstemming",
+      "titleEnd": "Gjort enkelt",
+      "subtitle": "Opprett sikre, transparente valg på få minutter. Fra lokale klubber til globale organisasjoner, Vottery muliggjør demokratisk beslutningstaking i enhver skala.",
+      "getStartedFree": "Kom i gang gratis",
+      "viewPricing": "Se priser",
+      "noCreditCard": "Ingen kredittkort påkrevd",
+      "freePlan": "Gratis plan for alltid",
+      "uptime": "Oppetid",
+      "activeVoters": "Aktive velgere"
+    },
+    "stats": {
+      "electionsCreated": "Valg opprettet",
+      "votesCast": "Stemmer avgitt",
+      "countries": "Land",
+      "uptime": "Oppetid"
+    },
+    "features": {
+      "title": "Alt du trenger for demokratisk avstemming",
+      "subtitle": "Kraftige funksjoner designet for å gjøre valgene dine sikre, transparente og tilgjengelige for alle.",
+      "secureVoting": {
+        "title": "Sikker avstemming",
+        "description": "Ende-til-ende-kryptering sikrer at stemmene dine er private og manipuleringssikre."
+      },
+      "lightningFast": {
+        "title": "Lynraskt",
+        "description": "Opprett og lansér valg på få minutter med vår intuitive plattform."
+      },
+      "realTimeAnalytics": {
+        "title": "Sanntidsanalyse",
+        "description": "Spor stemmer og engasjement med kraftige analysedashboards."
+      },
+      "flexiblePricing": {
+        "title": "Fleksible priser",
+        "description": "Betal etter bruk eller abonner. Velg det som fungerer best for deg."
+      },
+      "globalReach": {
+        "title": "Global rekkevidde",
+        "description": "Regional prissetting og støtte for flere valutaer for brukere over hele verden."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Vårt dedikerte supportteam er alltid her for å hjelpe deg med å lykkes."
+      }
+    },
+    "howItWorks": {
+      "title": "Slik fungerer det",
+      "subtitle": "Kom i gang med Vottery i tre enkle trinn",
+      "step1": {
+        "title": "Opprett konto",
+        "description": "Registrer deg på sekunder med e-postverifisering og tofaktorautentisering for maksimal sikkerhet."
+      },
+      "step2": {
+        "title": "Velg din plan",
+        "description": "Velg fra fleksible prisalternativer - betal etter bruk eller abonner for avanserte funksjoner."
+      },
+      "step3": {
+        "title": "Lansér valg",
+        "description": "Opprett valget ditt, inviter velgere og se sanntidsresultater komme inn sikkert."
+      },
+      "startFirstElection": "Start ditt første valg"
+    },
+    "testimonials": {
+      "title": "Klarert av organisasjoner over hele verden",
+      "subtitle": "Se hva kundene våre sier",
+      "testimonial1": {
+        "quote": "Vottery forvandlet hvordan vi gjennomfører våre årlige valg. Plattformen er utrolig intuitiv, og medlemmene våre elsker hvor enkelt det er å stemme.",
+        "name": "Ola Nordmann",
+        "role": "CEO, Teknologioppstart"
+      },
+      "testimonial2": {
+        "quote": "Sikkerhetsfunksjonene ga oss fullstendig trygghet. Våre 5 000+ medlemmer stemte uten ett eneste problem. Anbefales på det sterkeste!",
+        "name": "Kari Hansen",
+        "role": "Direktør, Ideell organisasjon"
+      },
+      "testimonial3": {
+        "quote": "Sanntidsanalyse og rapportering gjorde sporing av valgresultatene våre uanstrengt. Den beste avstemmingsplattformen vi noensinne har brukt.",
+        "name": "Erik Johansen",
+        "role": "President, Studentforening"
+      }
+    },
+    "cta": {
+      "title": "Klar til å transformere valgene dine?",
+      "subtitle": "Bli med tusenvis av organisasjoner som bruker Vottery til å gjennomføre sikre, transparente valg.",
+      "getStartedFree": "Kom i gang gratis",
+      "viewPricing": "Se priser",
+      "footer": "Ingen kredittkort påkrevd • Gratis plan for alltid tilgjengelig • Avbryt når som helst"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Sikker og transparent avstemming for alle"
+    },
+    "product": {
+      "title": "Produkt",
+      "pricing": "Priser",
+      "features": "Funksjoner",
+      "security": "Sikkerhet",
+      "enterprise": "Bedrift"
+    },
+    "company": {
+      "title": "Selskap",
+      "about": "Om oss",
+      "careers": "Karriere",
+      "blog": "Blogg",
+      "contact": "Kontakt"
+    },
+    "legal": {
+      "title": "Juridisk",
+      "privacy": "Personvernserklæring",
+      "terms": "Vilkår for bruk",
+      "cookies": "Informasjonskapsler"
+    },
+    "copyright": "Alle rettigheter reservert."
+  },
+  "progressBar": {
+  "userCheck": "Brukerkontroll",
+  "email": "E-post",
+  "phone": "Telefon",
+  "details": "Detaljer",
+  "biometric": "Biometrisk",
+  "security": "Sikkerhet",
+  "complete": "Fullført"
+},
+"emailVerification": {
+  "title": "Bekreft e-post",
+  "subtitle": "Vi sender en bekreftelseskode til",
+  "sendOTP": "Send kode",
+  "otpLabel": "Skriv inn 6-sifret kode",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Bekreft kode",
+  "resend": "Send på nytt",
+  "resendTimer": "Send på nytt ({timer}s)",
+  "skipDemo": "Hopp over kodebekreftelse (Demomodus)",
+  "success": {
+    "otpSent": "Kode sendt til e-post",
+    "verified": "E-post bekreftet",
+    "skipped": "Kodebekreftelse hoppet over"
+  },
+  "errors": {
+    "sendFailed": "Kunne ikke sende kode",
+    "verifyFailed": "Kodebekreftelse mislyktes",
+    "skipFailed": "Kunne ikke hoppe over kode"
+  }
+},
+"phoneVerification": {
+  "title": "Bekreft telefonnummer",
+  "subtitle": "Vi sender en bekreftelseskode til",
+  "sendOTP": "Send kode",
+  "otpLabel": "Skriv inn 6-sifret kode",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Bekreft kode",
+  "resend": "Send på nytt",
+  "resendTimer": "Send på nytt ({timer}s)",
+  "skipDemo": "Hopp over kodebekreftelse (Demomodus)",
+  "success": {
+    "otpSent": "Kode sendt til telefon",
+    "verified": "Telefon bekreftet",
+    "skipped": "Kodebekreftelse hoppet over"
+  },
+  "errors": {
+    "sendFailed": "Kunne ikke sende kode",
+    "verifyFailed": "Kodebekreftelse mislyktes",
+    "skipFailed": "Kunne ikke hoppe over kode"
+  }
+},
+"dashboard": {
+  "title": "Dashbord",
+  "stats": {
+    "activeElections": "Aktive valg",
+    "yourVotes": "Dine stemmer",
+    "pendingVotes": "Ventende stemmer",
+    "yourRole": "Din rolle",
+    "addedToday": "+{count} i dag",
+    "needVerification": "Trenger verifisering",
+    "permissions": "Tillatelser: {count}"
+  },
+  "recentActivity": {
+    "title": "Nylig aktivitet",
+    "voted": "Du stemte på \"{election}\"",
+    "completed": "Valg \"{election}\" fullført",
+    "promoted": "Du ble forfremmet til {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} timer siden",
+      "dayAgo": "{count} dag siden",
+      "daysAgo": "{count} dager siden"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Laster profilen din...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Logg ut",
+  "sections": {
+    "admin": "Administrasjon",
+    "securityAudit": "Sikkerhet & Revisjon",
+    "financialManagement": "Økonomistyring"
+  },
+  "navigation": {
+    "dashboard": "Dashbord",
+    "publicBulletin": "Offentlig bulleteng",
+    "voteNow": "Stem nå",
+    "myVotes": "Mine stemmer",
+    "allElections": "Alle valg",
+    "myElections": "Mine valg",
+    "myWallet": "Min lommebok",
+    "creatorWallet": "Skaperens lommebok",
+    "lotteryTickets": "Gamifiserte valgbilletter",
+    "subscriptions": "Abonnementer",
+    "createElection": "Opprett valg",
+    "verifyVotes": "Verifiser stemmer",
+    "userManagement": "Brukeradministrasjon",
+    "auditTrail": "Revisjonsspor"
+  },
+  "admin": {
+    "subscriptionAdmin": "Abonnementsadministrasjon",
+    "roleManagement": "Rolleadministrasjon",
+    "permissions": "Tillatelser",
+    "userRoles": "Brukerroller",
+    "roleHistory": "Rollehistorikk"
+  },
+  "security": {
+    "voteAudit": "Stemmerevisjon",
+    "electionStats": "Valgstatistikk",
+    "securityLogs": "Sikkerhetsl logger",
+    "systemAudit": "Systemrevisjon",
+    "encryptionStatus": "Krypteringsstatus",
+    "verificationTools": "Verifikasjonsverktøy",
+    "complianceReports": "Samsvarsrapporter"
+  },
+  "financial": {
+    "paymentGateways": "Betalingsgatewayer",
+    "transactionMonitoring": "Transaksjonsovervåking",
+    "revenueAnalytics": "Inntektsanalyse",
+    "prizeDistribution": "Premiedistribusjon",
+    "regionalPricing": "Regional prising",
+    "refundManagement": "Refusjonsadministrasjon",
+    "financialReports": "Finansielle rapporter"
+  },
+  "stats": {
+    "totalVotes": "Totalt stemmer",
+    "electionsCreated": "Opprettede valg"
+  },
+  "warnings": {
+    "profileError": "Advarsel: {error}. Fortsetter med grunnleggende brukerdata."
+  }
+}
+}

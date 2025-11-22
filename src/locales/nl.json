@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Welkom",
+    "login": "Inloggen",
+    "logout": "Uitloggen",
+    "register": "Registreren",
+    "submit": "Verzenden",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "close": "Sluiten",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "confirm": "Bevestigen",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "sort": "Sorteren",
+    "view": "Bekijken",
+    "download": "Downloaden",
+    "upload": "Uploaden",
+    "select": "Selecteren",
+    "clear": "Wissen",
+    "apply": "Toepassen",
+    "reset": "Resetten",
+    "getStarted": "Aan de slag",
+    "logoutAndStartAgain": "Uitloggen en opnieuw beginnen",
+    "or": "of"
+  },
+  
+  "nav": {
+    "home": "Home",
+    "pricing": "Prijzen",
+    "about": "Over ons"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Welkom! Verifieer dat u van Sngine bent",
+    "emailLabel": "E-mailadres",
+    "emailPlaceholder": "Voer uw e-mailadres in",
+    "phoneLabel": "Telefoonnummer (Optioneel)",
+    "phonePlaceholder": "+31612345678",
+    "addPhoneButton": "Telefoonnummer toevoegen",
+    "continueButton": "Doorgaan",
+    "noAccount": "Heeft u geen Sngine-account?",
+    "registerLink": "Registreer eerst bij Sngine",
+    "errors": {
+      "emailOrPhone": "Voer een e-mailadres of telefoonnummer in",
+      "checkFailed": "Gebruikersverificatie mislukt"
+    },
+    "success": {
+      "verified": "Gebruiker succesvol geverifieerd"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Vertrouwd door 10.000+ organisaties",
+      "title": "Democratisch",
+      "titleHighlight": "Stemmen",
+      "titleEnd": "Eenvoudig Gemaakt",
+      "subtitle": "Creëer veilige, transparante verkiezingen in minuten. Van lokale clubs tot mondiale organisaties, Vottery maakt democratische besluitvorming op elke schaal mogelijk.",
+      "getStartedFree": "Gratis beginnen",
+      "viewPricing": "Prijzen bekijken",
+      "noCreditCard": "Geen creditcard vereist",
+      "freePlan": "Voor altijd gratis plan",
+      "uptime": "Uptime",
+      "activeVoters": "Actieve kiezers"
+    },
+    "stats": {
+      "electionsCreated": "Gemaakte verkiezingen",
+      "votesCast": "Uitgebrachte stemmen",
+      "countries": "Landen",
+      "uptime": "Uptime"
+    },
+    "features": {
+      "title": "Alles wat u nodig heeft voor democratisch stemmen",
+      "subtitle": "Krachtige functies ontworpen om uw verkiezingen veilig, transparant en toegankelijk voor iedereen te maken.",
+      "secureVoting": {
+        "title": "Veilig stemmen",
+        "description": "End-to-end encryptie zorgt ervoor dat uw stemmen privé en fraudebestendig zijn."
+      },
+      "lightningFast": {
+        "title": "Bliksem snel",
+        "description": "Creëer en start verkiezingen in minuten met ons intuïtieve platform."
+      },
+      "realTimeAnalytics": {
+        "title": "Real-time analyses",
+        "description": "Volg stemmen en betrokkenheid met krachtige analysedashboards."
+      },
+      "flexiblePricing": {
+        "title": "Flexibele prijzen",
+        "description": "Betaal per gebruik of neem een abonnement. Kies wat het beste voor u werkt."
+      },
+      "globalReach": {
+        "title": "Wereldwijd bereik",
+        "description": "Regionale prijzen en ondersteuning voor meerdere valuta's voor gebruikers wereldwijd."
+      },
+      "support": {
+        "title": "24/7 ondersteuning",
+        "description": "Ons toegewijde ondersteuningsteam staat altijd klaar om u te helpen slagen."
+      }
+    },
+    "howItWorks": {
+      "title": "Hoe het werkt",
+      "subtitle": "Ga aan de slag met Vottery in drie eenvoudige stappen",
+      "step1": {
+        "title": "Account aanmaken",
+        "description": "Meld u in seconden aan met e-mailverificatie en tweefactorauthenticatie voor maximale beveiliging."
+      },
+      "step2": {
+        "title": "Kies uw plan",
+        "description": "Selecteer uit flexibele prijsopties - betaal per gebruik of neem een abonnement voor geavanceerde functies."
+      },
+      "step3": {
+        "title": "Start verkiezing",
+        "description": "Creëer uw verkiezing, nodig kiezers uit en bekijk real-time resultaten veilig binnenkomen."
+      },
+      "startFirstElection": "Start uw eerste verkiezing"
+    },
+    "testimonials": {
+      "title": "Vertrouwd door organisaties wereldwijd",
+      "subtitle": "Zie wat onze klanten zeggen",
+      "testimonial1": {
+        "quote": "Vottery heeft de manier waarop we onze jaarlijkse verkiezingen houden getransformeerd. Het platform is ongelooflijk intuïtief en onze leden houden ervan hoe gemakkelijk het is om te stemmen.",
+        "name": "Jan de Vries",
+        "role": "CEO, Tech Startup"
+      },
+      "testimonial2": {
+        "quote": "De beveiligingsfuncties gaven ons volledige gemoedsrust. Onze 5.000+ leden stemden zonder een enkel probleem. Zeer aanbevolen!",
+        "name": "Marieke Jansen",
+        "role": "Directeur, Non-profitorganisatie"
+      },
+      "testimonial3": {
+        "quote": "Real-time analyses en rapportage maakten het volgen van onze verkiezingsresultaten moeiteloos. Het beste stemplatform dat we ooit hebben gebruikt.",
+        "name": "Peter Bakker",
+        "role": "Voorzitter, Studentenvereniging"
+      }
+    },
+    "cta": {
+      "title": "Klaar om uw verkiezingen te transformeren?",
+      "subtitle": "Sluit u aan bij duizenden organisaties die Vottery gebruiken om veilige, transparante verkiezingen te houden.",
+      "getStartedFree": "Gratis beginnen",
+      "viewPricing": "Prijzen bekijken",
+      "footer": "Geen creditcard vereist • Voor altijd gratis plan beschikbaar • Op elk moment opzeggen"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Veilig en transparant stemmen voor iedereen"
+    },
+    "product": {
+      "title": "Product",
+      "pricing": "Prijzen",
+      "features": "Functies",
+      "security": "Beveiliging",
+      "enterprise": "Enterprise"
+    },
+    "company": {
+      "title": "Bedrijf",
+      "about": "Over ons",
+      "careers": "Carrières",
+      "blog": "Blog",
+      "contact": "Contact"
+    },
+    "legal": {
+      "title": "Juridisch",
+      "privacy": "Privacybeleid",
+      "terms": "Servicevoorwaarden",
+      "cookies": "Cookiebeleid"
+    },
+    "copyright": "Alle rechten voorbehouden."
+  },
+  "progressBar": {
+  "userCheck": "Gebruikerscontrole",
+  "email": "E-mail",
+  "phone": "Telefoon",
+  "details": "Details",
+  "biometric": "Biometrisch",
+  "security": "Beveiliging",
+  "complete": "Voltooid"
+},
+"emailVerification": {
+  "title": "E-mail verifiëren",
+  "subtitle": "We sturen een verificatiecode naar",
+  "sendOTP": "Code versturen",
+  "otpLabel": "Voer 6-cijferige code in",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Code verifiëren",
+  "resend": "Opnieuw verzenden",
+  "resendTimer": "Opnieuw verzenden ({timer}s)",
+  "skipDemo": "Codeverificatie overslaan (Demomodus)",
+  "success": {
+    "otpSent": "Code verzonden naar e-mail",
+    "verified": "E-mail succesvol geverifieerd",
+    "skipped": "Codeverificatie overgeslagen"
+  },
+  "errors": {
+    "sendFailed": "Code verzenden mislukt",
+    "verifyFailed": "Codeverificatie mislukt",
+    "skipFailed": "Code overslaan mislukt"
+  }
+},
+"phoneVerification": {
+  "title": "Telefoonnummer verifiëren",
+  "subtitle": "We sturen een verificatiecode naar",
+  "sendOTP": "Code versturen",
+  "otpLabel": "Voer 6-cijferige code in",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Code verifiëren",
+  "resend": "Opnieuw verzenden",
+  "resendTimer": "Opnieuw verzenden ({timer}s)",
+  "skipDemo": "Codeverificatie overslaan (Demomodus)",
+  "success": {
+    "otpSent": "Code verzonden naar telefoon",
+    "verified": "Telefoon succesvol geverifieerd",
+    "skipped": "Codeverificatie overgeslagen"
+  },
+  "errors": {
+    "sendFailed": "Code verzenden mislukt",
+    "verifyFailed": "Codeverificatie mislukt",
+    "skipFailed": "Code overslaan mislukt"
+  }
+},
+"dashboard": {
+  "title": "Dashboard",
+  "stats": {
+    "activeElections": "Actieve verkiezingen",
+    "yourVotes": "Uw stemmen",
+    "pendingVotes": "Openstaande stemmen",
+    "yourRole": "Uw rol",
+    "addedToday": "+{count} vandaag",
+    "needVerification": "Verificatie vereist",
+    "permissions": "Rechten: {count}"
+  },
+  "recentActivity": {
+    "title": "Recente activiteit",
+    "voted": "U heeft gestemd op \"{election}\"",
+    "completed": "Verkiezing \"{election}\" voltooid",
+    "promoted": "U bent gepromoveerd tot {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} uur geleden",
+      "dayAgo": "{count} dag geleden",
+      "daysAgo": "{count} dagen geleden"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Uw profiel wordt geladen...",
+  "appName": "Vottery",
+  "profile": "Profiel",
+  "logout": "Uitloggen",
+  "sections": {
+    "admin": "Beheer",
+    "securityAudit": "Beveiliging & Audit",
+    "financialManagement": "Financieel Beheer"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "publicBulletin": "Openbaar bulletin",
+    "voteNow": "Nu stemmen",
+    "myVotes": "Mijn stemmen",
+    "allElections": "Alle verkiezingen",
+    "myElections": "Mijn verkiezingen",
+    "myWallet": "Mijn portemonnee",
+    "creatorWallet": "Maker portemonnee",
+    "lotteryTickets": "Gegamificeerde verkiezingstickets",
+    "subscriptions": "Abonnementen",
+    "createElection": "Verkiezing aanmaken",
+    "verifyVotes": "Stemmen verifiëren",
+    "userManagement": "Gebruikersbeheer",
+    "auditTrail": "Auditspoor"
+  },
+  "admin": {
+    "subscriptionAdmin": "Abonnementenbeheer",
+    "roleManagement": "Rolbeheer",
+    "permissions": "Rechten",
+    "userRoles": "Gebruikersrollen",
+    "roleHistory": "Rolgeschiedenis"
+  },
+  "security": {
+    "voteAudit": "Stemaudit",
+    "electionStats": "Verkiezingsstatistieken",
+    "securityLogs": "Beveiligingslogs",
+    "systemAudit": "Systeemaudit",
+    "encryptionStatus": "Versleutelingsstatus",
+    "verificationTools": "Verificatietools",
+    "complianceReports": "Compliancerapporten"
+  },
+  "financial": {
+    "paymentGateways": "Betaalgateways",
+    "transactionMonitoring": "Transactiemonitoring",
+    "revenueAnalytics": "Omzetanalyse",
+    "prizeDistribution": "Prijsuitdeling",
+    "regionalPricing": "Regionale prijzen",
+    "refundManagement": "Terugbetalingsbeheer",
+    "financialReports": "Financiële rapporten"
+  },
+  "stats": {
+    "totalVotes": "Totaal stemmen",
+    "electionsCreated": "Aangemaakte verkiezingen"
+  },
+  "warnings": {
+    "profileError": "Waarschuwing: {error}. Doorgaan met basisgebruikersgegevens."
+  }
+}
+}

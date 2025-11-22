@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "환영합니다",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "register": "등록",
+    "submit": "제출",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "confirm": "확인",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "view": "보기",
+    "download": "다운로드",
+    "upload": "업로드",
+    "select": "선택",
+    "clear": "지우기",
+    "apply": "적용",
+    "reset": "재설정",
+    "getStarted": "시작하기",
+    "logoutAndStartAgain": "로그아웃 후 다시 시작",
+    "or": "또는"
+  },
+  
+  "nav": {
+    "home": "홈",
+    "pricing": "가격",
+    "about": "회사 소개"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "환영합니다! Sngine 사용자임을 확인해 주세요",
+    "emailLabel": "이메일 주소",
+    "emailPlaceholder": "이메일을 입력하세요",
+    "phoneLabel": "전화번호 (선택사항)",
+    "phonePlaceholder": "+821012345678",
+    "addPhoneButton": "전화번호 추가",
+    "continueButton": "계속",
+    "noAccount": "Sngine 계정이 없으신가요?",
+    "registerLink": "먼저 Sngine에 등록하세요",
+    "errors": {
+      "emailOrPhone": "이메일 또는 전화번호를 입력하세요",
+      "checkFailed": "사용자 확인 실패"
+    },
+    "success": {
+      "verified": "사용자 확인 완료"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "10,000개 이상의 조직이 신뢰합니다",
+      "title": "민주적인",
+      "titleHighlight": "투표를",
+      "titleEnd": "간단하게",
+      "subtitle": "몇 분 안에 안전하고 투명한 선거를 만드세요. 지역 클럽부터 글로벌 조직까지, Vottery는 모든 규모의 민주적 의사결정을 지원합니다.",
+      "getStartedFree": "무료로 시작하기",
+      "viewPricing": "가격 보기",
+      "noCreditCard": "신용카드 불필요",
+      "freePlan": "영구 무료 플랜",
+      "uptime": "가동 시간",
+      "activeVoters": "활성 투표자"
+    },
+    "stats": {
+      "electionsCreated": "생성된 선거",
+      "votesCast": "투표된 표",
+      "countries": "국가",
+      "uptime": "가동 시간"
+    },
+    "features": {
+      "title": "민주적 투표에 필요한 모든 것",
+      "subtitle": "선거를 안전하고 투명하며 모두가 접근할 수 있도록 설계된 강력한 기능.",
+      "secureVoting": {
+        "title": "안전한 투표",
+        "description": "엔드투엔드 암호화로 투표의 개인정보와 변조 방지를 보장합니다."
+      },
+      "lightningFast": {
+        "title": "번개처럼 빠름",
+        "description": "직관적인 플랫폼으로 몇 분 만에 선거를 생성하고 시작하세요."
+      },
+      "realTimeAnalytics": {
+        "title": "실시간 분석",
+        "description": "강력한 분석 대시보드로 투표와 참여도를 추적하세요."
+      },
+      "flexiblePricing": {
+        "title": "유연한 가격",
+        "description": "사용한 만큼 지불하거나 구독하세요. 귀하에게 가장 적합한 것을 선택하세요."
+      },
+      "globalReach": {
+        "title": "글로벌 도달",
+        "description": "전 세계 사용자를 위한 지역별 가격 및 다중 통화 지원."
+      },
+      "support": {
+        "title": "24/7 지원",
+        "description": "전담 지원팀이 귀하의 성공을 위해 항상 대기하고 있습니다."
+      }
+    },
+    "howItWorks": {
+      "title": "작동 방식",
+      "subtitle": "세 가지 간단한 단계로 Vottery 시작하기",
+      "step1": {
+        "title": "계정 만들기",
+        "description": "최대 보안을 위해 이메일 인증과 2단계 인증으로 몇 초 만에 가입하세요."
+      },
+      "step2": {
+        "title": "플랜 선택",
+        "description": "유연한 가격 옵션 중에서 선택하세요 - 사용한 만큼 지불하거나 고급 기능을 위해 구독하세요."
+      },
+      "step3": {
+        "title": "선거 시작",
+        "description": "선거를 만들고 투표자를 초대한 후 실시간 결과를 안전하게 확인하세요."
+      },
+      "startFirstElection": "첫 번째 선거 시작하기"
+    },
+    "testimonials": {
+      "title": "전 세계 조직들의 신뢰",
+      "subtitle": "고객들의 후기를 확인하세요",
+      "testimonial1": {
+        "quote": "Vottery는 우리의 연례 선거 진행 방식을 변화시켰습니다. 플랫폼이 매우 직관적이고 회원들은 투표의 간편함을 좋아합니다.",
+        "name": "김철수",
+        "role": "CEO, 기술 스타트업"
+      },
+      "testimonial2": {
+        "quote": "보안 기능 덕분에 완전한 안심을 얻었습니다. 5,000명 이상의 회원이 단 한 번의 문제 없이 투표했습니다. 강력 추천합니다!",
+        "name": "이영희",
+        "role": "이사, 비영리 조직"
+      },
+      "testimonial3": {
+        "quote": "실시간 분석과 보고 덕분에 선거 결과 추적이 수월했습니다. 지금까지 사용한 최고의 투표 플랫폼입니다.",
+        "name": "박민수",
+        "role": "회장, 학생회"
+      }
+    },
+    "cta": {
+      "title": "선거를 혁신할 준비가 되셨나요?",
+      "subtitle": "안전하고 투명한 선거를 진행하기 위해 Vottery를 사용하는 수천 개의 조직에 합류하세요.",
+      "getStartedFree": "무료로 시작하기",
+      "viewPricing": "가격 보기",
+      "footer": "신용카드 불필요 • 영구 무료 플랜 제공 • 언제든지 취소 가능"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "모두를 위한 안전하고 투명한 투표"
+    },
+    "product": {
+      "title": "제품",
+      "pricing": "가격",
+      "features": "기능",
+      "security": "보안",
+      "enterprise": "기업"
+    },
+    "company": {
+      "title": "회사",
+      "about": "회사 소개",
+      "careers": "채용",
+      "blog": "블로그",
+      "contact": "문의"
+    },
+    "legal": {
+      "title": "법률",
+      "privacy": "개인정보 보호정책",
+      "terms": "서비스 약관",
+      "cookies": "쿠키 정책"
+    },
+    "copyright": "모든 권리 보유."
+  },
+  "progressBar": {
+  "userCheck": "사용자 확인",
+  "email": "이메일",
+  "phone": "전화",
+  "details": "세부정보",
+  "biometric": "생체인증",
+  "security": "보안",
+  "complete": "완료"
+},
+"emailVerification": {
+  "title": "이메일 확인",
+  "subtitle": "다음 주소로 인증 코드를 보내드립니다",
+  "sendOTP": "코드 전송",
+  "otpLabel": "6자리 코드 입력",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "코드 확인",
+  "resend": "재전송",
+  "resendTimer": "재전송 ({timer}초)",
+  "skipDemo": "코드 확인 건너뛰기 (데모 모드)",
+  "success": {
+    "otpSent": "이메일로 코드가 전송되었습니다",
+    "verified": "이메일이 성공적으로 확인되었습니다",
+    "skipped": "코드 확인을 건너뛰었습니다"
+  },
+  "errors": {
+    "sendFailed": "코드 전송 실패",
+    "verifyFailed": "코드 확인 실패",
+    "skipFailed": "코드 건너뛰기 실패"
+  }
+},
+"phoneVerification": {
+  "title": "전화번호 확인",
+  "subtitle": "다음 번호로 인증 코드를 보내드립니다",
+  "sendOTP": "코드 전송",
+  "otpLabel": "6자리 코드 입력",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "코드 확인",
+  "resend": "재전송",
+  "resendTimer": "재전송 ({timer}초)",
+  "skipDemo": "코드 확인 건너뛰기 (데모 모드)",
+  "success": {
+    "otpSent": "전화로 코드가 전송되었습니다",
+    "verified": "전화번호가 성공적으로 확인되었습니다",
+    "skipped": "코드 확인을 건너뛰었습니다"
+  },
+  "errors": {
+    "sendFailed": "코드 전송 실패",
+    "verifyFailed": "코드 확인 실패",
+    "skipFailed": "코드 건너뛰기 실패"
+  }
+},
+"dashboard": {
+  "title": "대시보드",
+  "stats": {
+    "activeElections": "활성 선거",
+    "yourVotes": "내 투표",
+    "pendingVotes": "대기 중인 투표",
+    "yourRole": "내 역할",
+    "addedToday": "오늘 +{count}",
+    "needVerification": "확인 필요",
+    "permissions": "권한: {count}"
+  },
+  "recentActivity": {
+    "title": "최근 활동",
+    "voted": "\"{election}\"에 투표했습니다",
+    "completed": "선거 \"{election}\"이 완료되었습니다",
+    "promoted": "{role}로 승진했습니다",
+    "timeAgo": {
+      "hoursAgo": "{count}시간 전",
+      "dayAgo": "{count}일 전",
+      "daysAgo": "{count}일 전"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "프로필을 불러오는 중...",
+  "appName": "Vottery",
+  "profile": "프로필",
+  "logout": "로그아웃",
+  "sections": {
+    "admin": "관리",
+    "securityAudit": "보안 및 감사",
+    "financialManagement": "재무 관리"
+  },
+  "navigation": {
+    "dashboard": "대시보드",
+    "publicBulletin": "공개 게시판",
+    "voteNow": "지금 투표",
+    "myVotes": "내 투표",
+    "allElections": "모든 선거",
+    "myElections": "내 선거",
+    "myWallet": "내 지갑",
+    "creatorWallet": "크리에이터 지갑",
+    "lotteryTickets": "게임화된 선거 티켓",
+    "subscriptions": "구독",
+    "createElection": "선거 만들기",
+    "verifyVotes": "투표 확인",
+    "userManagement": "사용자 관리",
+    "auditTrail": "감사 추적"
+  },
+  "admin": {
+    "subscriptionAdmin": "구독 관리",
+    "roleManagement": "역할 관리",
+    "permissions": "권한",
+    "userRoles": "사용자 역할",
+    "roleHistory": "역할 이력"
+  },
+  "security": {
+    "voteAudit": "투표 감사",
+    "electionStats": "선거 통계",
+    "securityLogs": "보안 로그",
+    "systemAudit": "시스템 감사",
+    "encryptionStatus": "암호화 상태",
+    "verificationTools": "검증 도구",
+    "complianceReports": "규정 준수 보고서"
+  },
+  "financial": {
+    "paymentGateways": "결제 게이트웨이",
+    "transactionMonitoring": "거래 모니터링",
+    "revenueAnalytics": "수익 분석",
+    "prizeDistribution": "상금 배분",
+    "regionalPricing": "지역별 가격 책정",
+    "refundManagement": "환불 관리",
+    "financialReports": "재무 보고서"
+  },
+  "stats": {
+    "totalVotes": "총 투표 수",
+    "electionsCreated": "생성된 선거"
+  },
+  "warnings": {
+    "profileError": "경고: {error}. 기본 사용자 데이터로 계속합니다."
+  }
+}
+}

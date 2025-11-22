@@ -2,7 +2,7 @@
   "common": {
     "welcome": "欢迎",
     "login": "登录",
-    "logout": "登出",
+    "logout": "退出",
     "register": "注册",
     "submit": "提交",
     "cancel": "取消",
@@ -27,40 +27,63 @@
     "clear": "清除",
     "apply": "应用",
     "reset": "重置",
-    "getStarted": "开始",
-    "logoutAndStartAgain": "登出并重新开始"
+    "getStarted": "开始使用",
+    "logoutAndStartAgain": "退出并重新开始",
+    "or": "或"
   },
+  
   "nav": {
     "home": "首页",
     "pricing": "价格",
     "about": "关于我们"
   },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "欢迎！请验证您来自Sngine",
+    "emailLabel": "电子邮件地址",
+    "emailPlaceholder": "输入您的电子邮件",
+    "phoneLabel": "电话号码（可选）",
+    "phonePlaceholder": "+8613812345678",
+    "addPhoneButton": "添加电话号码",
+    "continueButton": "继续",
+    "noAccount": "没有Sngine账户？",
+    "registerLink": "请先在Sngine注册",
+    "errors": {
+      "emailOrPhone": "请输入电子邮件或电话号码",
+      "checkFailed": "用户验证失败"
+    },
+    "success": {
+      "verified": "用户验证成功"
+    }
+  },
+
   "landing": {
     "hero": {
-      "trustedBy": "受到超过10,000家组织的信任",
+      "trustedBy": "受到10,000多个组织的信赖",
       "title": "民主",
       "titleHighlight": "投票",
-      "titleEnd": "变简单",
-      "subtitle": "几分钟内创建安全、透明的选举。从本地俱乐部到全球组织，Vottery在任何规模上赋能民主决策。",
+      "titleEnd": "变得简单",
+      "subtitle": "在几分钟内创建安全、透明的选举。从本地俱乐部到全球组织，Vottery为任何规模的民主决策提供支持。",
       "getStartedFree": "免费开始",
       "viewPricing": "查看价格",
       "noCreditCard": "无需信用卡",
       "freePlan": "永久免费计划",
-      "uptime": "正常运行时间",
-      "activeVoters": "活跃投票者"
+      "uptime": "运行时间",
+      "activeVoters": "活跃选民"
     },
     "stats": {
-      "electionsCreated": "已创建选举",
-      "votesCast": "已投票数",
+      "electionsCreated": "创建的选举",
+      "votesCast": "投出的选票",
       "countries": "国家",
-      "uptime": "正常运行时间"
+      "uptime": "运行时间"
     },
     "features": {
       "title": "民主投票所需的一切",
-      "subtitle": "强大的功能旨在使您的选举安全、透明且人人可用。",
+      "subtitle": "强大的功能旨在使您的选举安全、透明并且对所有人开放。",
       "secureVoting": {
         "title": "安全投票",
-        "description": "端到端加密确保您的投票私密且防篡改。"
+        "description": "端到端加密确保您的投票是私密且防篡改的。"
       },
       "lightningFast": {
         "title": "闪电般快速",
@@ -68,7 +91,7 @@
       },
       "realTimeAnalytics": {
         "title": "实时分析",
-        "description": "使用强大的分析仪表板跟踪投票和参与度。"
+        "description": "通过强大的分析仪表板跟踪投票和参与度。"
       },
       "flexiblePricing": {
         "title": "灵活定价",
@@ -80,15 +103,15 @@
       },
       "support": {
         "title": "24/7支持",
-        "description": "我们专门的支持团队随时为您的成功提供帮助。"
+        "description": "我们专门的支持团队随时为您提供帮助。"
       }
     },
     "howItWorks": {
-      "title": "如何运作",
+      "title": "工作原理",
       "subtitle": "通过三个简单步骤开始使用Vottery",
       "step1": {
         "title": "创建账户",
-        "description": "通过电子邮件验证和双因素身份验证在几秒钟内注册，确保最大安全性。"
+        "description": "通过电子邮件验证和双因素身份验证在几秒钟内注册，实现最大安全性。"
       },
       "step2": {
         "title": "选择您的计划",
@@ -96,42 +119,194 @@
       },
       "step3": {
         "title": "启动选举",
-        "description": "创建您的选举，邀请投票者，并安全地查看实时结果。"
+        "description": "创建您的选举，邀请选民，并安全地实时查看结果。"
       },
       "startFirstElection": "开始您的第一次选举"
     },
     "testimonials": {
-      "title": "受到全球组织的信任",
+      "title": "受到全球组织的信赖",
       "subtitle": "看看我们的客户怎么说",
       "testimonial1": {
-        "quote": "Vottery改变了我们举行年度选举的方式。该平台非常直观，我们的成员喜欢投票是多么容易。",
-        "name": "李明",
-        "role": "首席执行官，科技创业公司"
+        "quote": "Vottery改变了我们进行年度选举的方式。该平台非常直观，我们的成员喜欢投票的简便性。",
+        "name": "张三",
+        "role": "CEO，科技创业公司"
       },
       "testimonial2": {
-        "quote": "安全功能让我们完全放心。我们的5000多名成员投票时没有任何问题。强烈推荐！",
-        "name": "王芳",
-        "role": "主任，非营利组织"
+        "quote": "安全功能让我们完全放心。我们的5,000多名成员投票时没有出现任何问题。强烈推荐！",
+        "name": "李四",
+        "role": "总监，非营利组织"
       },
       "testimonial3": {
-        "quote": "实时分析和报告使跟踪选举结果变得轻而易举。我们使用过的最好的投票平台。",
-        "name": "张伟",
+        "quote": "实时分析和报告使跟踪我们的选举结果变得轻松。这是我们使用过的最好的投票平台。",
+        "name": "王五",
         "role": "主席，学生会"
       }
     },
     "cta": {
       "title": "准备好改变您的选举了吗？",
-      "subtitle": "加入数千个使用Vottery进行安全、透明选举的组织。",
+      "subtitle": "加入成千上万使用Vottery进行安全、透明选举的组织。",
       "getStartedFree": "免费开始",
       "viewPricing": "查看价格",
-      "footer": "无需信用卡 • 永久免费计划可用 • 随时取消"
+      "footer": "无需信用卡 • 永久免费计划 • 随时取消"
     }
   },
-    "footer": {
-    "brand": {"tagline": "为全球组织简化安全、透明的投票。"},
-    "product": {"title": "产品", "pricing": "价格", "features": "功能", "security": "安全", "enterprise": "企业"},
-    "company": {"title": "公司", "about": "关于我们", "careers": "职业", "blog": "博客", "contact": "联系"},
-    "legal": {"title": "法律", "privacy": "隐私政策", "terms": "服务条款", "cookies": "Cookie 政策"},
+  "footer": {
+    "brand": {
+      "tagline": "为所有人提供安全透明的投票"
+    },
+    "product": {
+      "title": "产品",
+      "pricing": "价格",
+      "features": "功能",
+      "security": "安全",
+      "enterprise": "企业"
+    },
+    "company": {
+      "title": "公司",
+      "about": "关于我们",
+      "careers": "招聘",
+      "blog": "博客",
+      "contact": "联系我们"
+    },
+    "legal": {
+      "title": "法律",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "cookies": "Cookie政策"
+    },
     "copyright": "版权所有。"
+  },
+  "progressBar": {
+  "userCheck": "用户验证",
+  "email": "电子邮件",
+  "phone": "电话",
+  "details": "详细信息",
+  "biometric": "生物识别",
+  "security": "安全",
+  "complete": "完成"
+},
+"emailVerification": {
+  "title": "验证电子邮件",
+  "subtitle": "我们将向以下地址发送验证码",
+  "sendOTP": "发送验证码",
+  "otpLabel": "输入6位验证码",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "验证验证码",
+  "resend": "重新发送",
+  "resendTimer": "重新发送 ({timer}秒)",
+  "skipDemo": "跳过验证码验证（演示模式）",
+  "success": {
+    "otpSent": "验证码已发送到电子邮件",
+    "verified": "电子邮件验证成功",
+    "skipped": "已跳过验证码验证"
+  },
+  "errors": {
+    "sendFailed": "发送验证码失败",
+    "verifyFailed": "验证码验证失败",
+    "skipFailed": "跳过验证码失败"
   }
+},
+"phoneVerification": {
+  "title": "验证电话号码",
+  "subtitle": "我们将向以下号码发送验证码",
+  "sendOTP": "发送验证码",
+  "otpLabel": "输入6位验证码",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "验证验证码",
+  "resend": "重新发送",
+  "resendTimer": "重新发送 ({timer}秒)",
+  "skipDemo": "跳过验证码验证（演示模式）",
+  "success": {
+    "otpSent": "验证码已发送到电话",
+    "verified": "电话验证成功",
+    "skipped": "已跳过验证码验证"
+  },
+  "errors": {
+    "sendFailed": "发送验证码失败",
+    "verifyFailed": "验证码验证失败",
+    "skipFailed": "跳过验证码失败"
+  }
+},
+"dashboard": {
+  "title": "仪表板",
+  "stats": {
+    "activeElections": "活跃选举",
+    "yourVotes": "您的投票",
+    "pendingVotes": "待处理投票",
+    "yourRole": "您的角色",
+    "addedToday": "今天+{count}",
+    "needVerification": "需要验证",
+    "permissions": "权限: {count}"
+  },
+  "recentActivity": {
+    "title": "最近活动",
+    "voted": "您投票给了\"{election}\"",
+    "completed": "选举\"{election}\"已完成",
+    "promoted": "您被提升为{role}",
+    "timeAgo": {
+      "hoursAgo": "{count}小时前",
+      "dayAgo": "{count}天前",
+      "daysAgo": "{count}天前"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "正在加载您的个人资料...",
+  "appName": "Vottery",
+  "profile": "个人资料",
+  "logout": "退出登录",
+  "sections": {
+    "admin": "管理",
+    "securityAudit": "安全与审计",
+    "financialManagement": "财务管理"
+  },
+  "navigation": {
+    "dashboard": "仪表板",
+    "publicBulletin": "公共公告",
+    "voteNow": "立即投票",
+    "myVotes": "我的投票",
+    "allElections": "所有选举",
+    "myElections": "我的选举",
+    "myWallet": "我的钱包",
+    "creatorWallet": "创建者钱包",
+    "lotteryTickets": "游戏化选举票",
+    "subscriptions": "订阅",
+    "createElection": "创建选举",
+    "verifyVotes": "验证投票",
+    "userManagement": "用户管理",
+    "auditTrail": "审计追踪"
+  },
+  "admin": {
+    "subscriptionAdmin": "订阅管理",
+    "roleManagement": "角色管理",
+    "permissions": "权限",
+    "userRoles": "用户角色",
+    "roleHistory": "角色历史"
+  },
+  "security": {
+    "voteAudit": "投票审计",
+    "electionStats": "选举统计",
+    "securityLogs": "安全日志",
+    "systemAudit": "系统审计",
+    "encryptionStatus": "加密状态",
+    "verificationTools": "验证工具",
+    "complianceReports": "合规报告"
+  },
+  "financial": {
+    "paymentGateways": "支付网关",
+    "transactionMonitoring": "交易监控",
+    "revenueAnalytics": "收入分析",
+    "prizeDistribution": "奖品分配",
+    "regionalPricing": "区域定价",
+    "refundManagement": "退款管理",
+    "financialReports": "财务报告"
+  },
+  "stats": {
+    "totalVotes": "总投票数",
+    "electionsCreated": "创建的选举"
+  },
+  "warnings": {
+    "profileError": "警告：{error}。继续使用基本用户数据。"
+  }
+}
 }

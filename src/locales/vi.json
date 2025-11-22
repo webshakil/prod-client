@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Chào mừng",
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "register": "Đăng ký",
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "close": "Đóng",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "confirm": "Xác nhận",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "sort": "Sắp xếp",
+    "view": "Xem",
+    "download": "Tải xuống",
+    "upload": "Tải lên",
+    "select": "Chọn",
+    "clear": "Xóa",
+    "apply": "Áp dụng",
+    "reset": "Đặt lại",
+    "getStarted": "Bắt đầu",
+    "logoutAndStartAgain": "Đăng xuất & Bắt đầu lại",
+    "or": "hoặc"
+  },
+  
+  "nav": {
+    "home": "Trang chủ",
+    "pricing": "Bảng giá",
+    "about": "Giới thiệu"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Chào mừng! Vui lòng xác minh rằng bạn đến từ Sngine",
+    "emailLabel": "Địa chỉ Email",
+    "emailPlaceholder": "Nhập email của bạn",
+    "phoneLabel": "Số điện thoại (Tùy chọn)",
+    "phonePlaceholder": "+84912345678",
+    "addPhoneButton": "Thêm số điện thoại",
+    "continueButton": "Tiếp tục",
+    "noAccount": "Chưa có tài khoản Sngine?",
+    "registerLink": "Đăng ký trên Sngine trước",
+    "errors": {
+      "emailOrPhone": "Vui lòng nhập email hoặc số điện thoại",
+      "checkFailed": "Xác minh người dùng thất bại"
+    },
+    "success": {
+      "verified": "Xác minh người dùng thành công"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Được tin dùng bởi hơn 10,000 tổ chức",
+      "title": "Bỏ phiếu",
+      "titleHighlight": "Dân chủ",
+      "titleEnd": "Đơn giản hóa",
+      "subtitle": "Tạo cuộc bầu cử an toàn, minh bạch trong vài phút. Từ câu lạc bộ địa phương đến tổ chức toàn cầu, Vottery trao quyền ra quyết định dân chủ ở mọi quy mô.",
+      "getStartedFree": "Bắt đầu miễn phí",
+      "viewPricing": "Xem bảng giá",
+      "noCreditCard": "Không cần thẻ tín dụng",
+      "freePlan": "Gói miễn phí mãi mãi",
+      "uptime": "Thời gian hoạt động",
+      "activeVoters": "Cử tri đang hoạt động"
+    },
+    "stats": {
+      "electionsCreated": "Cuộc bầu cử đã tạo",
+      "votesCast": "Phiếu bầu đã bỏ",
+      "countries": "Quốc gia",
+      "uptime": "Thời gian hoạt động"
+    },
+    "features": {
+      "title": "Mọi thứ bạn cần cho việc bỏ phiếu dân chủ",
+      "subtitle": "Các tính năng mạnh mẽ được thiết kế để làm cho cuộc bầu cử của bạn an toàn, minh bạch và có thể tiếp cận với mọi người.",
+      "secureVoting": {
+        "title": "Bỏ phiếu an toàn",
+        "description": "Mã hóa đầu cuối đảm bảo phiếu bầu của bạn được bảo mật và chống giả mạo."
+      },
+      "lightningFast": {
+        "title": "Nhanh như chớp",
+        "description": "Tạo và khởi chạy cuộc bầu cử trong vài phút với nền tảng trực quan của chúng tôi."
+      },
+      "realTimeAnalytics": {
+        "title": "Phân tích thời gian thực",
+        "description": "Theo dõi phiếu bầu và mức độ tương tác với bảng điều khiển phân tích mạnh mẽ."
+      },
+      "flexiblePricing": {
+        "title": "Giá linh hoạt",
+        "description": "Trả theo mức sử dụng hoặc đăng ký. Chọn cái phù hợp nhất với bạn."
+      },
+      "globalReach": {
+        "title": "Phạm vi toàn cầu",
+        "description": "Giá cả theo khu vực và hỗ trợ đa tiền tệ cho người dùng trên toàn thế giới."
+      },
+      "support": {
+        "title": "Hỗ trợ 24/7",
+        "description": "Đội ngũ hỗ trợ tận tâm của chúng tôi luôn sẵn sàng giúp bạn thành công."
+      }
+    },
+    "howItWorks": {
+      "title": "Cách thức hoạt động",
+      "subtitle": "Bắt đầu với Vottery trong ba bước đơn giản",
+      "step1": {
+        "title": "Tạo tài khoản",
+        "description": "Đăng ký trong vài giây với xác minh email và xác thực hai yếu tố để bảo mật tối đa."
+      },
+      "step2": {
+        "title": "Chọn gói của bạn",
+        "description": "Chọn từ các tùy chọn giá linh hoạt - trả theo mức sử dụng hoặc đăng ký để có các tính năng nâng cao."
+      },
+      "step3": {
+        "title": "Khởi chạy cuộc bầu cử",
+        "description": "Tạo cuộc bầu cử của bạn, mời cử tri và xem kết quả thời gian thực một cách an toàn."
+      },
+      "startFirstElection": "Bắt đầu cuộc bầu cử đầu tiên của bạn"
+    },
+    "testimonials": {
+      "title": "Được tin dùng bởi các tổ chức trên toàn thế giới",
+      "subtitle": "Xem khách hàng của chúng tôi nói gì",
+      "testimonial1": {
+        "quote": "Vottery đã thay đổi cách chúng tôi tổ chức cuộc bầu cử hàng năm. Nền tảng cực kỳ trực quan, và các thành viên của chúng tôi thích việc bỏ phiếu dễ dàng như thế nào.",
+        "name": "Nguyễn Văn A",
+        "role": "CEO, Công ty Khởi nghiệp Công nghệ"
+      },
+      "testimonial2": {
+        "quote": "Các tính năng bảo mật đã mang lại cho chúng tôi sự an tâm hoàn toàn. Hơn 5,000 thành viên của chúng tôi đã bỏ phiếu mà không có một vấn đề nào. Rất khuyến nghị!",
+        "name": "Trần Thị B",
+        "role": "Giám đốc, Tổ chức phi lợi nhuận"
+      },
+      "testimonial3": {
+        "quote": "Phân tích và báo cáo thời gian thực làm cho việc theo dõi kết quả bầu cử của chúng tôi dễ dàng. Nền tảng bỏ phiếu tốt nhất mà chúng tôi từng sử dụng.",
+        "name": "Lê Văn C",
+        "role": "Chủ tịch, Hội sinh viên"
+      }
+    },
+    "cta": {
+      "title": "Sẵn sàng chuyển đổi cuộc bầu cử của bạn?",
+      "subtitle": "Tham gia hàng ngàn tổ chức sử dụng Vottery để tổ chức các cuộc bầu cử an toàn, minh bạch.",
+      "getStartedFree": "Bắt đầu miễn phí",
+      "viewPricing": "Xem bảng giá",
+      "footer": "Không cần thẻ tín dụng • Gói miễn phí mãi mãi • Hủy bất cứ lúc nào"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Bỏ phiếu an toàn và minh bạch cho tất cả mọi người"
+    },
+    "product": {
+      "title": "Sản phẩm",
+      "pricing": "Bảng giá",
+      "features": "Tính năng",
+      "security": "Bảo mật",
+      "enterprise": "Doanh nghiệp"
+    },
+    "company": {
+      "title": "Công ty",
+      "about": "Giới thiệu",
+      "careers": "Tuyển dụng",
+      "blog": "Blog",
+      "contact": "Liên hệ"
+    },
+    "legal": {
+      "title": "Pháp lý",
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản dịch vụ",
+      "cookies": "Chính sách Cookie"
+    },
+    "copyright": "Đã đăng ký bản quyền."
+  },
+  "progressBar": {
+  "userCheck": "Kiểm tra người dùng",
+  "email": "Email",
+  "phone": "Điện thoại",
+  "details": "Chi tiết",
+  "biometric": "Sinh trắc học",
+  "security": "Bảo mật",
+  "complete": "Hoàn tất"
+},
+"emailVerification": {
+  "title": "Xác minh Email",
+  "subtitle": "Chúng tôi sẽ gửi mã xác minh tới",
+  "sendOTP": "Gửi Mã",
+  "otpLabel": "Nhập mã 6 chữ số",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Xác minh Mã",
+  "resend": "Gửi lại",
+  "resendTimer": "Gửi lại ({timer}s)",
+  "skipDemo": "Bỏ qua xác minh mã (Chế độ demo)",
+  "success": {
+    "otpSent": "Mã đã được gửi tới email",
+    "verified": "Email đã được xác minh thành công",
+    "skipped": "Đã bỏ qua xác minh mã"
+  },
+  "errors": {
+    "sendFailed": "Gửi mã thất bại",
+    "verifyFailed": "Xác minh mã thất bại",
+    "skipFailed": "Bỏ qua mã thất bại"
+  }
+},
+"phoneVerification": {
+  "title": "Xác minh số điện thoại",
+  "subtitle": "Chúng tôi sẽ gửi mã xác minh tới",
+  "sendOTP": "Gửi Mã",
+  "otpLabel": "Nhập mã 6 chữ số",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Xác minh Mã",
+  "resend": "Gửi lại",
+  "resendTimer": "Gửi lại ({timer}s)",
+  "skipDemo": "Bỏ qua xác minh mã (Chế độ demo)",
+  "success": {
+    "otpSent": "Mã đã được gửi tới điện thoại",
+    "verified": "Điện thoại đã được xác minh thành công",
+    "skipped": "Đã bỏ qua xác minh mã"
+  },
+  "errors": {
+    "sendFailed": "Gửi mã thất bại",
+    "verifyFailed": "Xác minh mã thất bại",
+    "skipFailed": "Bỏ qua mã thất bại"
+  }
+},
+"dashboard": {
+  "title": "Bảng điều khiển",
+  "stats": {
+    "activeElections": "Cuộc bầu cử đang hoạt động",
+    "yourVotes": "Phiếu bầu của bạn",
+    "pendingVotes": "Phiếu bầu đang chờ",
+    "yourRole": "Vai trò của bạn",
+    "addedToday": "+{count} hôm nay",
+    "needVerification": "Cần xác minh",
+    "permissions": "Quyền: {count}"
+  },
+  "recentActivity": {
+    "title": "Hoạt động gần đây",
+    "voted": "Bạn đã bỏ phiếu cho \"{election}\"",
+    "completed": "Cuộc bầu cử \"{election}\" đã hoàn thành",
+    "promoted": "Bạn đã được thăng chức lên {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} giờ trước",
+      "dayAgo": "{count} ngày trước",
+      "daysAgo": "{count} ngày trước"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Đang tải hồ sơ của bạn...",
+  "appName": "Vottery",
+  "profile": "Hồ sơ",
+  "logout": "Đăng xuất",
+  "sections": {
+    "admin": "Quản trị",
+    "securityAudit": "Bảo mật & Kiểm toán",
+    "financialManagement": "Quản lý Tài chính"
+  },
+  "navigation": {
+    "dashboard": "Bảng điều khiển",
+    "publicBulletin": "Bản tin công khai",
+    "voteNow": "Bỏ phiếu ngay",
+    "myVotes": "Phiếu bầu của tôi",
+    "allElections": "Tất cả cuộc bầu cử",
+    "myElections": "Cuộc bầu cử của tôi",
+    "myWallet": "Ví của tôi",
+    "creatorWallet": "Ví người tạo",
+    "lotteryTickets": "Vé bầu cử trò chơi hóa",
+    "subscriptions": "Đăng ký",
+    "createElection": "Tạo cuộc bầu cử",
+    "verifyVotes": "Xác minh phiếu bầu",
+    "userManagement": "Quản lý người dùng",
+    "auditTrail": "Dấu vết kiểm toán"
+  },
+  "admin": {
+    "subscriptionAdmin": "Quản trị đăng ký",
+    "roleManagement": "Quản lý vai trò",
+    "permissions": "Quyền",
+    "userRoles": "Vai trò người dùng",
+    "roleHistory": "Lịch sử vai trò"
+  },
+  "security": {
+    "voteAudit": "Kiểm toán phiếu bầu",
+    "electionStats": "Thống kê bầu cử",
+    "securityLogs": "Nhật ký bảo mật",
+    "systemAudit": "Kiểm toán hệ thống",
+    "encryptionStatus": "Trạng thái mã hóa",
+    "verificationTools": "Công cụ xác minh",
+    "complianceReports": "Báo cáo tuân thủ"
+  },
+  "financial": {
+    "paymentGateways": "Cổng thanh toán",
+    "transactionMonitoring": "Giám sát giao dịch",
+    "revenueAnalytics": "Phân tích doanh thu",
+    "prizeDistribution": "Phân phối giải thưởng",
+    "regionalPricing": "Định giá theo khu vực",
+    "refundManagement": "Quản lý hoàn tiền",
+    "financialReports": "Báo cáo tài chính"
+  },
+  "stats": {
+    "totalVotes": "Tổng số phiếu",
+    "electionsCreated": "Cuộc bầu cử đã tạo"
+  },
+  "warnings": {
+    "profileError": "Cảnh báo: {error}. Tiếp tục với dữ liệu người dùng cơ bản."
+  }
+}
+}

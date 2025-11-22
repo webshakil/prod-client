@@ -28,112 +28,286 @@
     "apply": "Aplicar",
     "reset": "Restablecer",
     "getStarted": "Comenzar",
-    "logoutAndStartAgain": "Cerrar sesión y comenzar de nuevo"
+    "logoutAndStartAgain": "Cerrar sesión y comenzar de nuevo",
+    "or": "o"
   },
+  
   "nav": {
     "home": "Inicio",
     "pricing": "Precios",
     "about": "Acerca de"
   },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "¡Bienvenido! Por favor verifica que eres de Sngine",
+    "emailLabel": "Dirección de correo electrónico",
+    "emailPlaceholder": "Ingresa tu correo electrónico",
+    "phoneLabel": "Número de teléfono (Opcional)",
+    "phonePlaceholder": "+34612345678",
+    "addPhoneButton": "Agregar número de teléfono",
+    "continueButton": "Continuar",
+    "noAccount": "¿No tienes una cuenta de Sngine?",
+    "registerLink": "Regístrate en Sngine primero",
+    "errors": {
+      "emailOrPhone": "Por favor ingresa correo electrónico o número de teléfono",
+      "checkFailed": "La verificación de usuario falló"
+    },
+    "success": {
+      "verified": "Usuario verificado exitosamente"
+    }
+  },
+
   "landing": {
     "hero": {
       "trustedBy": "Confiado por más de 10,000 organizaciones",
       "title": "Votación",
       "titleHighlight": "Democrática",
       "titleEnd": "Simplificada",
-      "subtitle": "Cree elecciones seguras y transparentes en minutos. Desde clubes locales hasta organizaciones globales, Vottery empodera la toma de decisiones democráticas a cualquier escala.",
-      "getStartedFree": "Comenzar Gratis",
-      "viewPricing": "Ver Precios",
+      "subtitle": "Crea elecciones seguras y transparentes en minutos. Desde clubes locales hasta organizaciones globales, Vottery potencia la toma de decisiones democráticas a cualquier escala.",
+      "getStartedFree": "Comenzar gratis",
+      "viewPricing": "Ver precios",
       "noCreditCard": "No se requiere tarjeta de crédito",
       "freePlan": "Plan gratuito para siempre",
       "uptime": "Tiempo de actividad",
-      "activeVoters": "Votantes Activos"
+      "activeVoters": "Votantes activos"
     },
     "stats": {
-      "electionsCreated": "Elecciones Creadas",
-      "votesCast": "Votos Emitidos",
+      "electionsCreated": "Elecciones creadas",
+      "votesCast": "Votos emitidos",
       "countries": "Países",
-      "uptime": "Tiempo de Actividad"
+      "uptime": "Tiempo de actividad"
     },
     "features": {
-      "title": "Todo lo que Necesitas para Votación Democrática",
-      "subtitle": "Características poderosas diseñadas para hacer sus elecciones seguras, transparentes y accesibles para todos.",
+      "title": "Todo lo que necesitas para votación democrática",
+      "subtitle": "Funciones poderosas diseñadas para hacer tus elecciones seguras, transparentes y accesibles para todos.",
       "secureVoting": {
-        "title": "Votación Segura",
-        "description": "El cifrado de extremo a extremo garantiza que sus votos sean privados y a prueba de manipulaciones."
+        "title": "Votación segura",
+        "description": "El cifrado de extremo a extremo garantiza que tus votos sean privados y a prueba de manipulaciones."
       },
       "lightningFast": {
-        "title": "Ultrarrápido",
-        "description": "Cree y lance elecciones en minutos con nuestra plataforma intuitiva."
+        "title": "Increíblemente rápido",
+        "description": "Crea y lanza elecciones en minutos con nuestra plataforma intuitiva."
       },
       "realTimeAnalytics": {
-        "title": "Análisis en Tiempo Real",
-        "description": "Realice un seguimiento de votos y participación con potentes paneles de análisis."
+        "title": "Análisis en tiempo real",
+        "description": "Rastrea votos y participación con potentes paneles de análisis."
       },
       "flexiblePricing": {
-        "title": "Precios Flexibles",
-        "description": "Pago por uso o suscripción. Elija lo que mejor le funcione."
+        "title": "Precios flexibles",
+        "description": "Paga según uso o suscríbete. Elige lo que mejor funcione para ti."
       },
       "globalReach": {
-        "title": "Alcance Global",
-        "description": "Precios regionales y soporte de múltiples monedas para usuarios en todo el mundo."
+        "title": "Alcance global",
+        "description": "Precios regionales y soporte multimoneda para usuarios de todo el mundo."
       },
       "support": {
         "title": "Soporte 24/7",
-        "description": "Nuestro equipo de soporte dedicado está siempre aquí para ayudarlo a tener éxito."
+        "description": "Nuestro equipo de soporte dedicado está siempre aquí para ayudarte a tener éxito."
       }
     },
     "howItWorks": {
-      "title": "Cómo Funciona",
-      "subtitle": "Comience con Vottery en tres simples pasos",
+      "title": "Cómo funciona",
+      "subtitle": "Comienza con Vottery en tres simples pasos",
       "step1": {
-        "title": "Crear Cuenta",
-        "description": "Regístrese en segundos con verificación de correo electrónico y autenticación de dos factores para máxima seguridad."
+        "title": "Crear cuenta",
+        "description": "Regístrate en segundos con verificación de correo electrónico y autenticación de dos factores para máxima seguridad."
       },
       "step2": {
-        "title": "Elija Su Plan",
-        "description": "Seleccione entre opciones de precios flexibles: pago por uso o suscripción para funciones avanzadas."
+        "title": "Elige tu plan",
+        "description": "Selecciona entre opciones de precios flexibles: paga según uso o suscríbete para funciones avanzadas."
       },
       "step3": {
-        "title": "Lanzar Elección",
-        "description": "Cree su elección, invite votantes y observe los resultados en tiempo real de forma segura."
+        "title": "Lanzar elección",
+        "description": "Crea tu elección, invita votantes y observa los resultados en tiempo real de forma segura."
       },
-      "startFirstElection": "Iniciar Su Primera Elección"
+      "startFirstElection": "Inicia tu primera elección"
     },
     "testimonials": {
-      "title": "Confiado por Organizaciones en Todo el Mundo",
-      "subtitle": "Vea lo que dicen nuestros clientes",
+      "title": "Confiado por organizaciones en todo el mundo",
+      "subtitle": "Mira lo que dicen nuestros clientes",
       "testimonial1": {
-        "quote": "Vottery transformó la forma en que realizamos nuestras elecciones anuales. La plataforma es increíblemente intuitiva y a nuestros miembros les encanta lo fácil que es votar.",
+        "quote": "Vottery transformó cómo realizamos nuestras elecciones anuales. La plataforma es increíblemente intuitiva y a nuestros miembros les encanta lo fácil que es votar.",
         "name": "Juan Pérez",
         "role": "CEO, Startup Tecnológica"
       },
       "testimonial2": {
-        "quote": "Las características de seguridad nos dieron total tranquilidad. Nuestros 5,000+ miembros votaron sin ningún problema. ¡Muy recomendado!",
-        "name": "Sara Martínez",
-        "role": "Directora, Organización Sin Fines de Lucro"
+        "quote": "Las funciones de seguridad nos dieron total tranquilidad. Nuestros más de 5,000 miembros votaron sin un solo problema. ¡Altamente recomendado!",
+        "name": "María García",
+        "role": "Directora, Organización sin fines de lucro"
       },
       "testimonial3": {
-        "quote": "Los análisis e informes en tiempo real hicieron que el seguimiento de los resultados de nuestras elecciones fuera sencillo. La mejor plataforma de votación que hemos usado.",
-        "name": "Miguel López",
-        "role": "Presidente, Unión de Estudiantes"
+        "quote": "Los análisis y reportes en tiempo real hicieron que rastrear los resultados de nuestras elecciones fuera sin esfuerzo. La mejor plataforma de votación que hemos usado.",
+        "name": "Carlos Rodríguez",
+        "role": "Presidente, Unión Estudiantil"
       }
     },
     "cta": {
-      "title": "¿Listo para Transformar Sus Elecciones?",
-      "subtitle": "Únase a miles de organizaciones que usan Vottery para realizar elecciones seguras y transparentes.",
-      "getStartedFree": "Comenzar Gratis",
-      "viewPricing": "Ver Precios",
-      "footer": "No se requiere tarjeta de crédito • Plan gratuito disponible para siempre • Cancele en cualquier momento"
+      "title": "¿Listo para transformar tus elecciones?",
+      "subtitle": "Únete a miles de organizaciones que usan Vottery para realizar elecciones seguras y transparentes.",
+      "getStartedFree": "Comenzar gratis",
+      "viewPricing": "Ver precios",
+      "footer": "No se requiere tarjeta de crédito • Plan gratuito para siempre disponible • Cancela en cualquier momento"
     }
   },
   "footer": {
-    "brand": {"tagline": "Votación segura y transparente simplificada para organizaciones de todo el mundo."},
-    "product": {"title": "Producto", "pricing": "Precios", "features": "Características", "security": "Seguridad", "enterprise": "Empresa"},
-    "company": {"title": "Empresa", "about": "Acerca de", "careers": "Carreras", "blog": "Blog", "contact": "Contacto"},
-    "legal": {"title": "Legal", "privacy": "Política de Privacidad", "terms": "Términos de Servicio", "cookies": "Política de Cookies"},
+    "brand": {
+      "tagline": "Votación segura y transparente para todos"
+    },
+    "product": {
+      "title": "Producto",
+      "pricing": "Precios",
+      "features": "Funciones",
+      "security": "Seguridad",
+      "enterprise": "Empresas"
+    },
+    "company": {
+      "title": "Compañía",
+      "about": "Acerca de",
+      "careers": "Carreras",
+      "blog": "Blog",
+      "contact": "Contacto"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Política de privacidad",
+      "terms": "Términos de servicio",
+      "cookies": "Política de cookies"
+    },
     "copyright": "Todos los derechos reservados."
+  },
+  "progressBar": {
+  "userCheck": "Verificación de usuario",
+  "email": "Correo electrónico",
+  "phone": "Teléfono",
+  "details": "Detalles",
+  "biometric": "Biométrico",
+  "security": "Seguridad",
+  "complete": "Completado"
+},
+
+"emailVerification": {
+  "title": "Verificar correo electrónico",
+  "subtitle": "Enviaremos un código de verificación a",
+  "sendOTP": "Enviar código",
+  "otpLabel": "Ingrese el código de 6 dígitos",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verificar código",
+  "resend": "Reenviar",
+  "resendTimer": "Reenviar ({timer}s)",
+  "skipDemo": "Omitir verificación de código (Modo demo)",
+  "success": {
+    "otpSent": "Código enviado al correo electrónico",
+    "verified": "Correo electrónico verificado exitosamente",
+    "skipped": "Verificación de código omitida"
+  },
+  "errors": {
+    "sendFailed": "Error al enviar el código",
+    "verifyFailed": "Error en la verificación del código",
+    "skipFailed": "Error al omitir el código"
   }
-
-
+},
+"phoneVerification": {
+  "title": "Verificar número de teléfono",
+  "subtitle": "Enviaremos un código de verificación a",
+  "sendOTP": "Enviar código",
+  "otpLabel": "Ingrese el código de 6 dígitos",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verificar código",
+  "resend": "Reenviar",
+  "resendTimer": "Reenviar ({timer}s)",
+  "skipDemo": "Omitir verificación de código (Modo demo)",
+  "success": {
+    "otpSent": "Código enviado al teléfono",
+    "verified": "Teléfono verificado exitosamente",
+    "skipped": "Verificación de código omitida"
+  },
+  "errors": {
+    "sendFailed": "Error al enviar el código",
+    "verifyFailed": "Error en la verificación del código",
+    "skipFailed": "Error al omitir el código"
+  }
+},
+"dashboard": {
+  "title": "Panel de control",
+  "stats": {
+    "activeElections": "Elecciones activas",
+    "yourVotes": "Tus votos",
+    "pendingVotes": "Votos pendientes",
+    "yourRole": "Tu rol",
+    "addedToday": "+{count} hoy",
+    "needVerification": "Necesita verificación",
+    "permissions": "Permisos: {count}"
+  },
+  "recentActivity": {
+    "title": "Actividad reciente",
+    "voted": "Votaste en \"{election}\"",
+    "completed": "Elección \"{election}\" completada",
+    "promoted": "Fuiste promovido a {role}",
+    "timeAgo": {
+      "hoursAgo": "hace {count} horas",
+      "dayAgo": "hace {count} día",
+      "daysAgo": "hace {count} días"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Cargando tu perfil...",
+  "appName": "Vottery",
+  "profile": "Perfil",
+  "logout": "Cerrar sesión",
+  "sections": {
+    "admin": "Administración",
+    "securityAudit": "Seguridad y Auditoría",
+    "financialManagement": "Gestión Financiera"
+  },
+  "navigation": {
+    "dashboard": "Panel de control",
+    "publicBulletin": "Boletín público",
+    "voteNow": "Votar ahora",
+    "myVotes": "Mis votos",
+    "allElections": "Todas las elecciones",
+    "myElections": "Mis elecciones",
+    "myWallet": "Mi billetera",
+    "creatorWallet": "Billetera del creador",
+    "lotteryTickets": "Boletos de elección gamificados",
+    "subscriptions": "Suscripciones",
+    "createElection": "Crear elección",
+    "verifyVotes": "Verificar votos",
+    "userManagement": "Gestión de usuarios",
+    "auditTrail": "Registro de auditoría"
+  },
+  "admin": {
+    "subscriptionAdmin": "Administración de suscripciones",
+    "roleManagement": "Gestión de roles",
+    "permissions": "Permisos",
+    "userRoles": "Roles de usuario",
+    "roleHistory": "Historial de roles"
+  },
+  "security": {
+    "voteAudit": "Auditoría de votos",
+    "electionStats": "Estadísticas de elecciones",
+    "securityLogs": "Registros de seguridad",
+    "systemAudit": "Auditoría del sistema",
+    "encryptionStatus": "Estado de cifrado",
+    "verificationTools": "Herramientas de verificación",
+    "complianceReports": "Informes de cumplimiento"
+  },
+  "financial": {
+    "paymentGateways": "Pasarelas de pago",
+    "transactionMonitoring": "Monitoreo de transacciones",
+    "revenueAnalytics": "Análisis de ingresos",
+    "prizeDistribution": "Distribución de premios",
+    "regionalPricing": "Precios regionales",
+    "refundManagement": "Gestión de reembolsos",
+    "financialReports": "Informes financieros"
+  },
+  "stats": {
+    "totalVotes": "Total de votos",
+    "electionsCreated": "Elecciones creadas"
+  },
+  "warnings": {
+    "profileError": "Advertencia: {error}. Continuando con datos básicos del usuario."
+  }
+}
 }

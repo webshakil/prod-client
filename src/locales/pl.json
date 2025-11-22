@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Witamy",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "register": "Zarejestruj się",
+    "submit": "Wyślij",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "previous": "Poprzedni",
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces",
+    "confirm": "Potwierdź",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
+    "view": "Podgląd",
+    "download": "Pobierz",
+    "upload": "Prześlij",
+    "select": "Wybierz",
+    "clear": "Wyczyść",
+    "apply": "Zastosuj",
+    "reset": "Resetuj",
+    "getStarted": "Rozpocznij",
+    "logoutAndStartAgain": "Wyloguj i zacznij od nowa",
+    "or": "lub"
+  },
+  
+  "nav": {
+    "home": "Strona główna",
+    "pricing": "Cennik",
+    "about": "O nas"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Witamy! Proszę zweryfikować, że jesteś użytkownikiem Sngine",
+    "emailLabel": "Adres e-mail",
+    "emailPlaceholder": "Wprowadź swój e-mail",
+    "phoneLabel": "Numer telefonu (opcjonalnie)",
+    "phonePlaceholder": "+48123456789",
+    "addPhoneButton": "Dodaj numer telefonu",
+    "continueButton": "Kontynuuj",
+    "noAccount": "Nie masz konta Sngine?",
+    "registerLink": "Zarejestruj się najpierw w Sngine",
+    "errors": {
+      "emailOrPhone": "Proszę podać e-mail lub numer telefonu",
+      "checkFailed": "Weryfikacja użytkownika nie powiodła się"
+    },
+    "success": {
+      "verified": "Użytkownik zweryfikowany pomyślnie"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Zaufało nam ponad 10 000 organizacji",
+      "title": "Demokratyczne",
+      "titleHighlight": "Głosowanie",
+      "titleEnd": "Proste jak nigdy",
+      "subtitle": "Twórz bezpieczne, przejrzyste wybory w kilka minut. Od lokalnych klubów po globalne organizacje, Vottery umożliwia demokratyczne podejmowanie decyzji na dowolną skalę.",
+      "getStartedFree": "Rozpocznij za darmo",
+      "viewPricing": "Zobacz cennik",
+      "noCreditCard": "Karta kredytowa nie jest wymagana",
+      "freePlan": "Darmowy plan na zawsze",
+      "uptime": "Czas działania",
+      "activeVoters": "Aktywni wyborcy"
+    },
+    "stats": {
+      "electionsCreated": "Utworzonych wyborów",
+      "votesCast": "Oddanych głosów",
+      "countries": "Krajów",
+      "uptime": "Czas działania"
+    },
+    "features": {
+      "title": "Wszystko, czego potrzebujesz do demokratycznego głosowania",
+      "subtitle": "Zaawansowane funkcje zaprojektowane, aby Twoje wybory były bezpieczne, przejrzyste i dostępne dla wszystkich.",
+      "secureVoting": {
+        "title": "Bezpieczne głosowanie",
+        "description": "Szyfrowanie end-to-end zapewnia prywatność i odporność na manipulacje."
+      },
+      "lightningFast": {
+        "title": "Błyskawicznie szybkie",
+        "description": "Twórz i rozpoczynaj wybory w kilka minut dzięki naszej intuicyjnej platformie."
+      },
+      "realTimeAnalytics": {
+        "title": "Analityka w czasie rzeczywistym",
+        "description": "Śledź głosy i zaangażowanie za pomocą zaawansowanych paneli analitycznych."
+      },
+      "flexiblePricing": {
+        "title": "Elastyczny cennik",
+        "description": "Płać za użycie lub wykup abonament. Wybierz to, co jest dla Ciebie najlepsze."
+      },
+      "globalReach": {
+        "title": "Zasięg globalny",
+        "description": "Regionalne ceny i obsługa wielu walut dla użytkowników na całym świecie."
+      },
+      "support": {
+        "title": "Wsparcie 24/7",
+        "description": "Nasz dedykowany zespół wsparcia jest zawsze gotowy Ci pomóc."
+      }
+    },
+    "howItWorks": {
+      "title": "Jak to działa",
+      "subtitle": "Rozpocznij pracę z Vottery w trzech prostych krokach",
+      "step1": {
+        "title": "Utwórz konto",
+        "description": "Zarejestruj się w kilka sekund z weryfikacją e-mail i uwierzytelnianiem dwuskładnikowym dla maksymalnego bezpieczeństwa."
+      },
+      "step2": {
+        "title": "Wybierz swój plan",
+        "description": "Wybierz spośród elastycznych opcji cenowych - płać za użycie lub wykup abonament dla zaawansowanych funkcji."
+      },
+      "step3": {
+        "title": "Rozpocznij wybory",
+        "description": "Utwórz wybory, zaproś wyborców i obserwuj bezpieczne wyniki w czasie rzeczywistym."
+      },
+      "startFirstElection": "Rozpocznij swoje pierwsze wybory"
+    },
+    "testimonials": {
+      "title": "Zaufały nam organizacje na całym świecie",
+      "subtitle": "Zobacz, co mówią nasi klienci",
+      "testimonial1": {
+        "quote": "Vottery zmieniło sposób, w jaki prowadzimy nasze coroczne wybory. Platforma jest niesamowicie intuicyjna, a nasi członkowie uwielbiają, jak łatwo jest głosować.",
+        "name": "Jan Kowalski",
+        "role": "CEO, Startup Technologiczny"
+      },
+      "testimonial2": {
+        "quote": "Funkcje bezpieczeństwa dały nam całkowity spokój ducha. Ponad 5000 naszych członków głosowało bez żadnego problemu. Gorąco polecamy!",
+        "name": "Anna Nowak",
+        "role": "Dyrektor, Organizacja non-profit"
+      },
+      "testimonial3": {
+        "quote": "Analityka i raportowanie w czasie rzeczywistym sprawiły, że śledzenie wyników wyborów było bezproblemowe. Najlepsza platforma do głosowania, z jakiej kiedykolwiek korzystaliśmy.",
+        "name": "Piotr Wiśniewski",
+        "role": "Przewodniczący, Samorząd Studencki"
+      }
+    },
+    "cta": {
+      "title": "Gotowy na transformację swoich wyborów?",
+      "subtitle": "Dołącz do tysięcy organizacji korzystających z Vottery do przeprowadzania bezpiecznych, przejrzystych wyborów.",
+      "getStartedFree": "Rozpocznij za darmo",
+      "viewPricing": "Zobacz cennik",
+      "footer": "Karta kredytowa nie jest wymagana • Darmowy plan na zawsze • Anuluj w dowolnym momencie"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Bezpieczne i przejrzyste głosowanie dla wszystkich"
+    },
+    "product": {
+      "title": "Produkt",
+      "pricing": "Cennik",
+      "features": "Funkcje",
+      "security": "Bezpieczeństwo",
+      "enterprise": "Enterprise"
+    },
+    "company": {
+      "title": "Firma",
+      "about": "O nas",
+      "careers": "Kariera",
+      "blog": "Blog",
+      "contact": "Kontakt"
+    },
+    "legal": {
+      "title": "Prawne",
+      "privacy": "Polityka prywatności",
+      "terms": "Warunki usługi",
+      "cookies": "Polityka plików cookie"
+    },
+    "copyright": "Wszelkie prawa zastrzeżone."
+  },
+  "progressBar": {
+  "userCheck": "Sprawdzanie użytkownika",
+  "email": "E-mail",
+  "phone": "Telefon",
+  "details": "Szczegóły",
+  "biometric": "Biometryczne",
+  "security": "Bezpieczeństwo",
+  "complete": "Ukończono"
+},
+"emailVerification": {
+  "title": "Zweryfikuj e-mail",
+  "subtitle": "Wyślemy kod weryfikacyjny na adres",
+  "sendOTP": "Wyślij kod",
+  "otpLabel": "Wprowadź 6-cyfrowy kod",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Zweryfikuj kod",
+  "resend": "Wyślij ponownie",
+  "resendTimer": "Wyślij ponownie ({timer}s)",
+  "skipDemo": "Pomiń weryfikację kodu (Tryb demo)",
+  "success": {
+    "otpSent": "Kod wysłany na e-mail",
+    "verified": "E-mail zweryfikowany pomyślnie",
+    "skipped": "Pominięto weryfikację kodu"
+  },
+  "errors": {
+    "sendFailed": "Nie udało się wysłać kodu",
+    "verifyFailed": "Weryfikacja kodu nie powiodła się",
+    "skipFailed": "Nie udało się pominąć kodu"
+  }
+},
+"phoneVerification": {
+  "title": "Zweryfikuj numer telefonu",
+  "subtitle": "Wyślemy kod weryfikacyjny na numer",
+  "sendOTP": "Wyślij kod",
+  "otpLabel": "Wprowadź 6-cyfrowy kod",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Zweryfikuj kod",
+  "resend": "Wyślij ponownie",
+  "resendTimer": "Wyślij ponownie ({timer}s)",
+  "skipDemo": "Pomiń weryfikację kodu (Tryb demo)",
+  "success": {
+    "otpSent": "Kod wysłany na telefon",
+    "verified": "Telefon zweryfikowany pomyślnie",
+    "skipped": "Pominięto weryfikację kodu"
+  },
+  "errors": {
+    "sendFailed": "Nie udało się wysłać kodu",
+    "verifyFailed": "Weryfikacja kodu nie powiodła się",
+    "skipFailed": "Nie udało się pominąć kodu"
+  }
+},
+"dashboard": {
+  "title": "Pulpit",
+  "stats": {
+    "activeElections": "Aktywne wybory",
+    "yourVotes": "Twoje głosy",
+    "pendingVotes": "Oczekujące głosy",
+    "yourRole": "Twoja rola",
+    "addedToday": "+{count} dzisiaj",
+    "needVerification": "Wymaga weryfikacji",
+    "permissions": "Uprawnienia: {count}"
+  },
+  "recentActivity": {
+    "title": "Ostatnia aktywność",
+    "voted": "Głosowałeś na \"{election}\"",
+    "completed": "Wybory \"{election}\" zakończone",
+    "promoted": "Awansowałeś do {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} godzin temu",
+      "dayAgo": "{count} dzień temu",
+      "daysAgo": "{count} dni temu"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Ładowanie twojego profilu...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Wyloguj",
+  "sections": {
+    "admin": "Administracja",
+    "securityAudit": "Bezpieczeństwo i Audyt",
+    "financialManagement": "Zarządzanie Finansami"
+  },
+  "navigation": {
+    "dashboard": "Pulpit",
+    "publicBulletin": "Biuletyn publiczny",
+    "voteNow": "Głosuj teraz",
+    "myVotes": "Moje głosy",
+    "allElections": "Wszystkie wybory",
+    "myElections": "Moje wybory",
+    "myWallet": "Mój portfel",
+    "creatorWallet": "Portfel twórcy",
+    "lotteryTickets": "Zgamifikowane bilety wyborcze",
+    "subscriptions": "Subskrypcje",
+    "createElection": "Utwórz wybory",
+    "verifyVotes": "Weryfikuj głosy",
+    "userManagement": "Zarządzanie użytkownikami",
+    "auditTrail": "Ścieżka audytu"
+  },
+  "admin": {
+    "subscriptionAdmin": "Administracja subskrypcjami",
+    "roleManagement": "Zarządzanie rolami",
+    "permissions": "Uprawnienia",
+    "userRoles": "Role użytkowników",
+    "roleHistory": "Historia ról"
+  },
+  "security": {
+    "voteAudit": "Audyt głosów",
+    "electionStats": "Statystyki wyborów",
+    "securityLogs": "Dzienniki bezpieczeństwa",
+    "systemAudit": "Audyt systemu",
+    "encryptionStatus": "Status szyfrowania",
+    "verificationTools": "Narzędzia weryfikacji",
+    "complianceReports": "Raporty zgodności"
+  },
+  "financial": {
+    "paymentGateways": "Bramki płatności",
+    "transactionMonitoring": "Monitorowanie transakcji",
+    "revenueAnalytics": "Analiza przychodów",
+    "prizeDistribution": "Dystrybucja nagród",
+    "regionalPricing": "Cennik regionalny",
+    "refundManagement": "Zarządzanie zwrotami",
+    "financialReports": "Raporty finansowe"
+  },
+  "stats": {
+    "totalVotes": "Całkowita liczba głosów",
+    "electionsCreated": "Utworzone wybory"
+  },
+  "warnings": {
+    "profileError": "Ostrzeżenie: {error}. Kontynuacja z podstawowymi danymi użytkownika."
+  }
+}
+}

@@ -28,13 +28,36 @@
     "apply": "تطبيق",
     "reset": "إعادة تعيين",
     "getStarted": "ابدأ",
-    "logoutAndStartAgain": "تسجيل الخروج والبدء من جديد"
+    "logoutAndStartAgain": "تسجيل الخروج والبدء من جديد",
+    "or": "أو"
   },
+  
   "nav": {
     "home": "الرئيسية",
     "pricing": "الأسعار",
     "about": "عن"
   },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "مرحباً! يرجى التحقق من أنك من Sngine",
+    "emailLabel": "عنوان البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "phoneLabel": "رقم الهاتف (اختياري)",
+    "phonePlaceholder": "+966512345678",
+    "addPhoneButton": "إضافة رقم الهاتف",
+    "continueButton": "متابعة",
+    "noAccount": "ليس لديك حساب Sngine؟",
+    "registerLink": "سجل على Sngine أولاً",
+    "errors": {
+      "emailOrPhone": "يرجى إدخال البريد الإلكتروني أو رقم الهاتف",
+      "checkFailed": "فشل التحقق من المستخدم"
+    },
+    "success": {
+      "verified": "تم التحقق من المستخدم بنجاح"
+    }
+  },
+
   "landing": {
     "hero": {
       "trustedBy": "موثوق من قبل أكثر من 10,000 منظمة",
@@ -127,11 +150,165 @@
       "footer": "لا حاجة لبطاقة ائتمان • خطة مجانية متاحة للأبد • إلغاء في أي وقت"
     }
   },
-    "footer": {
-    "brand": {"tagline": "تصويت آمن وشفاف مبسط للمؤسسات في جميع أنحاء العالم."},
-    "product": {"title": "المنتج", "pricing": "الأسعار", "features": "الميزات", "security": "الأمان", "enterprise": "المؤسسات"},
-    "company": {"title": "الشركة", "about": "من نحن", "careers": "الوظائف", "blog": "المدونة", "contact": "اتصل بنا"},
-    "legal": {"title": "قانوني", "privacy": "سياسة الخصوصية", "terms": "شروط الخدمة", "cookies": "سياسة ملفات تعريف الارتباط"},
+  "footer": {
+    "brand": {
+      "tagline": "تصويت آمن وشفاف للجميع"
+    },
+    "product": {
+      "title": "المنتج",
+      "pricing": "الأسعار",
+      "features": "الميزات",
+      "security": "الأمان",
+      "enterprise": "المؤسسات"
+    },
+    "company": {
+      "title": "الشركة",
+      "about": "من نحن",
+      "careers": "الوظائف",
+      "blog": "المدونة",
+      "contact": "اتصل بنا"
+    },
+    "legal": {
+      "title": "قانوني",
+      "privacy": "سياسة الخصوصية",
+      "terms": "شروط الخدمة",
+      "cookies": "سياسة ملفات تعريف الارتباط"
+    },
     "copyright": "جميع الحقوق محفوظة."
+  },
+  "progressBar": {
+  "userCheck": "فحص المستخدم",
+  "email": "البريد الإلكتروني",
+  "phone": "الهاتف",
+  "details": "التفاصيل",
+  "biometric": "البيومترية",
+  "security": "الأمان",
+  "complete": "مكتمل"
+},
+
+
+"emailVerification": {
+  "title": "تحقق من البريد الإلكتروني",
+  "subtitle": "سنرسل رمز التحقق إلى",
+  "sendOTP": "إرسال رمز التحقق",
+  "otpLabel": "أدخل رمز التحقق المكون من 6 أرقام",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "تحقق من الرمز",
+  "resend": "إعادة الإرسال",
+  "resendTimer": "إعادة الإرسال ({timer} ث)",
+  "skipDemo": "تخطي التحقق من الرمز (وضع التجريبي)",
+  "success": {
+    "otpSent": "تم إرسال رمز التحقق إلى البريد الإلكتروني",
+    "verified": "تم التحقق من البريد الإلكتروني بنجاح",
+    "skipped": "تم تخطي التحقق من الرمز"
+  },
+  "errors": {
+    "sendFailed": "فشل إرسال رمز التحقق",
+    "verifyFailed": "فشل التحقق من الرمز",
+    "skipFailed": "فشل تخطي التحقق من الرمز"
   }
+},
+"phoneVerification": {
+  "title": "تحقق من رقم الهاتف",
+  "subtitle": "سنرسل رمز التحقق إلى",
+  "sendOTP": "إرسال رمز التحقق",
+  "otpLabel": "أدخل رمز التحقق المكون من 6 أرقام",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "تحقق من الرمز",
+  "resend": "إعادة الإرسال",
+  "resendTimer": "إعادة الإرسال ({timer} ث)",
+  "skipDemo": "تخطي التحقق من الرمز (وضع التجريبي)",
+  "success": {
+    "otpSent": "تم إرسال رمز التحقق إلى الهاتف",
+    "verified": "تم التحقق من الهاتف بنجاح",
+    "skipped": "تم تخطي التحقق من الرمز"
+  },
+  "errors": {
+    "sendFailed": "فشل إرسال رمز التحقق",
+    "verifyFailed": "فشل التحقق من الرمز",
+    "skipFailed": "فشل تخطي التحقق من الرمز"
+  }
+},
+"dashboard": {
+  "title": "لوحة التحكم",
+  "stats": {
+    "activeElections": "الانتخابات النشطة",
+    "yourVotes": "أصواتك",
+    "pendingVotes": "الأصوات المعلقة",
+    "yourRole": "دورك",
+    "addedToday": "+{count} اليوم",
+    "needVerification": "يحتاج إلى التحقق",
+    "permissions": "الصلاحيات: {count}"
+  },
+  "recentActivity": {
+    "title": "النشاط الأخير",
+    "voted": "لقد صوت على \"{election}\"",
+    "completed": "اكتملت الانتخابات \"{election}\"",
+    "promoted": "تمت ترقيتك إلى {role}",
+    "timeAgo": {
+      "hoursAgo": "منذ {count} ساعات",
+      "dayAgo": "منذ {count} يوم",
+      "daysAgo": "منذ {count} أيام"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "جاري تحميل ملفك الشخصي...",
+  "appName": "Vottery",
+  "profile": "الملف الشخصي",
+  "logout": "تسجيل الخروج",
+  "sections": {
+    "admin": "الإدارة",
+    "securityAudit": "الأمان والتدقيق",
+    "financialManagement": "الإدارة المالية"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "publicBulletin": "النشرة العامة",
+    "voteNow": "صوت الآن",
+    "myVotes": "أصواتي",
+    "allElections": "جميع الانتخابات",
+    "myElections": "انتخاباتي",
+    "myWallet": "محفظتي",
+    "creatorWallet": "محفظة المنشئ",
+    "lotteryTickets": "تذاكر الانتخابات المجازة",
+    "subscriptions": "الاشتراكات",
+    "createElection": "إنشاء انتخابات",
+    "verifyVotes": "التحقق من الأصوات",
+    "userManagement": "إدارة المستخدمين",
+    "auditTrail": "سجل التدقيق"
+  },
+  "admin": {
+    "subscriptionAdmin": "إدارة الاشتراكات",
+    "roleManagement": "إدارة الأدوار",
+    "permissions": "الصلاحيات",
+    "userRoles": "أدوار المستخدمين",
+    "roleHistory": "سجل الأدوار"
+  },
+  "security": {
+    "voteAudit": "تدقيق الأصوات",
+    "electionStats": "إحصائيات الانتخابات",
+    "securityLogs": "سجلات الأمان",
+    "systemAudit": "تدقيق النظام",
+    "encryptionStatus": "حالة التشفير",
+    "verificationTools": "أدوات التحقق",
+    "complianceReports": "تقارير الامتثال"
+  },
+  "financial": {
+    "paymentGateways": "بوابات الدفع",
+    "transactionMonitoring": "مراقبة المعاملات",
+    "revenueAnalytics": "تحليلات الإيرادات",
+    "prizeDistribution": "توزيع الجوائز",
+    "regionalPricing": "التسعير الإقليمي",
+    "refundManagement": "إدارة المبالغ المستردة",
+    "financialReports": "التقارير المالية"
+  },
+  "stats": {
+    "totalVotes": "إجمالي الأصوات",
+    "electionsCreated": "الانتخابات المنشأة"
+  },
+  "warnings": {
+    "profileError": "تحذير: {error}. المتابعة ببيانات المستخدم الأساسية."
+  }
+}
 }

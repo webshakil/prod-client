@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Selamat Datang",
+    "login": "Masuk",
+    "logout": "Keluar",
+    "register": "Daftar",
+    "submit": "Kirim",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "close": "Tutup",
+    "back": "Kembali",
+    "next": "Berikutnya",
+    "previous": "Sebelumnya",
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Berhasil",
+    "confirm": "Konfirmasi",
+    "search": "Cari",
+    "filter": "Filter",
+    "sort": "Urutkan",
+    "view": "Lihat",
+    "download": "Unduh",
+    "upload": "Unggah",
+    "select": "Pilih",
+    "clear": "Bersihkan",
+    "apply": "Terapkan",
+    "reset": "Atur Ulang",
+    "getStarted": "Mulai Sekarang",
+    "logoutAndStartAgain": "Keluar & Mulai Lagi",
+    "or": "atau"
+  },
+  
+  "nav": {
+    "home": "Beranda",
+    "pricing": "Harga",
+    "about": "Tentang Kami"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Selamat datang! Silakan verifikasi bahwa Anda dari Sngine",
+    "emailLabel": "Alamat Email",
+    "emailPlaceholder": "Masukkan email Anda",
+    "phoneLabel": "Nomor Telepon (Opsional)",
+    "phonePlaceholder": "+628123456789",
+    "addPhoneButton": "Tambah Nomor Telepon",
+    "continueButton": "Lanjutkan",
+    "noAccount": "Belum punya akun Sngine?",
+    "registerLink": "Daftar di Sngine terlebih dahulu",
+    "errors": {
+      "emailOrPhone": "Silakan masukkan email atau nomor telepon",
+      "checkFailed": "Verifikasi pengguna gagal"
+    },
+    "success": {
+      "verified": "Pengguna berhasil diverifikasi"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Dipercaya oleh 10.000+ organisasi",
+      "title": "Pemungutan Suara",
+      "titleHighlight": "Demokratis",
+      "titleEnd": "yang Sederhana",
+      "subtitle": "Buat pemilihan yang aman dan transparan dalam hitungan menit. Dari klub lokal hingga organisasi global, Vottery memberdayakan pengambilan keputusan demokratis dalam skala apa pun.",
+      "getStartedFree": "Mulai Gratis",
+      "viewPricing": "Lihat Harga",
+      "noCreditCard": "Tidak perlu kartu kredit",
+      "freePlan": "Paket gratis selamanya",
+      "uptime": "Waktu Aktif",
+      "activeVoters": "Pemilih Aktif"
+    },
+    "stats": {
+      "electionsCreated": "Pemilihan Dibuat",
+      "votesCast": "Suara Diberikan",
+      "countries": "Negara",
+      "uptime": "Waktu Aktif"
+    },
+    "features": {
+      "title": "Semua yang Anda Butuhkan untuk Pemungutan Suara Demokratis",
+      "subtitle": "Fitur canggih yang dirancang untuk membuat pemilihan Anda aman, transparan, dan dapat diakses oleh semua orang.",
+      "secureVoting": {
+        "title": "Pemungutan Suara Aman",
+        "description": "Enkripsi end-to-end memastikan suara Anda pribadi dan anti-rusak."
+      },
+      "lightningFast": {
+        "title": "Sangat Cepat",
+        "description": "Buat dan luncurkan pemilihan dalam hitungan menit dengan platform intuitif kami."
+      },
+      "realTimeAnalytics": {
+        "title": "Analitik Real-time",
+        "description": "Lacak suara dan keterlibatan dengan dashboard analitik yang canggih."
+      },
+      "flexiblePricing": {
+        "title": "Harga Fleksibel",
+        "description": "Bayar sesuai penggunaan atau berlangganan. Pilih yang terbaik untuk Anda."
+      },
+      "globalReach": {
+        "title": "Jangkauan Global",
+        "description": "Harga regional dan dukungan multi-mata uang untuk pengguna di seluruh dunia."
+      },
+      "support": {
+        "title": "Dukungan 24/7",
+        "description": "Tim dukungan kami yang berdedikasi selalu siap membantu kesuksesan Anda."
+      }
+    },
+    "howItWorks": {
+      "title": "Cara Kerjanya",
+      "subtitle": "Mulai dengan Vottery dalam tiga langkah sederhana",
+      "step1": {
+        "title": "Buat Akun",
+        "description": "Daftar dalam hitungan detik dengan verifikasi email dan autentikasi dua faktor untuk keamanan maksimal."
+      },
+      "step2": {
+        "title": "Pilih Paket Anda",
+        "description": "Pilih dari opsi harga fleksibel - bayar sesuai penggunaan atau berlangganan untuk fitur lanjutan."
+      },
+      "step3": {
+        "title": "Luncurkan Pemilihan",
+        "description": "Buat pemilihan Anda, undang pemilih, dan lihat hasil real-time masuk dengan aman."
+      },
+      "startFirstElection": "Mulai Pemilihan Pertama Anda"
+    },
+    "testimonials": {
+      "title": "Dipercaya oleh Organisasi di Seluruh Dunia",
+      "subtitle": "Lihat apa kata pelanggan kami",
+      "testimonial1": {
+        "quote": "Vottery mengubah cara kami melakukan pemilihan tahunan. Platform ini sangat intuitif, dan anggota kami menyukai betapa mudahnya memberikan suara.",
+        "name": "Budi Santoso",
+        "role": "CEO, Startup Teknologi"
+      },
+      "testimonial2": {
+        "quote": "Fitur keamanan memberikan kami ketenangan pikiran yang sempurna. 5.000+ anggota kami memberikan suara tanpa satu masalah pun. Sangat direkomendasikan!",
+        "name": "Siti Rahayu",
+        "role": "Direktur, Organisasi Nirlaba"
+      },
+      "testimonial3": {
+        "quote": "Analitik dan pelaporan real-time membuat pelacakan hasil pemilihan kami menjadi mudah. Platform pemungutan suara terbaik yang pernah kami gunakan.",
+        "name": "Ahmad Wijaya",
+        "role": "Presiden, Serikat Mahasiswa"
+      }
+    },
+    "cta": {
+      "title": "Siap Mengubah Pemilihan Anda?",
+      "subtitle": "Bergabunglah dengan ribuan organisasi yang menggunakan Vottery untuk melakukan pemilihan yang aman dan transparan.",
+      "getStartedFree": "Mulai Gratis",
+      "viewPricing": "Lihat Harga",
+      "footer": "Tidak perlu kartu kredit • Paket gratis selamanya tersedia • Batalkan kapan saja"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Pemungutan suara yang aman dan transparan untuk semua"
+    },
+    "product": {
+      "title": "Produk",
+      "pricing": "Harga",
+      "features": "Fitur",
+      "security": "Keamanan",
+      "enterprise": "Enterprise"
+    },
+    "company": {
+      "title": "Perusahaan",
+      "about": "Tentang Kami",
+      "careers": "Karir",
+      "blog": "Blog",
+      "contact": "Kontak"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Kebijakan Privasi",
+      "terms": "Syarat Layanan",
+      "cookies": "Kebijakan Cookie"
+    },
+    "copyright": "Semua hak dilindungi."
+  },
+  "progressBar": {
+  "userCheck": "Pemeriksaan Pengguna",
+  "email": "Email",
+  "phone": "Telepon",
+  "details": "Detail",
+  "biometric": "Biometrik",
+  "security": "Keamanan",
+  "complete": "Selesai"
+},
+"emailVerification": {
+  "title": "Verifikasi Email",
+  "subtitle": "Kami akan mengirim kode verifikasi ke",
+  "sendOTP": "Kirim Kode",
+  "otpLabel": "Masukkan kode 6 digit",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifikasi Kode",
+  "resend": "Kirim Ulang",
+  "resendTimer": "Kirim Ulang ({timer}d)",
+  "skipDemo": "Lewati verifikasi kode (Mode demo)",
+  "success": {
+    "otpSent": "Kode dikirim ke email",
+    "verified": "Email berhasil diverifikasi",
+    "skipped": "Verifikasi kode dilewati"
+  },
+  "errors": {
+    "sendFailed": "Gagal mengirim kode",
+    "verifyFailed": "Verifikasi kode gagal",
+    "skipFailed": "Gagal melewati kode"
+  }
+},
+"phoneVerification": {
+  "title": "Verifikasi Nomor Telepon",
+  "subtitle": "Kami akan mengirim kode verifikasi ke",
+  "sendOTP": "Kirim Kode",
+  "otpLabel": "Masukkan kode 6 digit",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifikasi Kode",
+  "resend": "Kirim Ulang",
+  "resendTimer": "Kirim Ulang ({timer}d)",
+  "skipDemo": "Lewati verifikasi kode (Mode demo)",
+  "success": {
+    "otpSent": "Kode dikirim ke telepon",
+    "verified": "Telepon berhasil diverifikasi",
+    "skipped": "Verifikasi kode dilewati"
+  },
+  "errors": {
+    "sendFailed": "Gagal mengirim kode",
+    "verifyFailed": "Verifikasi kode gagal",
+    "skipFailed": "Gagal melewati kode"
+  }
+},
+"dashboard": {
+  "title": "Dasbor",
+  "stats": {
+    "activeElections": "Pemilihan Aktif",
+    "yourVotes": "Suara Anda",
+    "pendingVotes": "Suara Tertunda",
+    "yourRole": "Peran Anda",
+    "addedToday": "+{count} hari ini",
+    "needVerification": "Perlu verifikasi",
+    "permissions": "Izin: {count}"
+  },
+  "recentActivity": {
+    "title": "Aktivitas Terkini",
+    "voted": "Anda memberikan suara pada \"{election}\"",
+    "completed": "Pemilihan \"{election}\" selesai",
+    "promoted": "Anda dipromosikan menjadi {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} jam yang lalu",
+      "dayAgo": "{count} hari yang lalu",
+      "daysAgo": "{count} hari yang lalu"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Memuat profil Anda...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Keluar",
+  "sections": {
+    "admin": "Admin",
+    "securityAudit": "Keamanan & Audit",
+    "financialManagement": "Manajemen Keuangan"
+  },
+  "navigation": {
+    "dashboard": "Dasbor",
+    "publicBulletin": "Buletin Publik",
+    "voteNow": "Vote Sekarang",
+    "myVotes": "Suara Saya",
+    "allElections": "Semua Pemilihan",
+    "myElections": "Pemilihan Saya",
+    "myWallet": "Dompet Saya",
+    "creatorWallet": "Dompet Kreator",
+    "lotteryTickets": "Tiket Pemilihan Bergamifikasi",
+    "subscriptions": "Langganan",
+    "createElection": "Buat Pemilihan",
+    "verifyVotes": "Verifikasi Suara",
+    "userManagement": "Manajemen Pengguna",
+    "auditTrail": "Jejak Audit"
+  },
+  "admin": {
+    "subscriptionAdmin": "Admin Langganan",
+    "roleManagement": "Manajemen Peran",
+    "permissions": "Izin",
+    "userRoles": "Peran Pengguna",
+    "roleHistory": "Riwayat Peran"
+  },
+  "security": {
+    "voteAudit": "Audit Suara",
+    "electionStats": "Statistik Pemilihan",
+    "securityLogs": "Log Keamanan",
+    "systemAudit": "Audit Sistem",
+    "encryptionStatus": "Status Enkripsi",
+    "verificationTools": "Alat Verifikasi",
+    "complianceReports": "Laporan Kepatuhan"
+  },
+  "financial": {
+    "paymentGateways": "Gateway Pembayaran",
+    "transactionMonitoring": "Pemantauan Transaksi",
+    "revenueAnalytics": "Analitik Pendapatan",
+    "prizeDistribution": "Distribusi Hadiah",
+    "regionalPricing": "Harga Regional",
+    "refundManagement": "Manajemen Pengembalian",
+    "financialReports": "Laporan Keuangan"
+  },
+  "stats": {
+    "totalVotes": "Total Suara",
+    "electionsCreated": "Pemilihan Dibuat"
+  },
+  "warnings": {
+    "profileError": "Peringatan: {error}. Melanjutkan dengan data pengguna dasar."
+  }
+}
+}

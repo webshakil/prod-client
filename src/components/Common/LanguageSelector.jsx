@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, Search, Check } from 'lucide-react';
 
-// ONLY 10 MOST IMPORTANT LANGUAGES
+// 20 MOST IMPORTANT LANGUAGES
 const LANGUAGES = [
   { code: 'en_us', name: 'English (US)', flag: '🇺🇸' },
   { code: 'es', name: 'Spanish', flag: '🇪🇸' },
@@ -14,6 +14,16 @@ const LANGUAGES = [
   { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
   { code: 'zh_cn', name: 'Chinese', flag: '🇨🇳' },
   { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+  { code: 'tr', name: 'Turkish', flag: '🇹🇷' },
+  { code: 'id', name: 'Indonesian', flag: '🇮🇩' },
+  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳' },
+  { code: 'th', name: 'Thai', flag: '🇹🇭' },
+  { code: 'pl', name: 'Polish', flag: '🇵🇱' },
+  { code: 'nl', name: 'Dutch', flag: '🇳🇱' },
+  { code: 'uk', name: 'Ukrainian', flag: '🇺🇦' },
+  { code: 'sv', name: 'Swedish', flag: '🇸🇪' },
 ];
 
 const LanguageSelector = () => {
@@ -106,7 +116,7 @@ const LanguageSelector = () => {
           </div>
 
           <div className="p-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 text-center">
-            10 languages available
+            20 languages available
           </div>
         </div>
       )}
@@ -115,34 +125,23 @@ const LanguageSelector = () => {
 };
 
 export default LanguageSelector;
-//last workable perfect code
+//last workable codes
 // import React, { useState, useEffect, useRef } from 'react';
 // import { useTranslation } from 'react-i18next';
 // import { ChevronDown, Search, Check } from 'lucide-react';
 
-// // FIRST 20 LANGUAGES ONLY
+// // ONLY 10 MOST IMPORTANT LANGUAGES
 // const LANGUAGES = [
 //   { code: 'en_us', name: 'English (US)', flag: '🇺🇸' },
 //   { code: 'es', name: 'Spanish', flag: '🇪🇸' },
 //   { code: 'fr', name: 'French', flag: '🇫🇷' },
 //   { code: 'de', name: 'German', flag: '🇩🇪' },
-//   { code: 'it', name: 'Italian', flag: '🇮🇹' },
 //   { code: 'pt_br', name: 'Portuguese (Brazil)', flag: '🇧🇷' },
-//   { code: 'nl', name: 'Dutch', flag: '🇳🇱' },
-//   { code: 'pl', name: 'Polish', flag: '🇵🇱' },
+//   { code: 'it', name: 'Italian', flag: '🇮🇹' },
 //   { code: 'ru', name: 'Russian', flag: '🇷🇺' },
 //   { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-//   { code: 'ko', name: 'Korean', flag: '🇰🇷' },
-//   { code: 'zh_cn', name: 'Chinese (Simplified)', flag: '🇨🇳' },
+//   { code: 'zh_cn', name: 'Chinese', flag: '🇨🇳' },
 //   { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
-//   { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
-//   { code: 'tr', name: 'Turkish', flag: '🇹🇷' },
-//   { code: 'sv', name: 'Swedish', flag: '🇸🇪' },
-//   { code: 'da', name: 'Danish', flag: '🇩🇰' },
-//   { code: 'fi', name: 'Finnish', flag: '🇫🇮' },
-//   { code: 'no', name: 'Norwegian', flag: '🇳🇴' },
-//   { code: 'cs', name: 'Czech', flag: '🇨🇿' },
-//   { code: 'hu', name: 'Hungarian', flag: '🇭🇺' },
 // ];
 
 // const LanguageSelector = () => {
@@ -235,7 +234,7 @@ export default LanguageSelector;
 //           </div>
 
 //           <div className="p-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 text-center">
-//             20 languages available
+//             10 languages available
 //           </div>
 //         </div>
 //       )}

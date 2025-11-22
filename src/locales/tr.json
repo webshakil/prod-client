@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Hoş geldiniz",
+    "login": "Giriş yap",
+    "logout": "Çıkış yap",
+    "register": "Kayıt ol",
+    "submit": "Gönder",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "back": "Geri",
+    "next": "İleri",
+    "previous": "Önceki",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "confirm": "Onayla",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "sort": "Sırala",
+    "view": "Görüntüle",
+    "download": "İndir",
+    "upload": "Yükle",
+    "select": "Seç",
+    "clear": "Temizle",
+    "apply": "Uygula",
+    "reset": "Sıfırla",
+    "getStarted": "Başlayın",
+    "logoutAndStartAgain": "Çıkış yap ve yeniden başla",
+    "or": "veya"
+  },
+  
+  "nav": {
+    "home": "Ana Sayfa",
+    "pricing": "Fiyatlandırma",
+    "about": "Hakkımızda"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Hoş geldiniz! Lütfen Sngine'den olduğunuzu doğrulayın",
+    "emailLabel": "E-posta Adresi",
+    "emailPlaceholder": "E-postanızı girin",
+    "phoneLabel": "Telefon Numarası (İsteğe bağlı)",
+    "phonePlaceholder": "+905321234567",
+    "addPhoneButton": "Telefon Numarası Ekle",
+    "continueButton": "Devam Et",
+    "noAccount": "Sngine hesabınız yok mu?",
+    "registerLink": "Önce Sngine'e kayıt olun",
+    "errors": {
+      "emailOrPhone": "Lütfen e-posta veya telefon numarası girin",
+      "checkFailed": "Kullanıcı doğrulaması başarısız"
+    },
+    "success": {
+      "verified": "Kullanıcı başarıyla doğrulandı"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "10.000'den fazla kuruluş tarafından güvenilir",
+      "title": "Demokratik",
+      "titleHighlight": "Oylama",
+      "titleEnd": "Kolaylaştırıldı",
+      "subtitle": "Dakikalar içinde güvenli, şeffaf seçimler oluşturun. Yerel kulüplerden küresel kuruluşlara kadar Vottery, her ölçekte demokratik karar almayı güçlendirir.",
+      "getStartedFree": "Ücretsiz Başlayın",
+      "viewPricing": "Fiyatları Görüntüle",
+      "noCreditCard": "Kredi kartı gerekmez",
+      "freePlan": "Sonsuza kadar ücretsiz plan",
+      "uptime": "Çalışma süresi",
+      "activeVoters": "Aktif seçmenler"
+    },
+    "stats": {
+      "electionsCreated": "Oluşturulan Seçimler",
+      "votesCast": "Kullanılan Oylar",
+      "countries": "Ülkeler",
+      "uptime": "Çalışma süresi"
+    },
+    "features": {
+      "title": "Demokratik Oylama İçin İhtiyacınız Olan Her Şey",
+      "subtitle": "Seçimlerinizi güvenli, şeffaf ve herkes için erişilebilir hale getirmek için tasarlanmış güçlü özellikler.",
+      "secureVoting": {
+        "title": "Güvenli Oylama",
+        "description": "Uçtan uca şifreleme, oylarınızın gizli ve kurcalanmaya karşı korumalı olmasını sağlar."
+      },
+      "lightningFast": {
+        "title": "Şimşek Hızında",
+        "description": "Sezgisel platformumuzla dakikalar içinde seçimler oluşturun ve başlatın."
+      },
+      "realTimeAnalytics": {
+        "title": "Gerçek Zamanlı Analitik",
+        "description": "Güçlü analitik panolarıyla oyları ve katılımı takip edin."
+      },
+      "flexiblePricing": {
+        "title": "Esnek Fiyatlandırma",
+        "description": "Kullandığınız kadar ödeyin veya abone olun. Sizin için en iyisini seçin."
+      },
+      "globalReach": {
+        "title": "Küresel Erişim",
+        "description": "Dünya çapındaki kullanıcılar için bölgesel fiyatlandırma ve çoklu para birimi desteği."
+      },
+      "support": {
+        "title": "7/24 Destek",
+        "description": "Özel destek ekibimiz başarılı olmanıza yardımcı olmak için her zaman burada."
+      }
+    },
+    "howItWorks": {
+      "title": "Nasıl Çalışır",
+      "subtitle": "Üç basit adımda Vottery ile başlayın",
+      "step1": {
+        "title": "Hesap Oluştur",
+        "description": "Maksimum güvenlik için e-posta doğrulama ve iki faktörlü kimlik doğrulama ile saniyeler içinde kaydolun."
+      },
+      "step2": {
+        "title": "Planınızı Seçin",
+        "description": "Esnek fiyatlandırma seçeneklerinden seçim yapın - kullandığınız kadar ödeyin veya gelişmiş özellikler için abone olun."
+      },
+      "step3": {
+        "title": "Seçimi Başlat",
+        "description": "Seçiminizi oluşturun, seçmenleri davet edin ve gerçek zamanlı sonuçların güvenli bir şekilde gelmesini izleyin."
+      },
+      "startFirstElection": "İlk Seçiminizi Başlatın"
+    },
+    "testimonials": {
+      "title": "Dünya Çapında Kuruluşlar Tarafından Güvenilir",
+      "subtitle": "Müşterilerimizin söylediklerine bakın",
+      "testimonial1": {
+        "quote": "Vottery, yıllık seçimlerimizi nasıl yaptığımızı dönüştürdü. Platform inanılmaz derecede sezgisel ve üyelerimiz oy kullanmanın ne kadar kolay olduğunu seviyor.",
+        "name": "Ahmet Yılmaz",
+        "role": "CEO, Teknoloji Girişimi"
+      },
+      "testimonial2": {
+        "quote": "Güvenlik özellikleri bize tam bir iç huzuru verdi. 5.000'den fazla üyemiz tek bir sorun yaşamadan oy kullandı. Kesinlikle tavsiye edilir!",
+        "name": "Ayşe Demir",
+        "role": "Direktör, Kar Amacı Gütmeyen Kuruluş"
+      },
+      "testimonial3": {
+        "quote": "Gerçek zamanlı analitik ve raporlama, seçim sonuçlarımızı takip etmeyi zahmetsiz hale getirdi. Şimdiye kadar kullandığımız en iyi oylama platformu.",
+        "name": "Mehmet Kaya",
+        "role": "Başkan, Öğrenci Birliği"
+      }
+    },
+    "cta": {
+      "title": "Seçimlerinizi Dönüştürmeye Hazır mısınız?",
+      "subtitle": "Güvenli, şeffaf seçimler yapmak için Vottery'yi kullanan binlerce kuruluşa katılın.",
+      "getStartedFree": "Ücretsiz Başlayın",
+      "viewPricing": "Fiyatları Görüntüle",
+      "footer": "Kredi kartı gerekmez • Sonsuza kadar ücretsiz plan mevcut • İstediğiniz zaman iptal edin"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Herkes için güvenli ve şeffaf oylama"
+    },
+    "product": {
+      "title": "Ürün",
+      "pricing": "Fiyatlandırma",
+      "features": "Özellikler",
+      "security": "Güvenlik",
+      "enterprise": "Kurumsal"
+    },
+    "company": {
+      "title": "Şirket",
+      "about": "Hakkımızda",
+      "careers": "Kariyer",
+      "blog": "Blog",
+      "contact": "İletişim"
+    },
+    "legal": {
+      "title": "Yasal",
+      "privacy": "Gizlilik Politikası",
+      "terms": "Hizmet Şartları",
+      "cookies": "Çerez Politikası"
+    },
+    "copyright": "Tüm hakları saklıdır."
+  },
+  "progressBar": {
+  "userCheck": "Kullanıcı Kontrolü",
+  "email": "E-posta",
+  "phone": "Telefon",
+  "details": "Detaylar",
+  "biometric": "Biyometrik",
+  "security": "Güvenlik",
+  "complete": "Tamamlandı"
+},
+"emailVerification": {
+  "title": "E-postayı Doğrula",
+  "subtitle": "Doğrulama kodunu göndereceğiz",
+  "sendOTP": "Kod Gönder",
+  "otpLabel": "6 haneli kodu girin",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Kodu Doğrula",
+  "resend": "Yeniden Gönder",
+  "resendTimer": "Yeniden Gönder ({timer}sn)",
+  "skipDemo": "Kod doğrulamayı atla (Demo modu)",
+  "success": {
+    "otpSent": "E-postaya kod gönderildi",
+    "verified": "E-posta başarıyla doğrulandı",
+    "skipped": "Kod doğrulama atlandı"
+  },
+  "errors": {
+    "sendFailed": "Kod gönderme başarısız",
+    "verifyFailed": "Kod doğrulama başarısız",
+    "skipFailed": "Kod atlama başarısız"
+  }
+},
+"phoneVerification": {
+  "title": "Telefon Numarasını Doğrula",
+  "subtitle": "Doğrulama kodunu göndereceğiz",
+  "sendOTP": "Kod Gönder",
+  "otpLabel": "6 haneli kodu girin",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Kodu Doğrula",
+  "resend": "Yeniden Gönder",
+  "resendTimer": "Yeniden Gönder ({timer}sn)",
+  "skipDemo": "Kod doğrulamayı atla (Demo modu)",
+  "success": {
+    "otpSent": "Telefona kod gönderildi",
+    "verified": "Telefon başarıyla doğrulandı",
+    "skipped": "Kod doğrulama atlandı"
+  },
+  "errors": {
+    "sendFailed": "Kod gönderme başarısız",
+    "verifyFailed": "Kod doğrulama başarısız",
+    "skipFailed": "Kod atlama başarısız"
+  }
+},
+"dashboard": {
+  "title": "Kontrol Paneli",
+  "stats": {
+    "activeElections": "Aktif Seçimler",
+    "yourVotes": "Oylarınız",
+    "pendingVotes": "Bekleyen Oylar",
+    "yourRole": "Rolünüz",
+    "addedToday": "Bugün +{count}",
+    "needVerification": "Doğrulama gerekli",
+    "permissions": "İzinler: {count}"
+  },
+  "recentActivity": {
+    "title": "Son Aktivite",
+    "voted": "\"{election}\" için oy kullandınız",
+    "completed": "\"{election}\" seçimi tamamlandı",
+    "promoted": "{role} olarak terfi ettiniz",
+    "timeAgo": {
+      "hoursAgo": "{count} saat önce",
+      "dayAgo": "{count} gün önce",
+      "daysAgo": "{count} gün önce"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Profiliniz yükleniyor...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Çıkış Yap",
+  "sections": {
+    "admin": "Yönetim",
+    "securityAudit": "Güvenlik ve Denetim",
+    "financialManagement": "Finansal Yönetim"
+  },
+  "navigation": {
+    "dashboard": "Kontrol Paneli",
+    "publicBulletin": "Genel Bülten",
+    "voteNow": "Şimdi Oy Ver",
+    "myVotes": "Oylarım",
+    "allElections": "Tüm Seçimler",
+    "myElections": "Seçimlerim",
+    "myWallet": "Cüzdanım",
+    "creatorWallet": "Oluşturucu Cüzdanı",
+    "lotteryTickets": "Oyunlaştırılmış Seçim Biletleri",
+    "subscriptions": "Abonelikler",
+    "createElection": "Seçim Oluştur",
+    "verifyVotes": "Oyları Doğrula",
+    "userManagement": "Kullanıcı Yönetimi",
+    "auditTrail": "Denetim İzi"
+  },
+  "admin": {
+    "subscriptionAdmin": "Abonelik Yönetimi",
+    "roleManagement": "Rol Yönetimi",
+    "permissions": "İzinler",
+    "userRoles": "Kullanıcı Rolleri",
+    "roleHistory": "Rol Geçmişi"
+  },
+  "security": {
+    "voteAudit": "Oy Denetimi",
+    "electionStats": "Seçim İstatistikleri",
+    "securityLogs": "Güvenlik Günlükleri",
+    "systemAudit": "Sistem Denetimi",
+    "encryptionStatus": "Şifreleme Durumu",
+    "verificationTools": "Doğrulama Araçları",
+    "complianceReports": "Uyumluluk Raporları"
+  },
+  "financial": {
+    "paymentGateways": "Ödeme Ağ Geçitleri",
+    "transactionMonitoring": "İşlem İzleme",
+    "revenueAnalytics": "Gelir Analitiği",
+    "prizeDistribution": "Ödül Dağıtımı",
+    "regionalPricing": "Bölgesel Fiyatlandırma",
+    "refundManagement": "İade Yönetimi",
+    "financialReports": "Finansal Raporlar"
+  },
+  "stats": {
+    "totalVotes": "Toplam Oylar",
+    "electionsCreated": "Oluşturulan Seçimler"
+  },
+  "warnings": {
+    "profileError": "Uyarı: {error}. Temel kullanıcı verileriyle devam ediliyor."
+  }
+}
+}

@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Bun venit",
+    "login": "Autentificare",
+    "logout": "Deconectare",
+    "register": "Înregistrare",
+    "submit": "Trimite",
+    "cancel": "Anulează",
+    "save": "Salvează",
+    "delete": "Șterge",
+    "edit": "Editează",
+    "close": "Închide",
+    "back": "Înapoi",
+    "next": "Următorul",
+    "previous": "Anterior",
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "success": "Succes",
+    "confirm": "Confirmă",
+    "search": "Caută",
+    "filter": "Filtrează",
+    "sort": "Sortează",
+    "view": "Vizualizare",
+    "download": "Descarcă",
+    "upload": "Încarcă",
+    "select": "Selectează",
+    "clear": "Șterge",
+    "apply": "Aplică",
+    "reset": "Resetează",
+    "getStarted": "Începe",
+    "logoutAndStartAgain": "Deconectează-te și începe din nou",
+    "or": "sau"
+  },
+  
+  "nav": {
+    "home": "Acasă",
+    "pricing": "Prețuri",
+    "about": "Despre noi"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Bun venit! Vă rugăm să verificați că sunteți de la Sngine",
+    "emailLabel": "Adresă de email",
+    "emailPlaceholder": "Introduceți adresa de email",
+    "phoneLabel": "Număr de telefon (Opțional)",
+    "phonePlaceholder": "+40712345678",
+    "addPhoneButton": "Adaugă număr de telefon",
+    "continueButton": "Continuă",
+    "noAccount": "Nu aveți un cont Sngine?",
+    "registerLink": "Înregistrați-vă mai întâi pe Sngine",
+    "errors": {
+      "emailOrPhone": "Vă rugăm să introduceți email-ul sau numărul de telefon",
+      "checkFailed": "Verificarea utilizatorului a eșuat"
+    },
+    "success": {
+      "verified": "Utilizator verificat cu succes"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Încrederea a peste 10.000 de organizații",
+      "title": "Votare",
+      "titleHighlight": "Democratică",
+      "titleEnd": "Simplificată",
+      "subtitle": "Creați alegeri sigure și transparente în câteva minute. De la cluburi locale la organizații globale, Vottery oferă puterea luării deciziilor democratice la orice scară.",
+      "getStartedFree": "Începe gratuit",
+      "viewPricing": "Vezi prețurile",
+      "noCreditCard": "Nu este necesară cardul de credit",
+      "freePlan": "Plan gratuit pentru totdeauna",
+      "uptime": "Timp de funcționare",
+      "activeVoters": "Votanți activi"
+    },
+    "stats": {
+      "electionsCreated": "Alegeri create",
+      "votesCast": "Voturi exprimate",
+      "countries": "Țări",
+      "uptime": "Timp de funcționare"
+    },
+    "features": {
+      "title": "Tot ce aveți nevoie pentru votare democratică",
+      "subtitle": "Funcții puternice concepute pentru a face alegerile dvs. sigure, transparente și accesibile pentru toată lumea.",
+      "secureVoting": {
+        "title": "Votare securizată",
+        "description": "Criptarea end-to-end asigură că voturile dvs. sunt private și protejate împotriva manipulării."
+      },
+      "lightningFast": {
+        "title": "Rapid ca fulgerul",
+        "description": "Creați și lansați alegeri în câteva minute cu platforma noastră intuitivă."
+      },
+      "realTimeAnalytics": {
+        "title": "Analiză în timp real",
+        "description": "Urmăriți voturile și angajamentul cu tablouri de bord analitice puternice."
+      },
+      "flexiblePricing": {
+        "title": "Prețuri flexibile",
+        "description": "Plătiți pe măsură ce utilizați sau abonați-vă. Alegeți ce funcționează cel mai bine pentru dvs."
+      },
+      "globalReach": {
+        "title": "Acoperire globală",
+        "description": "Prețuri regionale și suport multi-valută pentru utilizatori din întreaga lume."
+      },
+      "support": {
+        "title": "Asistență 24/7",
+        "description": "Echipa noastră dedicată de asistență este întotdeauna aici pentru a vă ajuta să reușiți."
+      }
+    },
+    "howItWorks": {
+      "title": "Cum funcționează",
+      "subtitle": "Începeți cu Vottery în trei pași simpli",
+      "step1": {
+        "title": "Creați un cont",
+        "description": "Înregistrați-vă în câteva secunde cu verificare prin email și autentificare cu doi factori pentru securitate maximă."
+      },
+      "step2": {
+        "title": "Alegeți planul dvs.",
+        "description": "Selectați din opțiuni de prețuri flexibile - plătiți pe măsură ce utilizați sau abonați-vă pentru funcții avansate."
+      },
+      "step3": {
+        "title": "Lansați alegerea",
+        "description": "Creați alegerea dvs., invitați votanții și urmăriți rezultatele în timp real în siguranță."
+      },
+      "startFirstElection": "Începeți prima dvs. alegere"
+    },
+    "testimonials": {
+      "title": "Încrederea organizațiilor din întreaga lume",
+      "subtitle": "Vedeți ce spun clienții noștri",
+      "testimonial1": {
+        "quote": "Vottery a transformat modul în care organizăm alegerile anuale. Platforma este incredibil de intuitivă, iar membrii noștri adoră cât de ușor este să voteze.",
+        "name": "Ion Popescu",
+        "role": "CEO, Startup Tehnologic"
+      },
+      "testimonial2": {
+        "quote": "Funcțiile de securitate ne-au oferit o liniște completă. Peste 5.000 de membri ai noștri au votat fără nicio problemă. Foarte recomandat!",
+        "name": "Maria Ionescu",
+        "role": "Director, Organizație nonprofit"
+      },
+      "testimonial3": {
+        "quote": "Analiza și raportarea în timp real au făcut urmărirea rezultatelor alegerilor noastre fără efort. Cea mai bună platformă de votare pe care am folosit-o vreodată.",
+        "name": "Andrei Constantinescu",
+        "role": "Președinte, Uniune studențească"
+      }
+    },
+    "cta": {
+      "title": "Gata să vă transformați alegerile?",
+      "subtitle": "Alăturați-vă miilor de organizații care folosesc Vottery pentru a organiza alegeri sigure și transparente.",
+      "getStartedFree": "Începe gratuit",
+      "viewPricing": "Vezi prețurile",
+      "footer": "Nu este necesară cardul de credit • Plan gratuit pentru totdeauna disponibil • Anulați oricând"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Votare sigură și transparentă pentru toți"
+    },
+    "product": {
+      "title": "Produs",
+      "pricing": "Prețuri",
+      "features": "Funcții",
+      "security": "Securitate",
+      "enterprise": "Enterprise"
+    },
+    "company": {
+      "title": "Companie",
+      "about": "Despre noi",
+      "careers": "Cariere",
+      "blog": "Blog",
+      "contact": "Contact"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Politica de confidențialitate",
+      "terms": "Termeni și condiții",
+      "cookies": "Politica cookie-urilor"
+    },
+    "copyright": "Toate drepturile rezervate."
+  },
+  "progressBar": {
+  "userCheck": "Verificare utilizator",
+  "email": "E-mail",
+  "phone": "Telefon",
+  "details": "Detalii",
+  "biometric": "Biometric",
+  "security": "Securitate",
+  "complete": "Completat"
+},
+"emailVerification": {
+  "title": "Verifică e-mailul",
+  "subtitle": "Vom trimite un cod de verificare la",
+  "sendOTP": "Trimite cod",
+  "otpLabel": "Introduceți codul de 6 cifre",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifică codul",
+  "resend": "Retrimite",
+  "resendTimer": "Retrimite ({timer}s)",
+  "skipDemo": "Sari peste verificarea codului (Mod demo)",
+  "success": {
+    "otpSent": "Cod trimis pe e-mail",
+    "verified": "E-mail verificat cu succes",
+    "skipped": "Verificare cod sărit"
+  },
+  "errors": {
+    "sendFailed": "Trimiterea codului a eșuat",
+    "verifyFailed": "Verificarea codului a eșuat",
+    "skipFailed": "Sărirea codului a eșuat"
+  }
+},
+"phoneVerification": {
+  "title": "Verifică numărul de telefon",
+  "subtitle": "Vom trimite un cod de verificare la",
+  "sendOTP": "Trimite cod",
+  "otpLabel": "Introduceți codul de 6 cifre",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifică codul",
+  "resend": "Retrimite",
+  "resendTimer": "Retrimite ({timer}s)",
+  "skipDemo": "Sari peste verificarea codului (Mod demo)",
+  "success": {
+    "otpSent": "Cod trimis pe telefon",
+    "verified": "Telefon verificat cu succes",
+    "skipped": "Verificare cod sărit"
+  },
+  "errors": {
+    "sendFailed": "Trimiterea codului a eșuat",
+    "verifyFailed": "Verificarea codului a eșuat",
+    "skipFailed": "Sărirea codului a eșuat"
+  }
+},
+"dashboard": {
+  "title": "Tablou de bord",
+  "stats": {
+    "activeElections": "Alegeri active",
+    "yourVotes": "Voturile tale",
+    "pendingVotes": "Voturi în așteptare",
+    "yourRole": "Rolul tău",
+    "addedToday": "+{count} astăzi",
+    "needVerification": "Necesită verificare",
+    "permissions": "Permisiuni: {count}"
+  },
+  "recentActivity": {
+    "title": "Activitate recentă",
+    "voted": "Ai votat pentru \"{election}\"",
+    "completed": "Alegerea \"{election}\" completată",
+    "promoted": "Ai fost promovat la {role}",
+    "timeAgo": {
+      "hoursAgo": "acum {count} ore",
+      "dayAgo": "acum {count} zi",
+      "daysAgo": "acum {count} zile"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Se încarcă profilul dvs...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Deconectare",
+  "sections": {
+    "admin": "Administrare",
+    "securityAudit": "Securitate și Audit",
+    "financialManagement": "Gestionare Financiară"
+  },
+  "navigation": {
+    "dashboard": "Tablou de bord",
+    "publicBulletin": "Buletin public",
+    "voteNow": "Votează acum",
+    "myVotes": "Voturile mele",
+    "allElections": "Toate alegerile",
+    "myElections": "Alegerile mele",
+    "myWallet": "Portofelul meu",
+    "creatorWallet": "Portofel creator",
+    "lotteryTickets": "Bilete alegeri gamificate",
+    "subscriptions": "Abonamente",
+    "createElection": "Creează alegeri",
+    "verifyVotes": "Verifică voturi",
+    "userManagement": "Gestionare utilizatori",
+    "auditTrail": "Pistă de audit"
+  },
+  "admin": {
+    "subscriptionAdmin": "Administrare abonamente",
+    "roleManagement": "Gestionare roluri",
+    "permissions": "Permisiuni",
+    "userRoles": "Roluri utilizatori",
+    "roleHistory": "Istoric roluri"
+  },
+  "security": {
+    "voteAudit": "Audit voturi",
+    "electionStats": "Statistici alegeri",
+    "securityLogs": "Jurnale de securitate",
+    "systemAudit": "Audit sistem",
+    "encryptionStatus": "Status criptare",
+    "verificationTools": "Instrumente verificare",
+    "complianceReports": "Rapoarte conformitate"
+  },
+  "financial": {
+    "paymentGateways": "Gateway-uri plată",
+    "transactionMonitoring": "Monitorizare tranzacții",
+    "revenueAnalytics": "Analiză venituri",
+    "prizeDistribution": "Distribuție premii",
+    "regionalPricing": "Prețuri regionale",
+    "refundManagement": "Gestionare rambursări",
+    "financialReports": "Rapoarte financiare"
+  },
+  "stats": {
+    "totalVotes": "Total voturi",
+    "electionsCreated": "Alegeri create"
+  },
+  "warnings": {
+    "profileError": "Avertisment: {error}. Continuare cu date utilizator de bază."
+  }
+}
+}

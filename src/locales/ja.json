@@ -19,7 +19,7 @@
     "confirm": "確認",
     "search": "検索",
     "filter": "フィルター",
-    "sort": "並べ替え",
+    "sort": "並び替え",
     "view": "表示",
     "download": "ダウンロード",
     "upload": "アップロード",
@@ -28,39 +28,62 @@
     "apply": "適用",
     "reset": "リセット",
     "getStarted": "始める",
-    "logoutAndStartAgain": "ログアウトして最初から"
+    "logoutAndStartAgain": "ログアウトして最初からやり直す",
+    "or": "または"
   },
+  
   "nav": {
     "home": "ホーム",
     "pricing": "料金",
-    "about": "について"
+    "about": "私たちについて"
   },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "ようこそ！Sngineからのユーザーであることを確認してください",
+    "emailLabel": "メールアドレス",
+    "emailPlaceholder": "メールアドレスを入力",
+    "phoneLabel": "電話番号（オプション）",
+    "phonePlaceholder": "+81901234567",
+    "addPhoneButton": "電話番号を追加",
+    "continueButton": "続ける",
+    "noAccount": "Sngineアカウントをお持ちでない方",
+    "registerLink": "まずSngineに登録してください",
+    "errors": {
+      "emailOrPhone": "メールアドレスまたは電話番号を入力してください",
+      "checkFailed": "ユーザー確認に失敗しました"
+    },
+    "success": {
+      "verified": "ユーザーの確認が完了しました"
+    }
+  },
+
   "landing": {
     "hero": {
       "trustedBy": "10,000以上の組織に信頼されています",
       "title": "民主的な",
-      "titleHighlight": "投票",
-      "titleEnd": "をシンプルに",
-      "subtitle": "数分で安全で透明性の高い選挙を作成できます。地域のクラブからグローバル組織まで、Votteryはあらゆる規模で民主的な意思決定を可能にします。",
+      "titleHighlight": "投票を",
+      "titleEnd": "シンプルに",
+      "subtitle": "数分で安全で透明性の高い選挙を作成できます。地域のクラブからグローバルな組織まで、Votteryはあらゆる規模の民主的な意思決定を可能にします。",
       "getStartedFree": "無料で始める",
       "viewPricing": "料金を見る",
       "noCreditCard": "クレジットカード不要",
       "freePlan": "永久無料プラン",
-      "uptime": "稼働率",
+      "uptime": "稼働時間",
       "activeVoters": "アクティブな投票者"
     },
     "stats": {
       "electionsCreated": "作成された選挙",
       "votesCast": "投じられた票",
       "countries": "国",
-      "uptime": "稼働率"
+      "uptime": "稼働時間"
     },
     "features": {
       "title": "民主的な投票に必要なすべて",
-      "subtitle": "あなたの選挙を安全で透明性が高く、すべての人がアクセスできるようにする強力な機能。",
+      "subtitle": "選挙を安全、透明、そして誰もがアクセスできるようにするために設計された強力な機能。",
       "secureVoting": {
         "title": "安全な投票",
-        "description": "エンドツーエンドの暗号化により、投票が非公開で改ざん防止されることを保証します。"
+        "description": "エンドツーエンドの暗号化により、投票がプライベートで改ざん防止されることを保証します。"
       },
       "lightningFast": {
         "title": "超高速",
@@ -71,16 +94,16 @@
         "description": "強力な分析ダッシュボードで投票とエンゲージメントを追跡します。"
       },
       "flexiblePricing": {
-        "title": "柔軟な料金",
-        "description": "従量課金またはサブスクリプション。最適なものを選択してください。"
+        "title": "柔軟な料金体系",
+        "description": "従量課金またはサブスクリプション。あなたに最適なものを選択してください。"
       },
       "globalReach": {
         "title": "グローバルリーチ",
-        "description": "世界中のユーザー向けの地域別価格設定と複数通貨サポート。"
+        "description": "世界中のユーザー向けに地域別の価格設定と複数通貨のサポート。"
       },
       "support": {
         "title": "24時間365日サポート",
-        "description": "専任のサポートチームが常にあなたの成功をサポートします。"
+        "description": "専任のサポートチームが常にあなたの成功をお手伝いします。"
       }
     },
     "howItWorks": {
@@ -88,15 +111,15 @@
       "subtitle": "3つの簡単なステップでVotteryを始めましょう",
       "step1": {
         "title": "アカウント作成",
-        "description": "メール認証と二要素認証で数秒で登録し、最大限のセキュリティを確保します。"
+        "description": "メール確認と二要素認証で数秒で登録し、最大限のセキュリティを確保します。"
       },
       "step2": {
         "title": "プランを選択",
-        "description": "柔軟な価格オプションから選択 - 従量課金制または高度な機能のサブスクリプション。"
+        "description": "柔軟な料金オプションから選択 - 従量課金または高度な機能のためのサブスクリプション。"
       },
       "step3": {
         "title": "選挙を開始",
-        "description": "選挙を作成し、投票者を招待し、安全にリアルタイムの結果を確認します。"
+        "description": "選挙を作成し、投票者を招待し、リアルタイムの結果を安全に確認します。"
       },
       "startFirstElection": "最初の選挙を始める"
     },
@@ -104,34 +127,186 @@
       "title": "世界中の組織に信頼されています",
       "subtitle": "お客様の声をご覧ください",
       "testimonial1": {
-        "quote": "Votteryは私たちの年次選挙の実施方法を変革しました。プラットフォームは非常に直感的で、メンバーは投票がいかに簡単かを気に入っています。",
+        "quote": "Votteryは私たちの年次選挙の実施方法を変革しました。プラットフォームは非常に直感的で、メンバーは投票の簡単さを気に入っています。",
         "name": "田中太郎",
         "role": "CEO、テクノロジースタートアップ"
       },
       "testimonial2": {
-        "quote": "セキュリティ機能により完全な安心感が得られました。5,000人以上のメンバーが問題なく投票しました。強くお勧めします！",
+        "quote": "セキュリティ機能により、完全な安心感が得られました。5,000人以上のメンバーが問題なく投票しました。強くお勧めします！",
         "name": "佐藤花子",
-        "role": "ディレクター、非営利団体"
+        "role": "ディレクター、非営利組織"
       },
       "testimonial3": {
-        "quote": "リアルタイムの分析とレポートにより、選挙結果の追跡が簡単になりました。これまでに使用した中で最高の投票プラットフォームです。",
+        "quote": "リアルタイムの分析とレポートにより、選挙結果の追跡が簡単になりました。これまで使用した中で最高の投票プラットフォームです。",
         "name": "鈴木一郎",
-        "role": "学生会長"
+        "role": "会長、学生組合"
       }
     },
     "cta": {
       "title": "選挙を変革する準備はできていますか？",
-      "subtitle": "安全で透明性の高い選挙を実施するためにVotteryを使用している何千もの組織に参加しましょう。",
+      "subtitle": "安全で透明性の高い選挙を実施するためにVotteryを使用している何千もの組織に参加してください。",
       "getStartedFree": "無料で始める",
       "viewPricing": "料金を見る",
-      "footer": "クレジットカード不要 • 永久無料プラン利用可能 • いつでもキャンセル可能"
+      "footer": "クレジットカード不要 • 永久無料プランあり • いつでもキャンセル可能"
     }
   },
-    "footer": {
-    "brand": {"tagline": "世界中の組織のための安全で透明な投票を簡素化。"},
-    "product": {"title": "製品", "pricing": "料金", "features": "機能", "security": "セキュリティ", "enterprise": "エンタープライズ"},
-    "company": {"title": "会社", "about": "会社概要", "careers": "採用情報", "blog": "ブログ", "contact": "お問い合わせ"},
-    "legal": {"title": "法的事項", "privacy": "プライバシーポリシー", "terms": "利用規約", "cookies": "Cookie ポリシー"},
+  "footer": {
+    "brand": {
+      "tagline": "すべての人のための安全で透明な投票"
+    },
+    "product": {
+      "title": "製品",
+      "pricing": "料金",
+      "features": "機能",
+      "security": "セキュリティ",
+      "enterprise": "エンタープライズ"
+    },
+    "company": {
+      "title": "会社",
+      "about": "私たちについて",
+      "careers": "採用情報",
+      "blog": "ブログ",
+      "contact": "お問い合わせ"
+    },
+    "legal": {
+      "title": "法的情報",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "cookies": "クッキーポリシー"
+    },
     "copyright": "全著作権所有。"
+  },
+  "progressBar": {
+  "userCheck": "ユーザー確認",
+  "email": "メール",
+  "phone": "電話",
+  "details": "詳細",
+  "biometric": "生体認証",
+  "security": "セキュリティ",
+  "complete": "完了"
+},
+"emailVerification": {
+  "title": "メールを確認",
+  "subtitle": "確認コードを送信します",
+  "sendOTP": "コードを送信",
+  "otpLabel": "6桁のコードを入力",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "コードを確認",
+  "resend": "再送信",
+  "resendTimer": "再送信 ({timer}秒)",
+  "skipDemo": "コード確認をスキップ (デモモード)",
+  "success": {
+    "otpSent": "メールにコードを送信しました",
+    "verified": "メールの確認が完了しました",
+    "skipped": "コード確認をスキップしました"
+  },
+  "errors": {
+    "sendFailed": "コードの送信に失敗しました",
+    "verifyFailed": "コードの確認に失敗しました",
+    "skipFailed": "コードのスキップに失敗しました"
   }
+},
+"phoneVerification": {
+  "title": "電話番号を確認",
+  "subtitle": "確認コードを送信します",
+  "sendOTP": "コードを送信",
+  "otpLabel": "6桁のコードを入力",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "コードを確認",
+  "resend": "再送信",
+  "resendTimer": "再送信 ({timer}秒)",
+  "skipDemo": "コード確認をスキップ (デモモード)",
+  "success": {
+    "otpSent": "電話にコードを送信しました",
+    "verified": "電話の確認が完了しました",
+    "skipped": "コード確認をスキップしました"
+  },
+  "errors": {
+    "sendFailed": "コードの送信に失敗しました",
+    "verifyFailed": "コードの確認に失敗しました",
+    "skipFailed": "コードのスキップに失敗しました"
+  }
+},
+"dashboard": {
+  "title": "ダッシュボード",
+  "stats": {
+    "activeElections": "アクティブな選挙",
+    "yourVotes": "あなたの投票",
+    "pendingVotes": "保留中の投票",
+    "yourRole": "あなたの役割",
+    "addedToday": "今日+{count}",
+    "needVerification": "検証が必要",
+    "permissions": "権限: {count}"
+  },
+  "recentActivity": {
+    "title": "最近のアクティビティ",
+    "voted": "\"{election}\"に投票しました",
+    "completed": "選挙\"{election}\"が完了しました",
+    "promoted": "{role}に昇進しました",
+    "timeAgo": {
+      "hoursAgo": "{count}時間前",
+      "dayAgo": "{count}日前",
+      "daysAgo": "{count}日前"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "プロフィールを読み込んでいます...",
+  "appName": "Vottery",
+  "profile": "プロフィール",
+  "logout": "ログアウト",
+  "sections": {
+    "admin": "管理",
+    "securityAudit": "セキュリティと監査",
+    "financialManagement": "財務管理"
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "publicBulletin": "公開掲示板",
+    "voteNow": "今すぐ投票",
+    "myVotes": "マイ投票",
+    "allElections": "すべての選挙",
+    "myElections": "マイ選挙",
+    "myWallet": "マイウォレット",
+    "creatorWallet": "クリエイターウォレット",
+    "lotteryTickets": "ゲーム化された選挙チケット",
+    "subscriptions": "サブスクリプション",
+    "createElection": "選挙を作成",
+    "verifyVotes": "投票を確認",
+    "userManagement": "ユーザー管理",
+    "auditTrail": "監査証跡"
+  },
+  "admin": {
+    "subscriptionAdmin": "サブスクリプション管理",
+    "roleManagement": "役割管理",
+    "permissions": "権限",
+    "userRoles": "ユーザーの役割",
+    "roleHistory": "役割履歴"
+  },
+  "security": {
+    "voteAudit": "投票監査",
+    "electionStats": "選挙統計",
+    "securityLogs": "セキュリティログ",
+    "systemAudit": "システム監査",
+    "encryptionStatus": "暗号化ステータス",
+    "verificationTools": "検証ツール",
+    "complianceReports": "コンプライアンスレポート"
+  },
+  "financial": {
+    "paymentGateways": "決済ゲートウェイ",
+    "transactionMonitoring": "取引監視",
+    "revenueAnalytics": "収益分析",
+    "prizeDistribution": "賞品配布",
+    "regionalPricing": "地域別価格設定",
+    "refundManagement": "返金管理",
+    "financialReports": "財務報告"
+  },
+  "stats": {
+    "totalVotes": "総投票数",
+    "electionsCreated": "作成された選挙"
+  },
+  "warnings": {
+    "profileError": "警告: {error}。基本的なユーザーデータで続行します。"
+  }
+}
 }

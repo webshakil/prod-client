@@ -1,0 +1,312 @@
+{
+  "common": {
+    "welcome": "Välkommen",
+    "login": "Logga in",
+    "logout": "Logga ut",
+    "register": "Registrera",
+    "submit": "Skicka",
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "back": "Tillbaka",
+    "next": "Nästa",
+    "previous": "Föregående",
+    "loading": "Laddar...",
+    "error": "Fel",
+    "success": "Framgång",
+    "confirm": "Bekräfta",
+    "search": "Sök",
+    "filter": "Filtrera",
+    "sort": "Sortera",
+    "view": "Visa",
+    "download": "Ladda ner",
+    "upload": "Ladda upp",
+    "select": "Välj",
+    "clear": "Rensa",
+    "apply": "Tillämpa",
+    "reset": "Återställ",
+    "getStarted": "Kom igång",
+    "logoutAndStartAgain": "Logga ut och börja om",
+    "or": "eller"
+  },
+  
+  "nav": {
+    "home": "Hem",
+    "pricing": "Priser",
+    "about": "Om oss"
+  },
+
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Välkommen! Vänligen verifiera att du är från Sngine",
+    "emailLabel": "E-postadress",
+    "emailPlaceholder": "Ange din e-post",
+    "phoneLabel": "Telefonnummer (Valfritt)",
+    "phonePlaceholder": "+46701234567",
+    "addPhoneButton": "Lägg till telefonnummer",
+    "continueButton": "Fortsätt",
+    "noAccount": "Har du inget Sngine-konto?",
+    "registerLink": "Registrera dig på Sngine först",
+    "errors": {
+      "emailOrPhone": "Vänligen ange e-post eller telefonnummer",
+      "checkFailed": "Användarverifiering misslyckades"
+    },
+    "success": {
+      "verified": "Användare verifierad framgångsrikt"
+    }
+  },
+
+  "landing": {
+    "hero": {
+      "trustedBy": "Betrodd av 10 000+ organisationer",
+      "title": "Demokratisk",
+      "titleHighlight": "Röstning",
+      "titleEnd": "Gjord Enkel",
+      "subtitle": "Skapa säkra, transparenta val på några minuter. Från lokala klubbar till globala organisationer, Vottery möjliggör demokratiskt beslutsfattande i alla skalor.",
+      "getStartedFree": "Kom igång gratis",
+      "viewPricing": "Se priser",
+      "noCreditCard": "Inget kreditkort krävs",
+      "freePlan": "Gratis plan för alltid",
+      "uptime": "Drifttid",
+      "activeVoters": "Aktiva väljare"
+    },
+    "stats": {
+      "electionsCreated": "Skapade val",
+      "votesCast": "Avgivna röster",
+      "countries": "Länder",
+      "uptime": "Drifttid"
+    },
+    "features": {
+      "title": "Allt du behöver för demokratisk röstning",
+      "subtitle": "Kraftfulla funktioner utformade för att göra dina val säkra, transparenta och tillgängliga för alla.",
+      "secureVoting": {
+        "title": "Säker röstning",
+        "description": "End-to-end-kryptering säkerställer att dina röster är privata och manipuleringssäkra."
+      },
+      "lightningFast": {
+        "title": "Blixtsnabbt",
+        "description": "Skapa och starta val på några minuter med vår intuitiva plattform."
+      },
+      "realTimeAnalytics": {
+        "title": "Realtidsanalys",
+        "description": "Spåra röster och engagemang med kraftfulla analysinstrumentpaneler."
+      },
+      "flexiblePricing": {
+        "title": "Flexibla priser",
+        "description": "Betala per användning eller prenumerera. Välj vad som fungerar bäst för dig."
+      },
+      "globalReach": {
+        "title": "Global räckvidd",
+        "description": "Regional prissättning och flervalsvalutastöd för användare världen över."
+      },
+      "support": {
+        "title": "24/7 support",
+        "description": "Vårt dedikerade supportteam är alltid här för att hjälpa dig lyckas."
+      }
+    },
+    "howItWorks": {
+      "title": "Hur det fungerar",
+      "subtitle": "Kom igång med Vottery i tre enkla steg",
+      "step1": {
+        "title": "Skapa konto",
+        "description": "Registrera dig på några sekunder med e-postverifiering och tvåfaktorsautentisering för maximal säkerhet."
+      },
+      "step2": {
+        "title": "Välj din plan",
+        "description": "Välj bland flexibla prisalternativ - betala per användning eller prenumerera för avancerade funktioner."
+      },
+      "step3": {
+        "title": "Starta val",
+        "description": "Skapa ditt val, bjud in väljare och se realtidsresultat komma in säkert."
+      },
+      "startFirstElection": "Starta ditt första val"
+    },
+    "testimonials": {
+      "title": "Betrodd av organisationer världen över",
+      "subtitle": "Se vad våra kunder säger",
+      "testimonial1": {
+        "quote": "Vottery förändrade hur vi genomför våra årliga val. Plattformen är otroligt intuitiv och våra medlemmar älskar hur lätt det är att rösta.",
+        "name": "Erik Svensson",
+        "role": "VD, Tech Startup"
+      },
+      "testimonial2": {
+        "quote": "Säkerhetsfunktionerna gav oss fullständig sinnesfrid. Våra 5 000+ medlemmar röstade utan ett enda problem. Rekommenderas starkt!",
+        "name": "Anna Johansson",
+        "role": "Direktör, Ideell organisation"
+      },
+      "testimonial3": {
+        "quote": "Realtidsanalys och rapportering gjorde spårningen av våra valresultat enkel. Den bästa röstningsplattformen vi någonsin använt.",
+        "name": "Lars Andersson",
+        "role": "Ordförande, Studentkår"
+      }
+    },
+    "cta": {
+      "title": "Redo att transformera dina val?",
+      "subtitle": "Gå med i tusentals organisationer som använder Vottery för att genomföra säkra, transparenta val.",
+      "getStartedFree": "Kom igång gratis",
+      "viewPricing": "Se priser",
+      "footer": "Inget kreditkort krävs • Gratis plan för alltid tillgänglig • Avbryt när som helst"
+    }
+  },
+  "footer": {
+    "brand": {
+      "tagline": "Säker och transparent röstning för alla"
+    },
+    "product": {
+      "title": "Produkt",
+      "pricing": "Priser",
+      "features": "Funktioner",
+      "security": "Säkerhet",
+      "enterprise": "Företag"
+    },
+    "company": {
+      "title": "Företag",
+      "about": "Om oss",
+      "careers": "Karriär",
+      "blog": "Blogg",
+      "contact": "Kontakt"
+    },
+    "legal": {
+      "title": "Juridiskt",
+      "privacy": "Integritetspolicy",
+      "terms": "Användarvillkor",
+      "cookies": "Cookiepolicy"
+    },
+    "copyright": "Alla rättigheter förbehållna."
+  },
+  "progressBar": {
+  "userCheck": "Användarkontroll",
+  "email": "E-post",
+  "phone": "Telefon",
+  "details": "Detaljer",
+  "biometric": "Biometrisk",
+  "security": "Säkerhet",
+  "complete": "Slutförd"
+},
+"emailVerification": {
+  "title": "Verifiera e-post",
+  "subtitle": "Vi skickar en verifieringskod till",
+  "sendOTP": "Skicka kod",
+  "otpLabel": "Ange 6-siffrig kod",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifiera kod",
+  "resend": "Skicka igen",
+  "resendTimer": "Skicka igen ({timer}s)",
+  "skipDemo": "Hoppa över kodverifiering (Demoläge)",
+  "success": {
+    "otpSent": "Kod skickad till e-post",
+    "verified": "E-post verifierad framgångsrikt",
+    "skipped": "Kodverifiering hoppades över"
+  },
+  "errors": {
+    "sendFailed": "Kunde inte skicka kod",
+    "verifyFailed": "Kodverifiering misslyckades",
+    "skipFailed": "Kunde inte hoppa över kod"
+  }
+},
+"phoneVerification": {
+  "title": "Verifiera telefonnummer",
+  "subtitle": "Vi skickar en verifieringskod till",
+  "sendOTP": "Skicka kod",
+  "otpLabel": "Ange 6-siffrig kod",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verifiera kod",
+  "resend": "Skicka igen",
+  "resendTimer": "Skicka igen ({timer}s)",
+  "skipDemo": "Hoppa över kodverifiering (Demoläge)",
+  "success": {
+    "otpSent": "Kod skickad till telefon",
+    "verified": "Telefon verifierad framgångsrikt",
+    "skipped": "Kodverifiering hoppades över"
+  },
+  "errors": {
+    "sendFailed": "Kunde inte skicka kod",
+    "verifyFailed": "Kodverifiering misslyckades",
+    "skipFailed": "Kunde inte hoppa över kod"
+  }
+},
+"dashboard": {
+  "title": "Instrumentpanel",
+  "stats": {
+    "activeElections": "Aktiva val",
+    "yourVotes": "Dina röster",
+    "pendingVotes": "Väntande röster",
+    "yourRole": "Din roll",
+    "addedToday": "+{count} idag",
+    "needVerification": "Kräver verifiering",
+    "permissions": "Behörigheter: {count}"
+  },
+  "recentActivity": {
+    "title": "Senaste aktivitet",
+    "voted": "Du röstade på \"{election}\"",
+    "completed": "Val \"{election}\" slutfört",
+    "promoted": "Du befordrades till {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} timmar sedan",
+      "dayAgo": "{count} dag sedan",
+      "daysAgo": "{count} dagar sedan"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Laddar din profil...",
+  "appName": "Vottery",
+  "profile": "Profil",
+  "logout": "Logga ut",
+  "sections": {
+    "admin": "Administration",
+    "securityAudit": "Säkerhet & Revision",
+    "financialManagement": "Finansiell Förvaltning"
+  },
+  "navigation": {
+    "dashboard": "Instrumentpanel",
+    "publicBulletin": "Offentlig bulletin",
+    "voteNow": "Rösta nu",
+    "myVotes": "Mina röster",
+    "allElections": "Alla val",
+    "myElections": "Mina val",
+    "myWallet": "Min plånbok",
+    "creatorWallet": "Skapares plånbok",
+    "lotteryTickets": "Gamifierade valbiljetter",
+    "subscriptions": "Prenumerationer",
+    "createElection": "Skapa val",
+    "verifyVotes": "Verifiera röster",
+    "userManagement": "Användarhantering",
+    "auditTrail": "Revisionsspår"
+  },
+  "admin": {
+    "subscriptionAdmin": "Prenumerationsadministration",
+    "roleManagement": "Rollhantering",
+    "permissions": "Behörigheter",
+    "userRoles": "Användarroller",
+    "roleHistory": "Rollhistorik"
+  },
+  "security": {
+    "voteAudit": "Röstrevision",
+    "electionStats": "Valstatistik",
+    "securityLogs": "Säkerhetsloggar",
+    "systemAudit": "Systemrevision",
+    "encryptionStatus": "Krypteringsstatus",
+    "verificationTools": "Verifieringsverktyg",
+    "complianceReports": "Efterlevnadsrapporter"
+  },
+  "financial": {
+    "paymentGateways": "Betalningsgateways",
+    "transactionMonitoring": "Transaktionsövervakning",
+    "revenueAnalytics": "Intäktsanalys",
+    "prizeDistribution": "Prisutdelning",
+    "regionalPricing": "Regional prissättning",
+    "refundManagement": "Återbetalningshantering",
+    "financialReports": "Finansiella rapporter"
+  },
+  "stats": {
+    "totalVotes": "Totalt röster",
+    "electionsCreated": "Skapade val"
+  },
+  "warnings": {
+    "profileError": "Varning: {error}. Fortsätter med grundläggande användardata."
+  }
+}
+}

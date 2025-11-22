@@ -28,7 +28,8 @@
     "apply": "Apply",
     "reset": "Reset",
     "getStarted": "Get Started",
-    "logoutAndStartAgain": "Logout & Start Again"
+    "logoutAndStartAgain": "Logout & Start Again",
+    "or": "or"
   },
   
   "nav": {
@@ -37,7 +38,25 @@
     "about": "About Us"
   },
 
-
+  "userCheck": {
+    "title": "Vottery",
+    "subtitle": "Welcome! Please verify that you're from Sngine",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "Enter your email",
+    "phoneLabel": "Phone Number (Optional)",
+    "phonePlaceholder": "+1234567890",
+    "addPhoneButton": "Add Phone Number",
+    "continueButton": "Continue",
+    "noAccount": "Don't have a Sngine account?",
+    "registerLink": "Register on Sngine first",
+    "errors": {
+      "emailOrPhone": "Please enter email or phone number",
+      "checkFailed": "User check failed"
+    },
+    "success": {
+      "verified": "User verified successfully"
+    }
+  },
 
   "landing": {
     "hero": {
@@ -131,9 +150,9 @@
       "footer": "No credit card required • Free forever plan available • Cancel anytime"
     }
   },
-    "footer": {
+  "footer": {
     "brand": {
-      "tagline": "YOUR TRANSLATION HERE"
+      "tagline": "Secure and transparent voting for everyone"
     },
     "product": {
       "title": "Product",
@@ -156,5 +175,140 @@
       "cookies": "Cookie Policy"
     },
     "copyright": "All rights reserved."
+  },
+  "progressBar": {
+  "userCheck": "User Check",
+  "email": "Email",
+  "phone": "Phone",
+  "details": "Details",
+  "biometric": "Biometric",
+  "security": "Security",
+  "complete": "Complete"
+},
+
+
+"emailVerification": {
+  "title": "Verify Email",
+  "subtitle": "We'll send a verification code to",
+  "sendOTP": "Send OTP",
+  "otpLabel": "Enter 6-digit OTP",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verify OTP",
+  "resend": "Resend",
+  "resendTimer": "Resend ({timer}s)",
+  "skipDemo": "Skip OTP verification (Demo mode)",
+  "success": {
+    "otpSent": "OTP sent to email",
+    "verified": "Email verified successfully",
+    "skipped": "OTP verification skipped"
+  },
+  "errors": {
+    "sendFailed": "Failed to send OTP",
+    "verifyFailed": "OTP verification failed",
+    "skipFailed": "Failed to skip OTP"
   }
+},
+"phoneVerification": {
+  "title": "Verify Phone Number",
+  "subtitle": "We'll send a verification code to",
+  "sendOTP": "Send OTP",
+  "otpLabel": "Enter 6-digit OTP",
+  "otpPlaceholder": "000000",
+  "verifyOTP": "Verify OTP",
+  "resend": "Resend",
+  "resendTimer": "Resend ({timer}s)",
+  "skipDemo": "Skip OTP verification (Demo mode)",
+  "success": {
+    "otpSent": "OTP sent to phone",
+    "verified": "Phone verified successfully",
+    "skipped": "OTP verification skipped"
+  },
+  "errors": {
+    "sendFailed": "Failed to send OTP",
+    "verifyFailed": "OTP verification failed",
+    "skipFailed": "Failed to skip OTP"
+  }
+},
+"dashboard": {
+  "title": "Dashboard",
+  "stats": {
+    "activeElections": "Active Elections",
+    "yourVotes": "Your Votes",
+    "pendingVotes": "Pending Votes",
+    "yourRole": "Your Role",
+    "addedToday": "+{count} today",
+    "needVerification": "Need verification",
+    "permissions": "Permissions: {count}"
+  },
+  "recentActivity": {
+    "title": "Recent Activity",
+    "voted": "You voted on \"{election}\"",
+    "completed": "Election \"{election}\" completed",
+    "promoted": "You were promoted to {role}",
+    "timeAgo": {
+      "hoursAgo": "{count} hours ago",
+      "dayAgo": "{count} day ago",
+      "daysAgo": "{count} days ago"
+    }
+  }
+},
+"dashboardPage": {
+  "loading": "Loading your profile...",
+  "appName": "Vottery",
+  "profile": "Profile",
+  "logout": "Logout",
+  "sections": {
+    "admin": "Admin",
+    "securityAudit": "Security & Audit",
+    "financialManagement": "Financial Management"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "publicBulletin": "Public Bulletin",
+    "voteNow": "Vote Now",
+    "myVotes": "My Votes",
+    "allElections": "All Elections",
+    "myElections": "My Elections",
+    "myWallet": "My Wallet",
+    "creatorWallet": "Creator Wallet",
+    "lotteryTickets": "Gamified Election Tickets",
+    "subscriptions": "Subscriptions",
+    "createElection": "Create Election",
+    "verifyVotes": "Verify Votes",
+    "userManagement": "User Management",
+    "auditTrail": "Audit Trail"
+  },
+  "admin": {
+    "subscriptionAdmin": "Subscription Admin",
+    "roleManagement": "Role Management",
+    "permissions": "Permissions",
+    "userRoles": "User Roles",
+    "roleHistory": "Role History"
+  },
+  "security": {
+    "voteAudit": "Vote Audit",
+    "electionStats": "Election Stats",
+    "securityLogs": "Security Logs",
+    "systemAudit": "System Audit",
+    "encryptionStatus": "Encryption Status",
+    "verificationTools": "Verification Tools",
+    "complianceReports": "Compliance Reports"
+  },
+  "financial": {
+    "paymentGateways": "Payment Gateways",
+    "transactionMonitoring": "Transaction Monitoring",
+    "revenueAnalytics": "Revenue Analytics",
+    "prizeDistribution": "Prize Distribution",
+    "regionalPricing": "Regional Pricing",
+    "refundManagement": "Refund Management",
+    "financialReports": "Financial Reports"
+  },
+  "stats": {
+    "totalVotes": "Total Votes",
+    "electionsCreated": "Elections Created"
+  },
+  "warnings": {
+    "profileError": "Warning: {error}. Continuing with basic user data."
+  }
+}
 }
