@@ -446,6 +446,11 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
     </div>
   );
 }
+
+
+
+
+
 //last workable code
 // // src/pages/voting/payment/ElectionPaymentPage.jsx
 // // ✅ Handles payment for election participation fees using WALLET SERVICE
