@@ -78,6 +78,7 @@ import { loadSubscriptionData } from './utils/loadSubscriptionData';
 import { loadElectionData } from './utils/loadElectionData';
 import { useNotificationMonitor } from './hooks/useNotificationMonitor';
 import ElectionStatsPage from './pages/superAdmin/ElectionStatsPage';
+import PaymentSettingsPage from './pages/superAdmin/PaymentSettingsPage';
 
 export default function App() {
   useNotificationMonitor();
@@ -333,7 +334,18 @@ export default function App() {
               </AdminRoute>
             }
           />
+
+          {/* ✅ NEW: SETTINGS ROUTES */}
+          <Route
+            path="admin/settings/payment"
+            element={
+              <AdminRoute requiredRole="Manager">
+                <PaymentSettingsPage />
+              </AdminRoute>
+            }
+          />
         </Route>
+        
 
         {/* PROTECTED ROUTES (NOT nested under dashboard) */}
         {PROTECTED_ROUTES.filter(r => r.path !== '/dashboard').map((route) => (

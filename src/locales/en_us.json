@@ -260,7 +260,8 @@
   "sections": {
     "admin": "Admin",
     "securityAudit": "Security & Audit",
-    "financialManagement": "Financial Management"
+    "financialManagement": "Financial Management",
+    "settings": "Settings"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -302,6 +303,11 @@
     "regionalPricing": "Regional Pricing",
     "refundManagement": "Refund Management",
     "financialReports": "Financial Reports"
+  },
+  "settings": {
+    "paymentSettings": "Payment Settings",
+    "dashboardSettings": "Dashboard Settings",
+    "frontendSettings": "Frontend Settings"
   },
   "stats": {
     "totalVotes": "Total Votes",
