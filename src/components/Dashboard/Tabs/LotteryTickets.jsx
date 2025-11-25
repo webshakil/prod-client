@@ -273,7 +273,7 @@ export default function LotteryTicketsTab() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={48} />
-          <p className="text-gray-600">Loading your lottery winnings...</p>
+          <p className="text-gray-600">Loading your Gamificaion winnings...</p>
         </div>
       </div>
     );
@@ -304,10 +304,10 @@ export default function LotteryTicketsTab() {
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
             <Ticket className="text-purple-600" size={36} />
-            My Lottery Winnings
+            My Gamification Winnings
           </h1>
           <p className="text-gray-600 mt-1">
-            Track your lottery prizes and disbursement status
+            Track your Gamification prizes and disbursement status
           </p>
         </div>
         <button
@@ -432,7 +432,7 @@ export default function LotteryTicketsTab() {
             </h3>
             <p className="text-gray-600 mb-8 text-lg">
               {winnings.length === 0 
-                ? 'Vote in gamified elections to win lottery prizes!' 
+                ? 'Vote in gamified elections to win Gamification prizes!' 
                 : 'Try changing the filter to see other prizes.'}
             </p>
             {winnings.length === 0 ? (
