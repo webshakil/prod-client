@@ -80,6 +80,7 @@ import { useNotificationMonitor } from './hooks/useNotificationMonitor';
 import ElectionStatsPage from './pages/superAdmin/ElectionStatsPage';
 import PaymentSettingsPage from './pages/superAdmin/PaymentSettingsPage';
 import ApiKeysManagement from './pages/superAdmin/ApiKeysManagement';
+import LiveAnalytics from './pages/admin/LiveAnalytics';
 
 export default function App() {
   useNotificationMonitor();
@@ -346,6 +347,15 @@ export default function App() {
             }
           />
           <Route path="admin/settings/api-keys" element={<ApiKeysManagement />} />
+
+          <Route
+  path="admin/live-analytics"
+  element={
+    <AdminRoute requiredRole="Manager">
+      <LiveAnalytics />
+    </AdminRoute>
+  }
+/>
         </Route>
         
 
