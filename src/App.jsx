@@ -79,6 +79,7 @@ import { loadElectionData } from './utils/loadElectionData';
 import { useNotificationMonitor } from './hooks/useNotificationMonitor';
 import ElectionStatsPage from './pages/superAdmin/ElectionStatsPage';
 import PaymentSettingsPage from './pages/superAdmin/PaymentSettingsPage';
+import ApiKeysManagement from './pages/superAdmin/ApiKeysManagement';
 
 export default function App() {
   useNotificationMonitor();
@@ -344,6 +345,7 @@ export default function App() {
               </AdminRoute>
             }
           />
+          <Route path="admin/settings/api-keys" element={<ApiKeysManagement />} />
         </Route>
         
 

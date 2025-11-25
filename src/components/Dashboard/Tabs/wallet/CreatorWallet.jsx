@@ -682,7 +682,7 @@ export default function CreatorWallet() {
                                     <Gift size={16} />
                                     Prize Pool {hasDeposited ? 'Deposited' : 'Required'}
                                   </p>
-                                  <p className="text-xs text-purple-700">Creator-funded lottery</p>
+                                  <p className="text-xs text-purple-700">Creator-funded Gamification</p>
                                 </div>
                                 <p className="text-2xl font-bold text-purple-600">
                                   ${parseFloat(election.lottery_total_prize_pool || election.lottery_estimated_value || 0).toFixed(2)}
