@@ -157,17 +157,16 @@ export const lotteryyApi = createApi({
     // =====================================================
 
     // ✅ NEW: Get pending disbursement approvals
-    getPendingApprovals: builder.query({
+      getPendingApprovals: builder.query({
       query: (params = {}) => {
         const queryParams = new URLSearchParams();
         if (params.status) queryParams.append('status', params.status);
         if (params.minAmount) queryParams.append('minAmount', params.minAmount);
         if (params.maxAmount) queryParams.append('maxAmount', params.maxAmount);
         const queryString = queryParams.toString();
-        return `/admin/lottery/pending-approvals${queryString ? `?${queryString}` : ''}`;
+        return `/lottery/admin/pending-approvals${queryString ? `?${queryString}` : ''}`;
       },
       providesTags: ['PendingApprovals'],
-      // Transform to ensure consistent structure
       transformResponse: (response) => ({
         pendingApprovals: response.pendingApprovals || response.pending_approvals || [],
         stats: response.stats || {
@@ -179,19 +178,41 @@ export const lotteryyApi = createApi({
         thresholds: response.thresholds || {},
       }),
     }),
+    // getPendingApprovals: builder.query({
+    //   query: (params = {}) => {
+    //     const queryParams = new URLSearchParams();
+    //     if (params.status) queryParams.append('status', params.status);
+    //     if (params.minAmount) queryParams.append('minAmount', params.minAmount);
+    //     if (params.maxAmount) queryParams.append('maxAmount', params.maxAmount);
+    //     const queryString = queryParams.toString();
+    //     return `/admin/lottery/pending-approvals${queryString ? `?${queryString}` : ''}`;
+    //   },
+    //   providesTags: ['PendingApprovals'],
+    //   // Transform to ensure consistent structure
+    //   transformResponse: (response) => ({
+    //     pendingApprovals: response.pendingApprovals || response.pending_approvals || [],
+    //     stats: response.stats || {
+    //       total_pending: 0,
+    //       total_amount: 0,
+    //       pending_approval: 0,
+    //       pending_senior_approval: 0,
+    //     },
+    //     thresholds: response.thresholds || {},
+    //   }),
+    // }),
 
     // ✅ NEW: Get disbursement history with pagination
     getDisbursementHistory: builder.query({
       query: (params = {}) => {
         const queryParams = new URLSearchParams();
-        if (params.electionId) queryParams.append('electionId', params.electionId);
-        if (params.status) queryParams.append('status', params.status);
-        if (params.fromDate) queryParams.append('fromDate', params.fromDate);
-        if (params.toDate) queryParams.append('toDate', params.toDate);
         if (params.page) queryParams.append('page', params.page);
         if (params.limit) queryParams.append('limit', params.limit);
+        if (params.status) queryParams.append('status', params.status);
+        if (params.electionId) queryParams.append('electionId', params.electionId);
+        if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+        if (params.toDate) queryParams.append('toDate', params.toDate);
         const queryString = queryParams.toString();
-        return `/admin/lottery/disbursements${queryString ? `?${queryString}` : ''}`;
+        return `/lottery/admin/disbursements${queryString ? `?${queryString}` : ''}`;
       },
       providesTags: ['DisbursementHistory'],
       transformResponse: (response) => ({
@@ -200,69 +221,136 @@ export const lotteryyApi = createApi({
           page: 1,
           limit: 20,
           total: 0,
-          totalPages: 0,
+          totalPages: 1,
         },
       }),
     }),
+    // getDisbursementHistory: builder.query({
+    //   query: (params = {}) => {
+    //     const queryParams = new URLSearchParams();
+    //     if (params.electionId) queryParams.append('electionId', params.electionId);
+    //     if (params.status) queryParams.append('status', params.status);
+    //     if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    //     if (params.toDate) queryParams.append('toDate', params.toDate);
+    //     if (params.page) queryParams.append('page', params.page);
+    //     if (params.limit) queryParams.append('limit', params.limit);
+    //     const queryString = queryParams.toString();
+    //     return `/admin/lottery/disbursements${queryString ? `?${queryString}` : ''}`;
+    //   },
+    //   providesTags: ['DisbursementHistory'],
+    //   transformResponse: (response) => ({
+    //     disbursements: response.disbursements || [],
+    //     pagination: response.pagination || {
+    //       page: 1,
+    //       limit: 20,
+    //       total: 0,
+    //       totalPages: 0,
+    //     },
+    //   }),
+    // }),
 
     // ✅ NEW: Approve single disbursement
-    approveDisbursement: builder.mutation({
+      approveDisbursement: builder.mutation({
       query: ({ winnerId, notes }) => ({
-        url: `/admin/lottery/winners/${winnerId}/approve`,
+        url: `/lottery/admin/winners/${winnerId}/approve`,
         method: 'POST',
         body: { notes },
       }),
       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
     }),
+    // approveDisbursement: builder.mutation({
+    //   query: ({ winnerId, notes }) => ({
+    //     url: `/admin/lottery/winners/${winnerId}/approve`,
+    //     method: 'POST',
+    //     body: { notes },
+    //   }),
+    //   invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+    // }),
 
     // ✅ NEW: Reject single disbursement
     rejectDisbursement: builder.mutation({
       query: ({ winnerId, reason }) => ({
-        url: `/admin/lottery/winners/${winnerId}/reject`,
+        url: `/lottery/admin/winners/${winnerId}/reject`,
         method: 'POST',
         body: { reason },
       }),
       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
     }),
+    // rejectDisbursement: builder.mutation({
+    //   query: ({ winnerId, reason }) => ({
+    //     url: `/admin/lottery/winners/${winnerId}/reject`,
+    //     method: 'POST',
+    //     body: { reason },
+    //   }),
+    //   invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+    // }),
 
     // ✅ NEW: Bulk approve multiple disbursements
-    bulkApproveDisbursements: builder.mutation({
+      bulkApproveDisbursements: builder.mutation({
       query: (winnerIds) => ({
-        url: `/admin/lottery/disbursements/bulk-approve`,
+        url: `/lottery/admin/disbursements/bulk-approve`,
         method: 'POST',
         body: { winnerIds },
       }),
       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
     }),
+    // bulkApproveDisbursements: builder.mutation({
+    //   query: (winnerIds) => ({
+    //     url: `/admin/lottery/disbursements/bulk-approve`,
+    //     method: 'POST',
+    //     body: { winnerIds },
+    //   }),
+    //   invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+    // }),
 
     // =====================================================
     // ADMIN ENDPOINTS - Configuration
     // =====================================================
 
     // ✅ NEW: Get disbursement configuration (thresholds)
-    getDisbursementConfig: builder.query({
-      query: () => `/admin/lottery/config`,
+     getDisbursementConfig: builder.query({
+      query: () => `/lottery/admin/config`,
       providesTags: ['DisbursementConfig'],
       transformResponse: (response) => ({
         config: response.config || [],
-        current: response.current || {
-          AUTO_DISBURSE_THRESHOLD: 1000,
+        thresholds: response.thresholds || {
+          AUTO_DISBURSE_THRESHOLD: 5000,
           LARGE_AMOUNT_THRESHOLD: 10000,
           MAX_AUTO_DISBURSE_DAILY: 50000,
-          CURRENCY: 'USD',
         },
       }),
     }),
+    // getDisbursementConfig: builder.query({
+    //   query: () => `/admin/lottery/config`,
+    //   providesTags: ['DisbursementConfig'],
+    //   transformResponse: (response) => ({
+    //     config: response.config || [],
+    //     current: response.current || {
+    //       AUTO_DISBURSE_THRESHOLD: 1000,
+    //       LARGE_AMOUNT_THRESHOLD: 10000,
+    //       MAX_AUTO_DISBURSE_DAILY: 50000,
+    //       CURRENCY: 'USD',
+    //     },
+    //   }),
+    // }),
 
     // ✅ NEW: Update disbursement configuration (manager only)
-    updateDisbursementConfig: builder.mutation({
+      updateDisbursementConfig: builder.mutation({
       query: ({ config_key, config_value }) => ({
-        url: `/admin/lottery/config`,
+        url: `/lottery/admin/config`,
         method: 'PUT',
         body: { config_key, config_value },
       }),
       invalidatesTags: ['DisbursementConfig'],
     }),
+    // updateDisbursementConfig: builder.mutation({
+    //   query: ({ config_key, config_value }) => ({
+    //     url: `/admin/lottery/config`,
+    //     method: 'PUT',
+    //     body: { config_key, config_value },
+    //   }),
+    //   invalidatesTags: ['DisbursementConfig'],
+    // }),
 
   }),
 });
