@@ -2,7 +2,7 @@
 // ✨ Issue #1: End-to-End Encryption Verification
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:5003/api';
+const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
 const getUserData = () => {
   const userDataStr = localStorage.getItem('userData');

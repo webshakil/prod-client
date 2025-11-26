@@ -1,7 +1,7 @@
 // src/redux/api/verification/verificationApi.js
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:5003/api';
+const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
 const getUserData = () => {
   const userDataStr = localStorage.getItem('userData');
