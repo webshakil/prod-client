@@ -1,20 +1,13 @@
-// Updated AuditTrail.jsx - Better hash chain display with explanation
-import React, { useState} from 'react';
+// Updated AuditTrail.jsx - With Election Dropdown
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, Lock, CheckCircle, AlertCircle, Hash, Database, Link2, 
   Eye, Download, RefreshCw, TrendingUp, Users, Activity, 
-  FileText, AlertTriangle, Filter, Search, Info, Blocks,
-  GitBranch, Clock, Fingerprint
+  FileText, AlertTriangle, Filter, Info, Blocks,
+  GitBranch, Clock, Fingerprint, ChevronDown
 } from 'lucide-react';
-import { useGetAuditLogsQuery,useGetAuditStatsQuery,useLazyGetHashChainQuery,useLazyVerifyIntegrityQuery, useLazyExportAuditTrailQuery,useGetVoteVerificationsQuery} from '../../../redux/api/verification/auditTrailApi';
-// import {
-//   useGetAuditLogsQuery,
-//   useGetAuditStatsQuery,
-//   useLazyGetHashChainQuery,
-//   useLazyVerifyIntegrityQuery,
-//   useLazyExportAuditTrailQuery,
-//   useGetVoteVerificationsQuery,
-// } from '../../redux/api/verification/auditTrailApi';
+import { useGetAuditLogsQuery, useGetAuditStatsQuery, useLazyGetHashChainQuery, useLazyVerifyIntegrityQuery, useLazyExportAuditTrailQuery, useGetVoteVerificationsQuery } from '../../../redux/api/verification/auditTrailApi';
+import { getAllElections } from '../../../redux/api/election/electionApi';
 
 export default function AuditTrail() {
   const [page, setPage] = useState(1);
@@ -28,6 +21,29 @@ export default function AuditTrail() {
   const [showHashChain, setShowHashChain] = useState(false);
   const [showIntegrityCheck, setShowIntegrityCheck] = useState(false);
   const [showBlockchainInfo, setShowBlockchainInfo] = useState(false);
+
+  // ⭐ NEW: Elections state for dropdown
+  const [elections, setElections] = useState([]);
+  const [electionsLoading, setElectionsLoading] = useState(true);
+
+  // ⭐ NEW: Fetch all elections on component mount
+  useEffect(() => {
+    const fetchElections = async () => {
+      try {
+        setElectionsLoading(true);
+        const response = await getAllElections(1, 100, 'all');
+        // Handle different response structures
+        const electionsList = response?.data?.elections || response?.elections || response?.data || [];
+        setElections(Array.isArray(electionsList) ? electionsList : []);
+      } catch (error) {
+        console.error('Failed to fetch elections:', error);
+        setElections([]);
+      } finally {
+        setElectionsLoading(false);
+      }
+    };
+    fetchElections();
+  }, []);
 
   // RTK Query Hooks
   const { 
@@ -70,7 +86,7 @@ export default function AuditTrail() {
 
   const handleFetchHashChain = async () => {
     if (!selectedElectionId) {
-      alert('Please enter an Election ID');
+      alert('Please select an Election');
       return;
     }
     await getHashChain({ electionId: selectedElectionId, limit: 100 });
@@ -79,7 +95,7 @@ export default function AuditTrail() {
 
   const handleVerifyIntegrity = async () => {
     if (!selectedElectionId) {
-      alert('Please enter an Election ID');
+      alert('Please select an Election');
       return;
     }
     await verifyIntegrity(selectedElectionId);
@@ -88,7 +104,7 @@ export default function AuditTrail() {
 
   const handleExport = async (format) => {
     if (!selectedElectionId) {
-      alert('Please enter an Election ID');
+      alert('Please select an Election');
       return;
     }
     
@@ -117,6 +133,11 @@ export default function AuditTrail() {
     }
   };
 
+  // ⭐ NEW: Get selected election details for display
+  const getSelectedElection = () => {
+    return elections.find(e => e.id?.toString() === selectedElectionId?.toString());
+  };
+
   const getActionIcon = (actionType) => {
     const icons = {
       'duplicate_vote': <AlertCircle className="text-yellow-600" size={18} />,
@@ -140,6 +161,18 @@ export default function AuditTrail() {
   const clearFilters = () => {
     setFilters({ actionType: '', electionId: '', startDate: '', endDate: '' });
     setPage(1);
+  };
+
+  // ⭐ NEW: Get status badge color
+  const getStatusColor = (status) => {
+    const colors = {
+      'active': 'bg-green-100 text-green-800',
+      'published': 'bg-blue-100 text-blue-800',
+      'completed': 'bg-gray-100 text-gray-800',
+      'draft': 'bg-yellow-100 text-yellow-800',
+      'cancelled': 'bg-red-100 text-red-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -379,21 +412,60 @@ hash:abc...   hash:def...    hash:ghi...
           </p>
           
           <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Election ID</label>
-              <input
-                type="number"
-                value={selectedElectionId}
-                onChange={(e) => setSelectedElectionId(e.target.value)}
-                placeholder="Enter Election ID (e.g., 41, 60)"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-              />
+            {/* ⭐ CHANGED: Election Dropdown instead of Input */}
+            <div className="flex-1 min-w-[300px]">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Select Election</label>
+              <div className="relative">
+                <select
+                  value={selectedElectionId}
+                  onChange={(e) => {
+                    setSelectedElectionId(e.target.value);
+                    setShowHashChain(false);
+                    setShowIntegrityCheck(false);
+                  }}
+                  disabled={electionsLoading}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 pr-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {electionsLoading ? 'Loading elections...' : '-- Select an Election --'}
+                  </option>
+                  {elections.map((election) => (
+                    <option key={election.id} value={election.id}>
+                      #{election.id} - {election.title} ({election.status || 'unknown'})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown 
+                  size={20} 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" 
+                />
+              </div>
+              {/* Show selected election details */}
+              {selectedElectionId && getSelectedElection() && (
+                <div className="mt-2 p-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-semibold text-indigo-900">
+                      {getSelectedElection()?.title}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(getSelectedElection()?.status)}`}>
+                      {getSelectedElection()?.status}
+                    </span>
+                  </div>
+                  {getSelectedElection()?.voting_type && (
+                    <p className="text-xs text-indigo-600 mt-1">
+                      Type: {getSelectedElection()?.voting_type} | 
+                      ID: #{getSelectedElection()?.id}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex items-end gap-2">
+
+            <div className="flex items-start gap-2 pt-5">
               <button
                 onClick={handleFetchHashChain}
                 disabled={!selectedElectionId || hashChainLoading}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Link2 size={16} />
                 {hashChainLoading ? 'Loading...' : 'View Hash Chain'}
@@ -401,7 +473,7 @@ hash:abc...   hash:def...    hash:ghi...
               <button
                 onClick={handleVerifyIntegrity}
                 disabled={!selectedElectionId || integrityLoading}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Shield size={16} />
                 {integrityLoading ? 'Verifying...' : 'Verify Integrity'}
@@ -409,7 +481,7 @@ hash:abc...   hash:def...    hash:ghi...
               <button
                 onClick={() => handleExport('json')}
                 disabled={!selectedElectionId || exportLoading}
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Download size={16} />
                 {exportLoading ? 'Exporting...' : 'Export'}
@@ -702,15 +774,22 @@ hash:abc...   hash:def...    hash:ghi...
               </select>
             </div>
 
+            {/* ⭐ CHANGED: Election Filter Dropdown instead of Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Election ID</label>
-              <input
-                type="number"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Election</label>
+              <select
                 value={filters.electionId}
                 onChange={(e) => { setFilters({ ...filters, electionId: e.target.value }); setPage(1); }}
-                placeholder="All elections"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              />
+                disabled={electionsLoading}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">All Elections</option>
+                {elections.map((election) => (
+                  <option key={election.id} value={election.id}>
+                    #{election.id} - {election.title?.substring(0, 30)}{election.title?.length > 30 ? '...' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -879,6 +958,888 @@ hash:abc...   hash:def...    hash:ghi...
     </div>
   );
 }
+
+// // Updated AuditTrail.jsx - Better hash chain display with explanation
+// import React, { useState} from 'react';
+// import { 
+//   Shield, Lock, CheckCircle, AlertCircle, Hash, Database, Link2, 
+//   Eye, Download, RefreshCw, TrendingUp, Users, Activity, 
+//   FileText, AlertTriangle, Filter, Search, Info, Blocks,
+//   GitBranch, Clock, Fingerprint
+// } from 'lucide-react';
+// import { useGetAuditLogsQuery,useGetAuditStatsQuery,useLazyGetHashChainQuery,useLazyVerifyIntegrityQuery, useLazyExportAuditTrailQuery,useGetVoteVerificationsQuery} from '../../../redux/api/verification/auditTrailApi';
+// // import {
+// //   useGetAuditLogsQuery,
+// //   useGetAuditStatsQuery,
+// //   useLazyGetHashChainQuery,
+// //   useLazyVerifyIntegrityQuery,
+// //   useLazyExportAuditTrailQuery,
+// //   useGetVoteVerificationsQuery,
+// // } from '../../redux/api/verification/auditTrailApi';
+
+// export default function AuditTrail() {
+//   const [page, setPage] = useState(1);
+//   const [filters, setFilters] = useState({
+//     actionType: '',
+//     electionId: '',
+//     startDate: '',
+//     endDate: '',
+//   });
+//   const [selectedElectionId, setSelectedElectionId] = useState('');
+//   const [showHashChain, setShowHashChain] = useState(false);
+//   const [showIntegrityCheck, setShowIntegrityCheck] = useState(false);
+//   const [showBlockchainInfo, setShowBlockchainInfo] = useState(false);
+
+//   // RTK Query Hooks
+//   const { 
+//     data: logsData, 
+//     isLoading: logsLoading, 
+//     refetch: refetchLogs 
+//   } = useGetAuditLogsQuery({
+//     page,
+//     limit: 20,
+//     ...filters
+//   });
+
+//   const { 
+//     data: statsData, 
+//     isLoading: statsLoading,
+//     refetch: refetchStats
+//   } = useGetAuditStatsQuery(filters.electionId || undefined);
+
+//   const { 
+//     /*eslint-disable*/
+//     data: verificationsData 
+//   } = useGetVoteVerificationsQuery({
+//     electionId: filters.electionId || undefined,
+//     page: 1,
+//     limit: 10
+//   });
+
+//   const [getHashChain, { data: hashChainData, isLoading: hashChainLoading }] = useLazyGetHashChainQuery();
+//   const [verifyIntegrity, { data: integrityData, isLoading: integrityLoading }] = useLazyVerifyIntegrityQuery();
+//   const [exportAudit, { isLoading: exportLoading }] = useLazyExportAuditTrailQuery();
+
+//   const auditLogs = logsData?.data?.auditLogs || [];
+//   const pagination = logsData?.data?.pagination;
+//   const stats = statsData?.data;
+
+//   const handleRefresh = () => {
+//     refetchLogs();
+//     refetchStats();
+//   };
+
+//   const handleFetchHashChain = async () => {
+//     if (!selectedElectionId) {
+//       alert('Please enter an Election ID');
+//       return;
+//     }
+//     await getHashChain({ electionId: selectedElectionId, limit: 100 });
+//     setShowHashChain(true);
+//   };
+
+//   const handleVerifyIntegrity = async () => {
+//     if (!selectedElectionId) {
+//       alert('Please enter an Election ID');
+//       return;
+//     }
+//     await verifyIntegrity(selectedElectionId);
+//     setShowIntegrityCheck(true);
+//   };
+
+//   const handleExport = async (format) => {
+//     if (!selectedElectionId) {
+//       alert('Please enter an Election ID');
+//       return;
+//     }
+    
+//     try {
+//       const result = await exportAudit({ 
+//         electionId: selectedElectionId, 
+//         format,
+//         startDate: filters.startDate,
+//         endDate: filters.endDate
+//       }).unwrap();
+
+//       if (format === 'json') {
+//         const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+//         const url = window.URL.createObjectURL(blob);
+//         const a = document.createElement('a');
+//         a.href = url;
+//         a.download = `audit-trail-${selectedElectionId}-${Date.now()}.json`;
+//         document.body.appendChild(a);
+//         a.click();
+//         a.remove();
+//         window.URL.revokeObjectURL(url);
+//       }
+//     } catch (error) {
+//       console.error('Export failed:', error);
+//       alert('Failed to export audit trail');
+//     }
+//   };
+
+//   const getActionIcon = (actionType) => {
+//     const icons = {
+//       'duplicate_vote': <AlertCircle className="text-yellow-600" size={18} />,
+//       'suspicious_activity': <AlertTriangle className="text-red-600" size={18} />,
+//       'vote_cast': <CheckCircle className="text-green-600" size={18} />,
+//       'vote_verified': <Shield className="text-blue-600" size={18} />,
+//     };
+//     return icons[actionType] || <Lock className="text-gray-600" size={18} />;
+//   };
+
+//   const getActionColor = (actionType) => {
+//     const colors = {
+//       'duplicate_vote': 'bg-yellow-100 text-yellow-800',
+//       'suspicious_activity': 'bg-red-100 text-red-800',
+//       'vote_cast': 'bg-green-100 text-green-800',
+//       'vote_verified': 'bg-blue-100 text-blue-800',
+//     };
+//     return colors[actionType] || 'bg-gray-100 text-gray-800';
+//   };
+
+//   const clearFilters = () => {
+//     setFilters({ actionType: '', electionId: '', startDate: '', endDate: '' });
+//     setPage(1);
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 p-6">
+//       <div className="max-w-7xl mx-auto">
+//         {/* Header */}
+//         <div className="mb-8">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+//                 <Shield className="text-blue-600" size={32} />
+//                 Audit Trail & Blockchain Verification
+//               </h1>
+//               <p className="text-gray-600">
+//                 Industry-standard immutable audit logging with cryptographic verification
+//               </p>
+//             </div>
+//             <div className="flex gap-2">
+//               <button
+//                 onClick={() => setShowBlockchainInfo(!showBlockchainInfo)}
+//                 className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 flex items-center gap-2"
+//               >
+//                 <Info size={16} />
+//                 How It Works
+//               </button>
+//               <button
+//                 onClick={handleRefresh}
+//                 disabled={logsLoading || statsLoading}
+//                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50"
+//               >
+//                 <RefreshCw size={16} className={logsLoading ? 'animate-spin' : ''} />
+//                 Refresh
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Blockchain Info Panel */}
+//         {showBlockchainInfo && (
+//           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl shadow-lg p-6 mb-8 border border-indigo-200">
+//             <div className="flex items-center justify-between mb-4">
+//               <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
+//                 <Blocks size={24} />
+//                 Understanding Blockchain-Style Audit Trail
+//               </h2>
+//               <button onClick={() => setShowBlockchainInfo(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+//             </div>
+
+//             <div className="grid md:grid-cols-2 gap-6">
+//               {/* How it works */}
+//               <div className="bg-white rounded-lg p-4 shadow">
+//                 <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+//                   <GitBranch size={18} className="text-indigo-600" />
+//                   How Hash Chain Works
+//                 </h3>
+//                 <div className="space-y-3 text-sm text-gray-700">
+//                   <div className="flex items-start gap-3">
+//                     <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+//                     <p><strong>Each vote creates a block</strong> - When someone votes, a new block is added to the chain with the vote hash.</p>
+//                   </div>
+//                   <div className="flex items-start gap-3">
+//                     <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+//                     <p><strong>Blocks link together</strong> - Each block contains the hash of the previous block, creating an unbreakable chain.</p>
+//                   </div>
+//                   <div className="flex items-start gap-3">
+//                     <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+//                     <p><strong>Tampering is detectable</strong> - If anyone changes a vote, the hash changes, breaking the chain.</p>
+//                   </div>
+//                   <div className="flex items-start gap-3">
+//                     <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+//                     <p><strong>Merkle Root</strong> - A single hash representing ALL votes for quick verification.</p>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Visual representation */}
+//               <div className="bg-white rounded-lg p-4 shadow">
+//                 <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+//                   <Link2 size={18} className="text-green-600" />
+//                   Chain Structure
+//                 </h3>
+//                 <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs text-green-400 overflow-x-auto">
+//                   <pre>{`
+// ┌─────────┐    ┌─────────┐    ┌─────────┐
+// │ Block 1 │───▶│ Block 2 │───▶│ Block 3 │
+// │ Vote #1 │    │ Vote #2 │    │ Vote #3 │
+// └────┬────┘    └────┬────┘    └────┬────┘
+//      │              │              │
+// prev:000...   prev:abc...    prev:def...
+// hash:abc...   hash:def...    hash:ghi...
+//                   `}</pre>
+//                 </div>
+//                 <p className="text-xs text-gray-600 mt-2">
+//                   <strong>Genesis block</strong> starts with zeros. Each subsequent block links to the previous.
+//                 </p>
+//               </div>
+
+//               {/* What each field means */}
+//               <div className="bg-white rounded-lg p-4 shadow md:col-span-2">
+//                 <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+//                   <Fingerprint size={18} className="text-purple-600" />
+//                   Block Fields Explained
+//                 </h3>
+//                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+//                   <div className="bg-gray-50 p-3 rounded">
+//                     <p className="font-semibold text-gray-900">Vote Hash</p>
+//                     <p className="text-gray-600 text-xs">SHA-256 hash of the vote data. Unique fingerprint of each vote.</p>
+//                   </div>
+//                   <div className="bg-gray-50 p-3 rounded">
+//                     <p className="font-semibold text-gray-900">Previous Hash</p>
+//                     <p className="text-gray-600 text-xs">Hash of the previous block. Creates the chain linkage.</p>
+//                   </div>
+//                   <div className="bg-gray-50 p-3 rounded">
+//                     <p className="font-semibold text-gray-900">Block Hash</p>
+//                     <p className="text-gray-600 text-xs">Hash of the entire block (vote + previous hash + timestamp).</p>
+//                   </div>
+//                   <div className="bg-gray-50 p-3 rounded">
+//                     <p className="font-semibold text-gray-900">Merkle Root</p>
+//                     <p className="text-gray-600 text-xs">Single hash representing ALL votes. Used for quick verification.</p>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+//               <p className="text-sm text-yellow-800">
+//                 <strong>💡 Why only 1 block?</strong> The hash chain shows blocks <strong>per election</strong>. 
+//                 If an election has 1 vote, you'll see 1 block. If it has 100 votes, you'll see 100 blocks. 
+//                 The integrity check may show totals across ALL elections.
+//               </p>
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Statistics Cards */}
+//         {stats && (
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+//             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-600">Total Actions</p>
+//                   <p className="text-3xl font-bold text-gray-900">
+//                     {stats.overall?.total_actions || 0}
+//                   </p>
+//                 </div>
+//                 <Shield className="text-blue-600" size={40} />
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-600">Unique Users</p>
+//                   <p className="text-3xl font-bold text-gray-900">
+//                     {stats.overall?.unique_users || 0}
+//                   </p>
+//                 </div>
+//                 <Users className="text-green-600" size={40} />
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-600">Normal Votes</p>
+//                   <p className="text-3xl font-bold text-gray-900">
+//                     {stats.votes?.total_votes || 0}
+//                   </p>
+//                 </div>
+//                 <CheckCircle className="text-purple-600" size={40} />
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-indigo-500">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-600">Anonymous Votes</p>
+//                   <p className="text-3xl font-bold text-gray-900">
+//                     {stats.votes?.total_anonymous_votes || 0}
+//                   </p>
+//                 </div>
+//                 <Eye className="text-indigo-600" size={40} />
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-600">Last 24 Hours</p>
+//                   <p className="text-3xl font-bold text-gray-900">
+//                     {stats.recentActivity?.actions_24h || 0}
+//                   </p>
+//                 </div>
+//                 <TrendingUp className="text-orange-600" size={40} />
+//               </div>
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Action Type Breakdown */}
+//         {stats?.actionTypes && stats.actionTypes.length > 0 && (
+//           <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+//             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+//               <Activity size={20} />
+//               Action Type Distribution
+//             </h2>
+//             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+//               {stats.actionTypes.map((action) => (
+//                 <div
+//                   key={action.action_type}
+//                   className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:shadow-md transition-shadow"
+//                 >
+//                   {getActionIcon(action.action_type)}
+//                   <div>
+//                     <p className="text-sm font-medium text-gray-900">
+//                       {action.action_type?.replace(/_/g, ' ') || 'Unknown'}
+//                     </p>
+//                     <p className="text-2xl font-bold text-gray-900">{action.count}</p>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Blockchain Verification Section */}
+//         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+//           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+//             <Hash className="text-indigo-600" />
+//             Blockchain-Style Verification
+//             <span className="text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full ml-2">
+//               SHA-256 + Merkle Tree
+//             </span>
+//           </h2>
+//           <p className="text-sm text-gray-600 mb-4">
+//             Verify election integrity using cryptographic hash chains. Each vote creates a block linked to the previous one.
+//           </p>
+          
+//           <div className="flex flex-wrap gap-4 mb-6">
+//             <div className="flex-1 min-w-[200px]">
+//               <label className="block text-xs font-medium text-gray-500 mb-1">Election ID</label>
+//               <input
+//                 type="number"
+//                 value={selectedElectionId}
+//                 onChange={(e) => setSelectedElectionId(e.target.value)}
+//                 placeholder="Enter Election ID (e.g., 41, 60)"
+//                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+//               />
+//             </div>
+//             <div className="flex items-end gap-2">
+//               <button
+//                 onClick={handleFetchHashChain}
+//                 disabled={!selectedElectionId || hashChainLoading}
+//                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
+//               >
+//                 <Link2 size={16} />
+//                 {hashChainLoading ? 'Loading...' : 'View Hash Chain'}
+//               </button>
+//               <button
+//                 onClick={handleVerifyIntegrity}
+//                 disabled={!selectedElectionId || integrityLoading}
+//                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50"
+//               >
+//                 <Shield size={16} />
+//                 {integrityLoading ? 'Verifying...' : 'Verify Integrity'}
+//               </button>
+//               <button
+//                 onClick={() => handleExport('json')}
+//                 disabled={!selectedElectionId || exportLoading}
+//                 className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+//               >
+//                 <Download size={16} />
+//                 {exportLoading ? 'Exporting...' : 'Export'}
+//               </button>
+//             </div>
+//           </div>
+
+//           {/* Integrity Check Result */}
+//           {showIntegrityCheck && integrityData && (
+//             <div className={`mb-6 p-4 rounded-lg border-2 ${
+//               integrityData.verified 
+//                 ? 'bg-green-50 border-green-500' 
+//                 : 'bg-red-50 border-red-500'
+//             }`}>
+//               <div className="flex items-center gap-3 mb-2">
+//                 {integrityData.verified ? (
+//                   <CheckCircle className="text-green-600" size={24} />
+//                 ) : (
+//                   <AlertTriangle className="text-red-600" size={24} />
+//                 )}
+//                 <h3 className="text-lg font-bold">
+//                   {integrityData.verified ? 'Integrity Verified ✓' : 'Integrity Issues Detected'}
+//                 </h3>
+//                 {integrityData.integrityScore !== undefined && (
+//                   <span className={`ml-auto text-sm font-bold px-3 py-1 rounded-full ${
+//                     integrityData.integrityScore >= 90 ? 'bg-green-200 text-green-800' :
+//                     integrityData.integrityScore >= 70 ? 'bg-yellow-200 text-yellow-800' :
+//                     'bg-red-200 text-red-800'
+//                   }`}>
+//                     Score: {integrityData.integrityScore}%
+//                   </span>
+//                 )}
+//                 <button onClick={() => setShowIntegrityCheck(false)} className="ml-2 text-gray-500 hover:text-gray-700">✕</button>
+//               </div>
+//               <p className="text-sm mb-3">{integrityData.message}</p>
+              
+//               {/* Election Info */}
+//               {integrityData.election && (
+//                 <div className="bg-white/50 rounded p-2 mb-3">
+//                   <p className="text-sm">
+//                     <strong>Election:</strong> {integrityData.election.title} (ID: {integrityData.election.id})
+//                     <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
+//                       integrityData.election.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+//                     }`}>
+//                       {integrityData.election.status}
+//                     </span>
+//                   </p>
+//                 </div>
+//               )}
+
+//               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+//                 <div className="bg-white/50 rounded p-2">
+//                   <p className="text-gray-600">Normal Votes</p>
+//                   <p className="text-xl font-bold text-blue-600">{integrityData.details?.totalNormalVotes || 0}</p>
+//                 </div>
+//                 <div className="bg-white/50 rounded p-2">
+//                   <p className="text-gray-600">Anonymous Votes</p>
+//                   <p className="text-xl font-bold text-purple-600">{integrityData.details?.totalAnonymousVotes || 0}</p>
+//                 </div>
+//                 <div className="bg-white/50 rounded p-2">
+//                   <p className="text-gray-600">Audit Logs</p>
+//                   <p className="text-xl font-bold text-orange-600">{integrityData.details?.totalAuditLogs || 0}</p>
+//                 </div>
+//                 <div className="bg-white/50 rounded p-2">
+//                   <p className="text-gray-600">Verifications</p>
+//                   <p className="text-xl font-bold text-green-600">{integrityData.details?.totalVerifications || 0}</p>
+//                 </div>
+//               </div>
+
+//               {/* Checks */}
+//               {integrityData.checks && integrityData.checks.length > 0 && (
+//                 <div className="mt-4">
+//                   <p className="text-sm font-semibold mb-2">Security Checks:</p>
+//                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+//                     {integrityData.checks.map((check, idx) => (
+//                       <div 
+//                         key={idx}
+//                         className={`flex items-center gap-2 p-2 rounded text-xs ${
+//                           check.passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+//                         }`}
+//                       >
+//                         {check.passed ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+//                         <span>{check.name}</span>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
+//               )}
+
+//               {/* Issues */}
+//               {integrityData.issues && integrityData.issues.length > 0 && (
+//                 <div className="mt-4">
+//                   <p className="text-sm font-semibold mb-2 text-red-700">Issues Found:</p>
+//                   <div className="space-y-1">
+//                     {integrityData.issues.map((issue, idx) => (
+//                       <div key={idx} className={`text-xs p-2 rounded ${
+//                         issue.severity === 'critical' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+//                       }`}>
+//                         <strong>[{issue.severity?.toUpperCase()}]</strong> {issue.message}
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
+//               )}
+//             </div>
+//           )}
+
+//           {/* Hash Chain Display */}
+//           {showHashChain && hashChainData?.data && (
+//             <div className="border-t pt-6">
+//               <div className="flex items-center justify-between mb-4">
+//                 <h3 className="text-lg font-bold text-gray-900">
+//                   Hash Chain - Election #{hashChainData.data.election?.id || hashChainData.data.electionId}
+//                   {hashChainData.data.election?.title && (
+//                     <span className="text-sm font-normal text-gray-500 ml-2">
+//                       ({hashChainData.data.election.title})
+//                     </span>
+//                   )}
+//                 </h3>
+//                 <button onClick={() => setShowHashChain(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+//               </div>
+              
+//               {/* Chain Summary */}
+//               <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg p-4 mb-4">
+//                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+//                   <div>
+//                     <p className="text-xs text-gray-600">Total Blocks</p>
+//                     <p className="text-2xl font-bold text-gray-900">{hashChainData.data.totalBlocks}</p>
+//                     <p className="text-xs text-gray-500">1 block = 1 vote</p>
+//                   </div>
+//                   <div>
+//                     <p className="text-xs text-gray-600">Normal Votes</p>
+//                     <p className="text-2xl font-bold text-blue-600">{hashChainData.data.normalVotes}</p>
+//                   </div>
+//                   <div>
+//                     <p className="text-xs text-gray-600">Anonymous Votes</p>
+//                     <p className="text-2xl font-bold text-purple-600">{hashChainData.data.anonymousVotes}</p>
+//                   </div>
+//                   <div>
+//                     <p className="text-xs text-gray-600">Chain Integrity</p>
+//                     <p className="text-lg font-bold text-green-600 flex items-center gap-1">
+//                       <CheckCircle size={18} /> Verified
+//                     </p>
+//                   </div>
+//                   <div>
+//                     <p className="text-xs text-gray-600">Merkle Root</p>
+//                     <p className="text-xs font-mono text-indigo-600 truncate" title={hashChainData.data.merkleRoot}>
+//                       {hashChainData.data.merkleRoot?.substring(0, 20)}...
+//                     </p>
+//                     <button 
+//                       onClick={() => navigator.clipboard.writeText(hashChainData.data.merkleRoot)}
+//                       className="text-xs text-blue-500 hover:underline"
+//                     >
+//                       Copy
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Empty state */}
+//               {hashChainData.data.totalBlocks === 0 ? (
+//                 <div className="text-center py-8 bg-gray-50 rounded-lg">
+//                   <Database size={48} className="mx-auto mb-3 text-gray-300" />
+//                   <p className="text-gray-600">No votes found for this election</p>
+//                   <p className="text-sm text-gray-500">Votes will appear here as they are cast</p>
+//                 </div>
+//               ) : (
+//                 <>
+//                   {/* Genesis Block Info */}
+//                   <div className="mb-4 p-3 bg-gray-100 rounded-lg border-l-4 border-gray-400">
+//                     <p className="text-xs font-mono text-gray-600">
+//                       <strong>Genesis Hash (Block 0):</strong> {hashChainData.data.genesisHash}
+//                     </p>
+//                     <p className="text-xs text-gray-500 mt-1">
+//                       This is the starting point of the chain. All zeros indicate the beginning.
+//                     </p>
+//                   </div>
+
+//                   {/* Blocks */}
+//                   <div className="space-y-3 max-h-[500px] overflow-y-auto">
+//                     {hashChainData.data.hashChain?.map((block, index) => (
+//                       <div
+//                         key={block.blockNumber}
+//                         className={`border rounded-lg p-4 relative ${
+//                           block.voteType === 'anonymous' 
+//                             ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200' 
+//                             : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+//                         }`}
+//                       >
+//                         {/* Chain connector */}
+//                         {index < hashChainData.data.hashChain.length - 1 && (
+//                           <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10">
+//                             <div className="bg-gray-300 rounded-full p-1">
+//                               <Link2 size={12} className="text-gray-600" />
+//                             </div>
+//                           </div>
+//                         )}
+
+//                         <div className="flex items-center justify-between mb-3">
+//                           <div className="flex items-center gap-2">
+//                             <span className="text-lg font-bold text-gray-900">Block #{block.blockNumber}</span>
+//                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+//                               block.voteType === 'anonymous' 
+//                                 ? 'bg-purple-200 text-purple-800' 
+//                                 : 'bg-blue-200 text-blue-800'
+//                             }`}>
+//                               {block.voteType === 'anonymous' ? '🔒 Anonymous' : '👤 Normal'}
+//                             </span>
+//                             {block.verified && (
+//                               <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800">
+//                                 ✓ Verified
+//                               </span>
+//                             )}
+//                           </div>
+//                           <div className="flex items-center gap-2 text-xs text-gray-600">
+//                             <Clock size={14} />
+//                             {new Date(block.timestamp).toLocaleString()}
+//                           </div>
+//                         </div>
+
+//                         <div className="grid md:grid-cols-3 gap-3 text-xs font-mono">
+//                           <div className="bg-white/70 rounded p-2">
+//                             <p className="text-gray-500 mb-1 font-sans">Vote Hash</p>
+//                             <p className="text-gray-800 truncate" title={block.voteHash}>
+//                               {block.voteHash?.substring(0, 32)}...
+//                             </p>
+//                           </div>
+//                           <div className="bg-white/70 rounded p-2">
+//                             <p className="text-gray-500 mb-1 font-sans">Previous Hash</p>
+//                             <p className={`truncate ${
+//                               block.previousHash?.startsWith('0000') ? 'text-gray-400' : 'text-orange-600'
+//                             }`} title={block.previousHash}>
+//                               {block.previousHash?.substring(0, 32)}...
+//                             </p>
+//                             {block.previousHash?.startsWith('0000') && (
+//                               <p className="text-xs text-gray-400 font-sans">(Genesis)</p>
+//                             )}
+//                           </div>
+//                           <div className="bg-white/70 rounded p-2">
+//                             <p className="text-gray-500 mb-1 font-sans">Block Hash</p>
+//                             <p className="text-indigo-700 truncate" title={block.blockHash}>
+//                               {block.blockHash?.substring(0, 32)}...
+//                             </p>
+//                           </div>
+//                         </div>
+
+//                         {block.receiptId && (
+//                           <div className="mt-2 text-xs text-gray-500">
+//                             Receipt: <span className="font-mono">{block.receiptId}</span>
+//                           </div>
+//                         )}
+//                       </div>
+//                     ))}
+//                   </div>
+
+//                   {/* Chain end */}
+//                   <div className="mt-4 p-3 bg-indigo-100 rounded-lg border-l-4 border-indigo-500">
+//                     <p className="text-xs font-mono text-indigo-800">
+//                       <strong>Latest Block Hash:</strong> {hashChainData.data.latestBlockHash}
+//                     </p>
+//                     <p className="text-xs text-indigo-600 mt-1">
+//                       Generated at: {new Date(hashChainData.data.generatedAt).toLocaleString()}
+//                     </p>
+//                   </div>
+//                 </>
+//               )}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Filters */}
+//         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+//           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+//             <Filter size={20} />
+//             Filter Audit Logs
+//           </h3>
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
+//               <select
+//                 value={filters.actionType}
+//                 onChange={(e) => { setFilters({ ...filters, actionType: e.target.value }); setPage(1); }}
+//                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+//               >
+//                 <option value="">All Actions</option>
+//                 <option value="duplicate_vote">Duplicate Vote</option>
+//                 <option value="suspicious_activity">Suspicious Activity</option>
+//                 <option value="vote_cast">Vote Cast</option>
+//                 <option value="vote_verified">Vote Verified</option>
+//               </select>
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Election ID</label>
+//               <input
+//                 type="number"
+//                 value={filters.electionId}
+//                 onChange={(e) => { setFilters({ ...filters, electionId: e.target.value }); setPage(1); }}
+//                 placeholder="All elections"
+//                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+//               <input
+//                 type="date"
+//                 value={filters.startDate}
+//                 onChange={(e) => { setFilters({ ...filters, startDate: e.target.value }); setPage(1); }}
+//                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+//               <input
+//                 type="date"
+//                 value={filters.endDate}
+//                 onChange={(e) => { setFilters({ ...filters, endDate: e.target.value }); setPage(1); }}
+//                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+//               />
+//             </div>
+
+//             <div className="flex items-end">
+//               <button
+//                 onClick={clearFilters}
+//                 className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+//               >
+//                 Clear Filters
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Audit Logs Table */}
+//         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+//           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+//             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+//               <Database size={20} />
+//               Audit Log Entries
+//             </h2>
+//             {pagination && (
+//               <span className="text-sm text-gray-600">
+//                 {pagination.total} total entries
+//               </span>
+//             )}
+//           </div>
+
+//           {logsLoading ? (
+//             <div className="p-12 text-center">
+//               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+//               <p className="mt-4 text-gray-600">Loading audit logs...</p>
+//             </div>
+//           ) : auditLogs.length === 0 ? (
+//             <div className="p-12 text-center text-gray-500">
+//               <Database size={48} className="mx-auto mb-4 text-gray-300" />
+//               <p>No audit logs found</p>
+//               <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+//             </div>
+//           ) : (
+//             <div className="overflow-x-auto">
+//               <table className="w-full">
+//                 <thead className="bg-gray-50 border-b-2 border-gray-200">
+//                   <tr>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Election</th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Agent</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-gray-200">
+//                   {auditLogs.map((log) => (
+//                     <tr key={log.id} className="hover:bg-gray-50">
+//                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+//                         {new Date(log.created_at).toLocaleString()}
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap">
+//                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getActionColor(log.action_type)}`}>
+//                           {getActionIcon(log.action_type)}
+//                           {log.action_type?.replace(/_/g, ' ')}
+//                         </span>
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap">
+//                         <span className="text-sm font-semibold text-blue-600">#{log.election_id}</span>
+//                         {log.election_title && (
+//                           <p className="text-xs text-gray-500 truncate max-w-[150px]">{log.election_title}</p>
+//                         )}
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+//                         {log.user_name || `User #${log.user_id}`}
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 font-mono">
+//                         {log.ip_address || '-'}
+//                       </td>
+//                       <td className="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate" title={log.user_agent}>
+//                         {log.user_agent?.substring(0, 40) || '-'}...
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+
+//           {/* Pagination */}
+//           {!logsLoading && pagination && auditLogs.length > 0 && (
+//             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+//               <div className="text-sm text-gray-700">
+//                 Page {pagination.page} of {pagination.totalPages} ({pagination.total} entries)
+//               </div>
+//               <div className="flex gap-2">
+//                 <button
+//                   onClick={() => setPage(page - 1)}
+//                   disabled={!pagination.hasPrevPage}
+//                   className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+//                 >
+//                   ← Previous
+//                 </button>
+//                 <button
+//                   onClick={() => setPage(page + 1)}
+//                   disabled={!pagination.hasNextPage}
+//                   className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+//                 >
+//                   Next →
+//                 </button>
+//               </div>
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Info Footer */}
+//         <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+//           <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+//             <Shield size={20} className="text-blue-600" />
+//             Industry-Standard Security Features
+//           </h3>
+//           <p className="text-sm text-gray-700 mb-3">
+//             This audit system implements the same cryptographic principles used in Bitcoin and Ethereum blockchains.
+//             Every vote creates a block, and blocks are linked together making any tampering immediately detectable.
+//           </p>
+//           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
+//             <div className="flex items-center gap-2 bg-white/50 p-2 rounded">
+//               <Hash size={14} className="text-indigo-600" />
+//               <span>SHA-256 Hashing</span>
+//             </div>
+//             <div className="flex items-center gap-2 bg-white/50 p-2 rounded">
+//               <Link2 size={14} className="text-green-600" />
+//               <span>Chain Linking</span>
+//             </div>
+//             <div className="flex items-center gap-2 bg-white/50 p-2 rounded">
+//               <Shield size={14} className="text-blue-600" />
+//               <span>Tamper Detection</span>
+//             </div>
+//             <div className="flex items-center gap-2 bg-white/50 p-2 rounded">
+//               <GitBranch size={14} className="text-purple-600" />
+//               <span>Merkle Tree</span>
+//             </div>
+//             <div className="flex items-center gap-2 bg-white/50 p-2 rounded">
+//               <FileText size={14} className="text-orange-600" />
+//               <span>Export & Audit</span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 // import React, { useState } from 'react';
 // import { 
 //   Shield, Lock, CheckCircle, AlertCircle, Hash, Database, Link2, 
