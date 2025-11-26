@@ -94,12 +94,18 @@ export const platformAnalyticsApi = createApi({
       providesTags: (result, error, electionId) => [{ type: 'VoterDemographics', id: electionId }],
     }),
 
+    getPlatformRevenueReport: builder.query({
+  query: ({ period = 30 } = {}) => `/analytics/revenue/platform?period=${period}`,
+  providesTags: ['Revenue'],
+}),
+
   }),
 });
 
 export const {
   useGetPlatformReportQuery,
   useGetRevenueReportQuery,
+  useGetPlatformRevenueReportQuery,
   useGetRealTimeStatsQuery,
   useGetElectionAnalyticsQuery,
   useGetVoterDemographicsQuery,
