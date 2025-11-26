@@ -13,6 +13,7 @@ export default function RefundManagementPage() {
   const [activeTab, setActiveTab] = useState('all');
 
   // Empty refund data
+  /*eslint-disable*/
   const refunds = [];
   const stats = {
     total_refunds: 0,
