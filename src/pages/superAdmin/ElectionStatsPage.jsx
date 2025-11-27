@@ -328,7 +328,7 @@ export default function ElectionStatsPage() {
             <div>
               <p className="text-sm text-red-700 font-medium">Failed Draws</p>
               <p className="text-3xl font-bold text-red-600 mt-1">{stats.failedDraws}</p>
-              <p className="text-xs text-red-600 mt-1">Requires manual draw</p>
+              <p className="text-xs text-red-600 mt-1">Requires manual draw, this is a fallback, if any case autodraw fails</p>
             </div>
             <AlertTriangle className="w-10 h-10 text-red-400" />
           </div>
