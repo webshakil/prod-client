@@ -56,7 +56,11 @@ export const lotteryyApi = createApi({
     'MyWinnings',
     'PendingApprovals',
     'DisbursementHistory',
-    'DisbursementConfig'
+    'DisbursementConfig',
+    // 🆕 NEW: Added tag types for winnings wallet
+    'WinningsWallet',
+    'WinningsTransactions',
+    'Withdrawals'
   ],
   endpoints: (builder) => ({
     
@@ -122,7 +126,89 @@ export const lotteryyApi = createApi({
         'MyWinnings',
         'LotteryWinners',
         { type: 'Lottery' },
+        'WinningsWallet', // 🆕 NEW: Also invalidate wallet
       ],
+    }),
+
+    // =====================================================
+    // 🆕 NEW: USER WINNINGS WALLET ENDPOINTS
+    // =====================================================
+
+    // Get winnings wallet summary (total won, available, withdrawn, pending)
+    getWinningsWallet: builder.query({
+      query: () => `/lottery/wallet`,
+      providesTags: ['WinningsWallet'],
+      transformResponse: (response) => ({
+        wallet: response.wallet || {
+          total_won: 0,
+          total_disbursed: 0,
+          total_withdrawn: 0,
+          available_balance: 0,
+          pending_approval: 0,
+          unclaimed: 0,
+        },
+        summary: response.summary || {},
+        currency: response.currency || 'USD',
+      }),
+    }),
+
+    // Get transaction history (wins + withdrawals combined)
+    getWinningsTransactions: builder.query({
+      query: ({ page = 1, limit = 20, type = 'all' } = {}) => 
+        `/lottery/wallet/transactions?page=${page}&limit=${limit}&type=${type}`,
+      providesTags: ['WinningsTransactions'],
+      transformResponse: (response) => ({
+        transactions: response.transactions || [],
+        pagination: response.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 1,
+        },
+      }),
+    }),
+
+    // Get withdrawal history only
+    getWithdrawalHistory: builder.query({
+      query: ({ page = 1, limit = 20 } = {}) => 
+        `/lottery/wallet/withdrawals?page=${page}&limit=${limit}`,
+      providesTags: ['Withdrawals'],
+      transformResponse: (response) => ({
+        withdrawals: response.withdrawals || [],
+        pagination: response.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 1,
+        },
+      }),
+    }),
+
+    // Get single withdrawal details
+    getWithdrawalDetails: builder.query({
+      query: (withdrawalId) => `/lottery/wallet/withdrawals/${withdrawalId}`,
+      providesTags: (result, error, withdrawalId) => [
+        { type: 'Withdrawals', id: withdrawalId }
+      ],
+    }),
+
+    // Request a withdrawal
+    requestWithdrawal: builder.mutation({
+      query: (data) => ({
+        url: `/lottery/wallet/withdraw`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['WinningsWallet', 'WinningsTransactions', 'Withdrawals'],
+    }),
+
+    // Cancel pending withdrawal
+    cancelWithdrawal: builder.mutation({
+      query: (withdrawalId) => ({
+        url: `/lottery/wallet/withdrawals/${withdrawalId}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['WinningsWallet', 'WinningsTransactions', 'Withdrawals'],
     }),
 
     // =====================================================
@@ -209,7 +295,7 @@ export const lotteryyApi = createApi({
         method: 'POST',
         body: { notes },
       }),
-      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings', 'WinningsWallet'],
     }),
 
     // Reject single disbursement
@@ -219,7 +305,7 @@ export const lotteryyApi = createApi({
         method: 'POST',
         body: { reason },
       }),
-      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings', 'WinningsWallet'],
     }),
 
     // Bulk approve multiple disbursements
@@ -229,7 +315,44 @@ export const lotteryyApi = createApi({
         method: 'POST',
         body: { winnerIds },
       }),
-      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+      invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings', 'WinningsWallet'],
+    }),
+
+    // =====================================================
+    // 🆕 NEW: ADMIN WITHDRAWAL MANAGEMENT ENDPOINTS
+    // =====================================================
+
+    // Get all pending withdrawals (admin view)
+    getAdminPendingWithdrawals: builder.query({
+      query: ({ page = 1, limit = 20, status = 'pending' } = {}) => 
+        `/lottery/wallet/admin/pending-withdrawals?page=${page}&limit=${limit}&status=${status}`,
+      providesTags: ['Withdrawals'],
+      transformResponse: (response) => ({
+        withdrawals: response.withdrawals || [],
+        stats: response.stats || {
+          pending_count: 0,
+          processing_count: 0,
+          completed_count: 0,
+          pending_amount: 0,
+          completed_amount: 0,
+        },
+        pagination: response.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 1,
+        },
+      }),
+    }),
+
+    // Process withdrawal (approve/complete/reject)
+    processWithdrawal: builder.mutation({
+      query: ({ withdrawalId, action, transactionId, notes }) => ({
+        url: `/lottery/wallet/admin/withdrawals/${withdrawalId}/process`,
+        method: 'POST',
+        body: { action, transactionId, notes },
+      }),
+      invalidatesTags: ['Withdrawals', 'WinningsWallet', 'WinningsTransactions'],
     }),
 
     // =====================================================
@@ -289,6 +412,14 @@ export const {
   useGetMyWinningsQuery,
   useClaimPrizeMutation,
   
+  // 🆕 NEW: User Winnings Wallet
+  useGetWinningsWalletQuery,
+  useGetWinningsTransactionsQuery,
+  useGetWithdrawalHistoryQuery,
+  useGetWithdrawalDetailsQuery,
+  useRequestWithdrawalMutation,
+  useCancelWithdrawalMutation,
+  
   // Admin - Lottery Management
   useGetLotteryParticipantsQuery,
   useDrawLotteryMutation,
@@ -300,6 +431,10 @@ export const {
   useRejectDisbursementMutation,
   useBulkApproveDisbursementsMutation,
   
+  // 🆕 NEW: Admin Withdrawal Management
+  useGetAdminPendingWithdrawalsQuery,
+  useProcessWithdrawalMutation,
+  
   // Admin - Configuration
   useGetDisbursementConfigQuery,
   useUpdateDisbursementConfigMutation,
@@ -307,6 +442,316 @@ export const {
 } = lotteryyApi;
 
 export default lotteryyApi;
+//last workable perfect code only to add new rotues above code
+// // src/redux/api/lotteryyy/lotteryApi.js
+// // ✨ 3 y's to avoid conflict with existing lottery files
+// // ✅ ENHANCED: Full lottery prize disbursement system
+// import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+// const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+
+// const getUserData = () => {
+//   const userDataStr = localStorage.getItem('userData');
+//   if (userDataStr) {
+//     try {
+//       return JSON.parse(userDataStr);
+//     } catch (error) {
+//       console.error('Error parsing userData:', error);
+//     }
+//   }
+//   return null;
+// };
+
+// export const lotteryyApi = createApi({
+//   reducerPath: 'lotteryyApi',
+//   baseQuery: fetchBaseQuery({
+//     baseUrl: VOTING_SERVICE_URL,
+//     prepareHeaders: (headers) => {
+//       const userData = getUserData();
+      
+//       if (userData) {
+//         headers.set('x-user-data', JSON.stringify({
+//           userId: userData.userId,
+//           email: userData.email,
+//           phone: userData.phone || null,
+//           username: userData.username || null,
+//           roles: (userData.roles || ['Voter']).map(role => 
+//             role === 'ContentCreator' ? 'Content_Creator' : role
+//           ),
+//           subscriptionType: userData.subscriptionType || 'Free',
+//           isSubscribed: userData.isSubscribed || false
+//         }));
+        
+//         headers.set('x-user-id', userData.userId);
+//       }
+      
+//       const token = localStorage.getItem('accessToken');
+//       if (token) {
+//         headers.set('Authorization', `Bearer ${token}`);
+//       }
+      
+//       return headers;
+//     },
+//   }),
+//   tagTypes: [
+//     'Lottery', 
+//     'LotteryTicket', 
+//     'LotteryParticipants', 
+//     'LotteryWinners',
+//     'MyWinnings',
+//     'PendingApprovals',
+//     'DisbursementHistory',
+//     'DisbursementConfig'
+//   ],
+//   endpoints: (builder) => ({
+    
+//     // =====================================================
+//     // PUBLIC ENDPOINTS
+//     // =====================================================
+    
+//     // ✅ FIXED: Get lottery info for election (includes winners if drawn)
+//     getLotteryInfo: builder.query({
+//       query: (electionId) => `/lottery/elections/${electionId}/info`,
+//       providesTags: (result, error, electionId) => [
+//         { type: 'Lottery', id: electionId },
+//         'LotteryWinners'
+//       ],
+//     }),
+
+//     // ✅ FIXED: Get public winners announcement (masked names)
+//     getWinnersAnnouncement: builder.query({
+//       query: (electionId) => `/lottery/elections/${electionId}/winners`,
+//       providesTags: (result, error, electionId) => [
+//         { type: 'LotteryWinners', id: electionId }
+//       ],
+//     }),
+
+//     // =====================================================
+//     // USER ENDPOINTS
+//     // =====================================================
+
+//     // ✅ FIXED: Get user's lottery ticket for specific election
+//     getMyLotteryTicket: builder.query({
+//       query: (electionId) => `/lottery/elections/${electionId}/my-ticket`,
+//       providesTags: (result, error, electionId) => [
+//         { type: 'LotteryTicket', id: electionId }
+//       ],
+//     }),
+
+//     // Get user's complete winning history across ALL elections
+//     getMyWinnings: builder.query({
+//       query: () => `/lottery/my-winnings`,
+//       providesTags: ['MyWinnings'],
+//       transformResponse: (response) => ({
+//         winnings: response.winnings || [],
+//         summary: response.summary || {
+//           total_wins: 0,
+//           total_won: 0,
+//           claimed: 0,
+//           disbursed: 0,
+//           pending: 0,
+//           unclaimed: 0,
+//           rejected: 0,
+//         },
+//       }),
+//     }),
+
+//     // Claim lottery prize with full response handling
+//     claimPrize: builder.mutation({
+//       query: (winnerId) => ({
+//         url: `/lottery/winners/${winnerId}/claim`,
+//         method: 'POST',
+//       }),
+//       /*eslint-disable*/
+//       invalidatesTags: (result, error, winnerId) => [
+//         'MyWinnings',
+//         'LotteryWinners',
+//         { type: 'Lottery' },
+//       ],
+//     }),
+
+//     // =====================================================
+//     // ADMIN/CREATOR ENDPOINTS - Lottery Management
+//     // =====================================================
+
+//     // ✅ FIXED: Get all lottery participants for an election
+//     getLotteryParticipants: builder.query({
+//       query: (electionId) => `/lottery/elections/${electionId}/participants`,
+//       providesTags: (result, error, electionId) => [
+//         { type: 'LotteryParticipants', id: electionId }
+//       ],
+//     }),
+
+//     // ✅ FIXED: Draw lottery manually (admin only)
+//     drawLottery: builder.mutation({
+//       query: (electionId) => ({
+//         url: `/lottery/elections/${electionId}/draw`,
+//         method: 'POST',
+//       }),
+//       invalidatesTags: (result, error, electionId) => [
+//         { type: 'Lottery', id: electionId },
+//         { type: 'LotteryWinners', id: electionId },
+//         'PendingApprovals',
+//       ],
+//     }),
+
+//     // =====================================================
+//     // ADMIN ENDPOINTS - Disbursement Management
+//     // =====================================================
+
+//     // Get pending disbursement approvals
+//     getPendingApprovals: builder.query({
+//       query: (params = {}) => {
+//         const queryParams = new URLSearchParams();
+//         if (params.status) queryParams.append('status', params.status);
+//         if (params.minAmount) queryParams.append('minAmount', params.minAmount);
+//         if (params.maxAmount) queryParams.append('maxAmount', params.maxAmount);
+//         const queryString = queryParams.toString();
+//         return `/lottery/admin/pending-approvals${queryString ? `?${queryString}` : ''}`;
+//       },
+//       providesTags: ['PendingApprovals'],
+//       transformResponse: (response) => ({
+//         pendingApprovals: response.pendingApprovals || response.pending_approvals || [],
+//         stats: response.stats || {
+//           total_pending: 0,
+//           total_amount: 0,
+//           pending_approval: 0,
+//           pending_senior_approval: 0,
+//         },
+//         thresholds: response.thresholds || {},
+//       }),
+//     }),
+
+//     // Get disbursement history with pagination
+//     getDisbursementHistory: builder.query({
+//       query: (params = {}) => {
+//         const queryParams = new URLSearchParams();
+//         if (params.page) queryParams.append('page', params.page);
+//         if (params.limit) queryParams.append('limit', params.limit);
+//         if (params.status) queryParams.append('status', params.status);
+//         if (params.electionId) queryParams.append('electionId', params.electionId);
+//         if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+//         if (params.toDate) queryParams.append('toDate', params.toDate);
+//         const queryString = queryParams.toString();
+//         return `/lottery/admin/disbursements${queryString ? `?${queryString}` : ''}`;
+//       },
+//       providesTags: ['DisbursementHistory'],
+//       transformResponse: (response) => ({
+//         disbursements: response.disbursements || [],
+//         pagination: response.pagination || {
+//           page: 1,
+//           limit: 20,
+//           total: 0,
+//           totalPages: 1,
+//         },
+//       }),
+//     }),
+
+//     // Approve single disbursement
+//     approveDisbursement: builder.mutation({
+//       query: ({ winnerId, notes }) => ({
+//         url: `/lottery/admin/winners/${winnerId}/approve`,
+//         method: 'POST',
+//         body: { notes },
+//       }),
+//       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+//     }),
+
+//     // Reject single disbursement
+//     rejectDisbursement: builder.mutation({
+//       query: ({ winnerId, reason }) => ({
+//         url: `/lottery/admin/winners/${winnerId}/reject`,
+//         method: 'POST',
+//         body: { reason },
+//       }),
+//       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+//     }),
+
+//     // Bulk approve multiple disbursements
+//     bulkApproveDisbursements: builder.mutation({
+//       query: (winnerIds) => ({
+//         url: `/lottery/admin/disbursements/bulk-approve`,
+//         method: 'POST',
+//         body: { winnerIds },
+//       }),
+//       invalidatesTags: ['PendingApprovals', 'DisbursementHistory', 'MyWinnings'],
+//     }),
+
+//     // =====================================================
+//     // ADMIN ENDPOINTS - Configuration
+//     // =====================================================
+
+//     // ✅ FIXED: Get disbursement configuration (thresholds)
+//     getDisbursementConfig: builder.query({
+//       query: () => `/lottery/admin/config`,
+//       providesTags: ['DisbursementConfig'],
+//       transformResponse: (response) => ({
+//         config: response.config || [],
+//         current: response.current || response.thresholds || {},
+//         thresholds: response.thresholds || {
+//           auto_disburse_threshold: 50,
+//           large_amount_threshold: 1000,
+//           max_auto_disburse_daily: 50000,
+//           currency: 'USD'
+//         },
+//       }),
+//     }),
+
+//     // Update disbursement configuration (manager only)
+//     updateDisbursementConfig: builder.mutation({
+//       query: ({ config_key, config_value }) => ({
+//         url: `/lottery/admin/config`,
+//         method: 'PUT',
+//         body: { config_key, config_value },
+//       }),
+//       invalidatesTags: ['DisbursementConfig'],
+//     }),
+
+//     // ✅ NEW: Bulk update disbursement configuration (manager only)
+//     bulkUpdateDisbursementConfig: builder.mutation({
+//       query: (configs) => ({
+//         url: `/lottery/admin/config/bulk`,
+//         method: 'PUT',
+//         body: { configs },
+//       }),
+//       invalidatesTags: ['DisbursementConfig'],
+//     }),
+
+//   }),
+// });
+
+// // =====================================================
+// // EXPORT HOOKS
+// // =====================================================
+
+// export const {
+//   // Public
+//   useGetLotteryInfoQuery,
+//   useGetWinnersAnnouncementQuery,
+  
+//   // User
+//   useGetMyLotteryTicketQuery,
+//   useGetMyWinningsQuery,
+//   useClaimPrizeMutation,
+  
+//   // Admin - Lottery Management
+//   useGetLotteryParticipantsQuery,
+//   useDrawLotteryMutation,
+  
+//   // Admin - Disbursement Management
+//   useGetPendingApprovalsQuery,
+//   useGetDisbursementHistoryQuery,
+//   useApproveDisbursementMutation,
+//   useRejectDisbursementMutation,
+//   useBulkApproveDisbursementsMutation,
+  
+//   // Admin - Configuration
+//   useGetDisbursementConfigQuery,
+//   useUpdateDisbursementConfigMutation,
+//   useBulkUpdateDisbursementConfigMutation,
+// } = lotteryyApi;
+
+// export default lotteryyApi;
 //last workable code but for some correction above code
 // // src/redux/api/lotteryyy/lotteryApi.js
 // // ✨ 3 y's to avoid conflict with existing lottery files
