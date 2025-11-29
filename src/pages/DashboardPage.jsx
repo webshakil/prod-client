@@ -491,7 +491,7 @@ export default function DashboardPage() {
                   <span className="text-lg">📊</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.electionStats')}</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/security-logs');
                     setSidebarOpen(false);
@@ -504,8 +504,8 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">🔐</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.securityLogs')}</span>
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/system-audit');
                     setSidebarOpen(false);
@@ -518,7 +518,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">📝</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.systemAudit')}</span>
-                </button>
+                </button> */}
                 <button
                   onClick={() => {
                     navigate('/dashboard/admin/encryption-status');
@@ -533,7 +533,7 @@ export default function DashboardPage() {
                   <span className="text-lg">🛡️</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.encryptionStatus')}</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/verification-tools');
                     setSidebarOpen(false);
@@ -546,8 +546,8 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">✓</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.verificationTools')}</span>
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/compliance-reports');
                     setSidebarOpen(false);
@@ -560,7 +560,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">📊</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.security.complianceReports')}</span>
-                </button>
+                </button> */}
               </nav>
             </>
           )}
@@ -572,7 +572,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-gray-400 font-semibold uppercase">{t('dashboardPage.sections.financialManagement')}</p>
               </div>
               <nav className="p-4 space-y-2">
-                <button
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/payment-gateways');
                     setSidebarOpen(false);
@@ -585,8 +585,8 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">💳</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.paymentGateways')}</span>
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/transaction-monitoring');
                     setSidebarOpen(false);
@@ -599,7 +599,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">💰</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.transactionMonitoring')}</span>
-                </button>
+                </button> */}
                 <button
                   onClick={() => {
                     navigate('/dashboard/admin/revenue-analytics');
@@ -628,7 +628,7 @@ export default function DashboardPage() {
                   <span className="text-lg">🎁</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.prizeDistribution')}</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/regional-pricing');
                     setSidebarOpen(false);
@@ -641,7 +641,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">🌍</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.regionalPricing')}</span>
-                </button>
+                </button> */}
                 <button
                   onClick={() => {
                     navigate('/dashboard/admin/refund-management');
@@ -656,7 +656,7 @@ export default function DashboardPage() {
                   <span className="text-lg">↩️</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.refundManagement')}</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     navigate('/dashboard/admin/financial-reports');
                     setSidebarOpen(false);
@@ -669,7 +669,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-lg">📊</span>
                   <span className="text-sm md:text-base">{t('dashboardPage.financial.financialReports')}</span>
-                </button>
+                </button> */}
               </nav>
             </>
           )}

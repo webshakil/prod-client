@@ -515,7 +515,7 @@ export default function UserManagement() {
               </h3>
               <div className="relative h-80 bg-gradient-to-b from-indigo-50 to-white rounded-xl p-6 border border-indigo-100">
                 <div className="absolute inset-6 flex items-end justify-between gap-1">
-                  {analytics.registrationTrend.reverse().map((item) => {
+                  {[...analytics.registrationTrend].reverse().map((item) => {
                     const maxCount = Math.max(...analytics.registrationTrend.map(r => r.count));
                     const heightPercentage = (item.count / maxCount) * 100;
                     
