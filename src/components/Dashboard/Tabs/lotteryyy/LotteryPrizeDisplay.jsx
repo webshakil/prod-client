@@ -185,7 +185,7 @@ export default function LotteryPrizeDisplay({
           </div>
 
           <p className="text-xs opacity-75">
-            Lucky winners selected
+            Lucky winners will be selected
           </p>
         </div>
 

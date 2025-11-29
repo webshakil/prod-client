@@ -304,15 +304,40 @@ export default function VideoWatchProgress({
       </div>
     );
   }
-
   if (!videoId) {
-    return (
-      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
-        <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-        <p className="text-red-800 font-semibold">Invalid video URL</p>
-      </div>
-    );
-  }
+  // No video URL - this election doesn't require video
+  return (
+    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-500 rounded-2xl p-8 text-center shadow-xl">
+      <CheckCircle className="w-20 h-20 text-purple-600 mx-auto mb-4" />
+      <h2 className="text-3xl font-bold text-purple-900 mb-3">
+        ✓ No Video Required
+      </h2>
+      <p className="text-lg text-purple-700 mb-2">
+        This election does not have a video requirement.
+      </p>
+      <p className="text-purple-600 mb-8">
+        You can proceed directly to voting.
+      </p>
+      {onComplete && (
+        <button
+          onClick={onComplete}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-10 py-4 rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          Continue to Voting →
+        </button>
+      )}
+    </div>
+  );
+}
+
+  // if (!videoId) {
+  //   return (
+  //     <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
+  //       <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+  //       <p className="text-red-800 font-semibold">Invalid video URL</p>
+  //     </div>
+  //   );
+  // }
 
   if (completed && !isReady) {
     return (

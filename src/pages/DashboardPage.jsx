@@ -143,13 +143,13 @@ export default function DashboardPage() {
       icon: '➕',
     });
 
-    if (isModerator || isAdmin || isManager) {
-      tabsList.push({
-        path: '/dashboard/verify-votes',
-        label: t('dashboardPage.navigation.verifyVotes'),
-        icon: '✓',
-      });
-    }
+    // if (isModerator || isAdmin || isManager) {
+    //   tabsList.push({
+    //     path: '/dashboard/verify-votes',
+    //     label: t('dashboardPage.navigation.verifyVotes'),
+    //     icon: '✓',
+    //   });
+    // }
 
     if (isAdmin || isManager) {
       tabsList.push({

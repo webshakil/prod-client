@@ -147,7 +147,7 @@ export default function VoteNow() {
         return {
           canVote: true,
           reason: null,
-          buttonText: 'Vote Now',
+          buttonText: 'Vote Now ',
           icon: <Vote size={20} />
         };
       }
