@@ -367,7 +367,8 @@ export default function DashboardPage() {
           </nav>
 
           {/* ✅ ADMIN Section */}
-          {isManager && (
+          {/* {isManager && ( */}
+          {(isManager || isAdmin) && (
             <>
               <div className="mt-6 pt-4 px-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400 font-semibold uppercase">{t('dashboardPage.sections.admin')}</p>
