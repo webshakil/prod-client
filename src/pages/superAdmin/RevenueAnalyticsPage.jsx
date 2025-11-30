@@ -519,11 +519,16 @@ export default function RevenueAnalyticsPage() {
                   <p className="text-2xl font-bold text-yellow-700">{formatNumber(platformFees?.stats?.pending_payments)}</p>
                   <p className="text-xs text-yellow-600">Pending</p>
                 </div>
-                <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 text-center border border-red-100">
+                {/* <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 text-center border border-red-100">
                   <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-red-700">{formatNumber(platformFees?.stats?.failed_payments)}</p>
                   <p className="text-xs text-red-600">Failed</p>
-                </div>
+                </div> */}
+                <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 text-center border border-red-100">
+  <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+  <p className="text-2xl font-bold text-red-700">{formatNumber(platformFees?.stats?.failed_payments)}</p>
+  <p className="text-xs text-red-600">Payment Failed</p>
+</div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center border border-emerald-100">
                   <DollarSign className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-emerald-700">{formatCurrency(platformFees?.stats?.platform_fee_last_30_days)}</p>
