@@ -1035,7 +1035,7 @@ export default function RevenueAnalyticsPage() {
         </div>
 
         {/* Footer Info */}
-        <div className="mt-8 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
+        {/* <div className="mt-8 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
               <DollarSign className="w-8 h-8 text-emerald-600" />
@@ -1043,13 +1043,13 @@ export default function RevenueAnalyticsPage() {
             <div>
               <h3 className="font-bold text-gray-900 text-lg">Understanding Platform Revenue</h3>
               <p className="text-gray-600 mt-2">
-                Platform revenue comes from two sources: <strong>Platform Fees</strong> (5% of each election payment) 
+                Platform revenue comes from two sources: <strong>Platform Fees</strong>  
                 and <strong>Subscription Usage</strong> (pay-as-you-go billing for premium features).
               </p>
               <div className="mt-4 grid sm:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="text-gray-700">Platform Fee: 5% of payments</span>
+                  <span className="text-gray-700">Platform Fee: % or of payments</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -1062,7 +1062,7 @@ export default function RevenueAnalyticsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
