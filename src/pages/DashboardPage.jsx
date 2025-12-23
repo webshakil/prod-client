@@ -102,13 +102,12 @@ export default function DashboardPage() {
       icon: '📋',
     });
 
-    if (canCreateElections) {
-      tabsList.push({
-        path: '/dashboard/my-elections',
-        label: t('dashboardPage.navigation.myElections'),
-        icon: '📁',
-      });
-    }
+    // ✅ FIXED: My Elections now available for ALL users (not just election creators)
+    tabsList.push({
+      path: '/dashboard/my-elections',
+      label: t('dashboardPage.navigation.myElections'),
+      icon: '📁',
+    });
 
     tabsList.push({
       path: '/dashboard/wallet',
@@ -756,6 +755,8 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
 
 //last workbale code just to add creatro wallte for all users above code
 // // src/pages/DashboardPage.jsx - UPDATED WITH NOTIFICATION BELL
