@@ -25,7 +25,7 @@ export default function ElectionAccessGuard() {
 
   // Check if user already voted - if yes, show receipt
   useEffect(() => {
-    if (ballotData?.hasVoted) {
+    if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
       setCurrentStep(4);
     }
   }, [ballotData]);
