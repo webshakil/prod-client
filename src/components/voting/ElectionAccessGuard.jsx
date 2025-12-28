@@ -52,52 +52,99 @@ export default function ElectionAccessGuard() {
   }
 
   // ✅ ADDED: Check hasVoted FIRST - before any steps
-  if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-        <div className="max-w-4xl mx-auto pb-4">
+  // ✅ CHECK hasVoted FIRST - before any steps
+if (ballotData?.hasVoted) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+      <div className="max-w-4xl mx-auto pb-4">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+        >
+          <ArrowLeft size={20} />
+          Go to Dashboard
+        </button>
+      </div>
+
+      <div className="max-w-2xl mx-auto py-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">You Have Already Voted!</h2>
+          <p className="text-gray-600 mb-6">
+            Thank you for participating in this election. Your vote has been recorded.
+          </p>
+          
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+            <h3 className="font-semibold text-gray-900 mb-2">{ballotData.election?.title}</h3>
+            <p className="text-sm text-gray-600">{ballotData.election?.description}</p>
+          </div>
+
+          {ballotData?.lotteryEnabled && (
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-6">
+              <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+              <p className="text-purple-700 text-sm">
+                You're entered in the lottery draw. Winners will be notified after the election ends.
+              </p>
+            </div>
+          )}
+          
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+            className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-lg"
           >
-            <ArrowLeft size={20} />
-            Go to Dashboard
+            Back to Dashboard
           </button>
         </div>
-
-        <div className="max-w-2xl mx-auto py-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">You Have Already Voted!</h2>
-            <p className="text-gray-600 mb-6">
-              Thank you for participating in this election. Your vote has been recorded.
-            </p>
-            
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-2">{ballotData.election?.title}</h3>
-              <p className="text-sm text-gray-600">{ballotData.election?.description}</p>
-            </div>
-
-            {ballotData?.lotteryEnabled && (
-              <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-6">
-                <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
-                <p className="text-purple-700 text-sm">
-                  You're entered in the lottery draw. Winners will be notified after the election ends.
-                </p>
-              </div>
-            )}
-            
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-lg"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+  // if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+  //       <div className="max-w-4xl mx-auto pb-4">
+  //         <button
+  //           onClick={() => navigate('/dashboard')}
+  //           className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+  //         >
+  //           <ArrowLeft size={20} />
+  //           Go to Dashboard
+  //         </button>
+  //       </div>
+
+  //       <div className="max-w-2xl mx-auto py-8">
+  //         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+  //           <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
+  //           <h2 className="text-3xl font-bold text-gray-900 mb-4">You Have Already Voted!</h2>
+  //           <p className="text-gray-600 mb-6">
+  //             Thank you for participating in this election. Your vote has been recorded.
+  //           </p>
+            
+  //           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+  //             <h3 className="font-semibold text-gray-900 mb-2">{ballotData.election?.title}</h3>
+  //             <p className="text-sm text-gray-600">{ballotData.election?.description}</p>
+  //           </div>
+
+  //           {ballotData?.lotteryEnabled && (
+  //             <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-6">
+  //               <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+  //               <p className="text-purple-700 text-sm">
+  //                 You're entered in the lottery draw. Winners will be notified after the election ends.
+  //               </p>
+  //             </div>
+  //           )}
+            
+  //           <button
+  //             onClick={() => navigate('/dashboard')}
+  //             className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-lg"
+  //           >
+  //             Back to Dashboard
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const isFree = !ballotData.paymentRequired;
   const hasPaid = paymentStatus?.paid;
