@@ -1,15 +1,11 @@
-// src/store/index.js
-// ✅ REDUX STORE WITH RTK QUERY
+// src/redux/store.js
 
 import { configureStore } from '@reduxjs/toolkit';
 
-// RTK Query APIs
-import { baseApi } from './api/baseApi';
-import { votingApi } from './api/votingApi';
-import { electionApi } from './api/electionApi';
-import { lotteryApi } from './api/lotteryApi';
+// ✅ CORRECT: Import indexApi (not baseApi)
+import { indexApi } from './api/indexApi';
 
-// Regular Slices (for local state)
+// Regular Slices
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import electionReducer from './slices/electionSlice';
@@ -19,11 +15,8 @@ import walletReducer from './slices/walletSlice';
 
 export const store = configureStore({
   reducer: {
-    // RTK Query API reducers
-    [baseApi.reducerPath]: baseApi.reducer,
-    [votingApi.reducerPath]: votingApi.reducer,
-    [electionApi.reducerPath]: electionApi.reducer,
-    [lotteryApi.reducerPath]: lotteryApi.reducer,
+    // ✅ Use indexApi
+    [indexApi.reducerPath]: indexApi.reducer,
     
     // Regular slices
     auth: authReducer,
@@ -38,12 +31,55 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['auth/setCredentials'],
       },
-    })
-      .concat(baseApi.middleware)
-      .concat(votingApi.middleware)
-      .concat(electionApi.middleware)
-      .concat(lotteryApi.middleware),
+    }).concat(indexApi.middleware),
 });
+//last working code
+// // src/store/index.js
+// // ✅ REDUX STORE WITH RTK QUERY
+
+// import { configureStore } from '@reduxjs/toolkit';
+
+// // RTK Query APIs
+// import { baseApi } from './api/baseApi';
+// import { votingApi } from './api/votingApi';
+// import { electionApi } from './api/electionApi';
+// import { lotteryApi } from './api/lotteryApi';
+
+// // Regular Slices (for local state)
+// import authReducer from './slices/authSlice';
+// import userReducer from './slices/userSlice';
+// import electionReducer from './slices/electionSlice';
+// import subscriptionReducer from './slices/subscriptionSlice';
+// import notificationReducer from './slices/notificationSlice';
+// import walletReducer from './slices/walletSlice';
+
+// export const store = configureStore({
+//   reducer: {
+//     // RTK Query API reducers
+//     [baseApi.reducerPath]: baseApi.reducer,
+//     [votingApi.reducerPath]: votingApi.reducer,
+//     [electionApi.reducerPath]: electionApi.reducer,
+//     [lotteryApi.reducerPath]: lotteryApi.reducer,
+    
+//     // Regular slices
+//     auth: authReducer,
+//     user: userReducer,
+//     election: electionReducer,
+//     subscription: subscriptionReducer,
+//     notification: notificationReducer,
+//     wallet: walletReducer,
+//   },
+//   middleware: (getDefaultMiddleware) =>
+//     getDefaultMiddleware({
+//       serializableCheck: {
+//         ignoredActions: ['auth/setCredentials'],
+//       },
+//     })
+//       .concat(baseApi.middleware)
+//       .concat(votingApi.middleware)
+//       .concat(electionApi.middleware)
+//       .concat(lotteryApi.middleware),
+// });
 
 // // src/redux/store.js
 // import { configureStore } from '@reduxjs/toolkit';
