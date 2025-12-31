@@ -4,18 +4,20 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { indexApi } from './api/indexApi';
+// ✅ Use default import (same as authApi.js)
+import indexApi from './api/indexApi';
+
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import electionReducer from './slices/electionSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import notificationReducer from './slices/notificationSlice';
-import walletReducer from './slices/wallletSlice'; // Note: 3 L's
+import walletReducer from './slices/wallletSlice';
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user'], // Only persist these
+  whitelist: ['auth', 'user'],
 };
 
 const rootReducer = combineReducers({
