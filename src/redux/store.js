@@ -11,7 +11,7 @@ import userReducer from './slices/userSlice';
 import electionReducer from './slices/electionSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import notificationReducer from './slices/notificationSlice';
-import walletReducer from './slices/walletSlice';
+import walletReducer from './slices/wallletSlice';
 
 export const store = configureStore({
   reducer: {
