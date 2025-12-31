@@ -4,8 +4,8 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
 
-// ✅ Use default import (same as authApi.js)
 import indexApi from './api/indexApi';
+import { userApi } from './api/user/userApi';  // ✅ ADD THIS
 
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
@@ -22,6 +22,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   [indexApi.reducerPath]: indexApi.reducer,
+  [userApi.reducerPath]: userApi.reducer,  // ✅ ADD THIS
   auth: authReducer,
   user: userReducer,
   election: electionReducer,
@@ -39,11 +40,59 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'auth/setCredentials'],
       },
-    }).concat(indexApi.middleware),
+    })
+      .concat(indexApi.middleware)
+      .concat(userApi.middleware),  // ✅ ADD THIS
 });
 
 export const persistor = persistStore(store);
 export default store;
+// // src/redux/store.js
+// import { configureStore } from '@reduxjs/toolkit';
+// import { persistStore, persistReducer } from 'redux-persist';
+// import storage from 'redux-persist/lib/storage';
+// import { combineReducers } from '@reduxjs/toolkit';
+
+// // ✅ Use default import (same as authApi.js)
+// import indexApi from './api/indexApi';
+
+// import authReducer from './slices/authSlice';
+// import userReducer from './slices/userSlice';
+// import electionReducer from './slices/electionSlice';
+// import subscriptionReducer from './slices/subscriptionSlice';
+// import notificationReducer from './slices/notificationSlice';
+// import walletReducer from './slices/wallletSlice';
+
+// const persistConfig = {
+//   key: 'root',
+//   storage,
+//   whitelist: ['auth', 'user'],
+// };
+
+// const rootReducer = combineReducers({
+//   [indexApi.reducerPath]: indexApi.reducer,
+//   auth: authReducer,
+//   user: userReducer,
+//   election: electionReducer,
+//   subscription: subscriptionReducer,
+//   notification: notificationReducer,
+//   wallet: walletReducer,
+// });
+
+// const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+// export const store = configureStore({
+//   reducer: persistedReducer,
+//   middleware: (getDefaultMiddleware) =>
+//     getDefaultMiddleware({
+//       serializableCheck: {
+//         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'auth/setCredentials'],
+//       },
+//     }).concat(indexApi.middleware),
+// });
+
+// export const persistor = persistStore(store);
+// export default store;
 // // src/redux/store.js
 
 // import { configureStore } from '@reduxjs/toolkit';
