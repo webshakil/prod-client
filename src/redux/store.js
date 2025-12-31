@@ -1,38 +1,82 @@
 // src/redux/store.js
-
 import { configureStore } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+import { combineReducers } from '@reduxjs/toolkit';
 
-// ✅ CORRECT: Import indexApi (not baseApi)
 import { indexApi } from './api/indexApi';
-
-// Regular Slices
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import electionReducer from './slices/electionSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import notificationReducer from './slices/notificationSlice';
-import walletReducer from './slices/wallletSlice';
+import walletReducer from './slices/wallletSlice'; // Note: 3 L's
+
+const persistConfig = {
+  key: 'root',
+  storage,
+  whitelist: ['auth', 'user'], // Only persist these
+};
+
+const rootReducer = combineReducers({
+  [indexApi.reducerPath]: indexApi.reducer,
+  auth: authReducer,
+  user: userReducer,
+  election: electionReducer,
+  subscription: subscriptionReducer,
+  notification: notificationReducer,
+  wallet: walletReducer,
+});
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    // ✅ Use indexApi
-    [indexApi.reducerPath]: indexApi.reducer,
-    
-    // Regular slices
-    auth: authReducer,
-    user: userReducer,
-    election: electionReducer,
-    subscription: subscriptionReducer,
-    notification: notificationReducer,
-    wallet: walletReducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['auth/setCredentials'],
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'auth/setCredentials'],
       },
     }).concat(indexApi.middleware),
 });
+
+export const persistor = persistStore(store);
+export default store;
+// // src/redux/store.js
+
+// import { configureStore } from '@reduxjs/toolkit';
+
+// // ✅ CORRECT: Import indexApi (not baseApi)
+// import { indexApi } from './api/indexApi';
+
+// // Regular Slices
+// import authReducer from './slices/authSlice';
+// import userReducer from './slices/userSlice';
+// import electionReducer from './slices/electionSlice';
+// import subscriptionReducer from './slices/subscriptionSlice';
+// import notificationReducer from './slices/notificationSlice';
+// import walletReducer from './slices/wallletSlice';
+
+// export const store = configureStore({
+//   reducer: {
+//     // ✅ Use indexApi
+//     [indexApi.reducerPath]: indexApi.reducer,
+    
+//     // Regular slices
+//     auth: authReducer,
+//     user: userReducer,
+//     election: electionReducer,
+//     subscription: subscriptionReducer,
+//     notification: notificationReducer,
+//     wallet: walletReducer,
+//   },
+//   middleware: (getDefaultMiddleware) =>
+//     getDefaultMiddleware({
+//       serializableCheck: {
+//         ignoredActions: ['auth/setCredentials'],
+//       },
+//     }).concat(indexApi.middleware),
+// });
 //last working code
 // // src/store/index.js
 // // ✅ REDUX STORE WITH RTK QUERY
