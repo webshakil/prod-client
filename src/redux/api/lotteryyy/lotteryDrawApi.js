@@ -54,7 +54,7 @@ export const lotteryDrawApi = createApi({
     // Manual lottery draw (admin only)
     drawLottery: builder.mutation({
       query: (electionId) => ({
-        url: `/lottery/elections/${electionId}/lottery/draw`,
+        url: `/lottery/elections/${electionId}/draw`,
         method: 'POST',
       }),
       invalidatesTags: ['LotteryDraw', 'Winners'],
