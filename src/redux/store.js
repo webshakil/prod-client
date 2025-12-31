@@ -92,7 +92,7 @@ const rootReducer = combineReducers({
   user: userReducer,
   election: electionReducer,
   subscription: subscriptionReducer,
-  notification: notificationReducer,
+  notifications: notificationReducer,
   wallet: walletReducer,
 });
 
