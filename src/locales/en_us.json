@@ -288,7 +288,7 @@
   },
   "security": {
     "voteAudit": "Vote Audit",
-    "electionStats": "Election Stats",
+    "electionStats": "Election Status",
     "securityLogs": "Security Logs",
     "systemAudit": "System Audit",
     "encryptionStatus": "Encryption Status",

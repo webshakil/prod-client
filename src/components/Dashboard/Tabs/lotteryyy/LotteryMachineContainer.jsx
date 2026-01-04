@@ -373,7 +373,7 @@ export default function LotteryMachineContainer({
         />
 
         {/* 3D Lottery Machine - ✨ ALWAYS VISIBLE */}
-        <div id="lottery-machine-3d" className="bg-black bg-opacity-50 rounded-3xl p-6 backdrop-blur-sm">
+        {/* <div id="lottery-machine-3d" className="bg-black bg-opacity-50 rounded-3xl p-6 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-white mb-4 text-center">
             3D Gamify Machine
           </h2>
@@ -384,7 +384,7 @@ export default function LotteryMachineContainer({
             winners={winners}
             onBallExtracted={handleBallExtracted}
           />
-        </div>
+        </div> */}
 
         {/* Admin Controls */}
         {isAdmin && !hasBeenDrawn && (

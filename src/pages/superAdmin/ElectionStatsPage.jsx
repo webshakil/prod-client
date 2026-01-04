@@ -1,11 +1,6 @@
-// src/pages/superAdmin/ElectionStatsPage.jsx - DEFINITIVE FIX
-/**
- * This version tries BOTH /info AND /lottery endpoints to handle
- * different backend configurations. It also checks the winners
- * endpoint as a fallback.
- */
+// src/pages/superAdmin/ElectionStatsPage.jsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, Clock, Calendar, Play, X, TrendingUp, Loader, Trophy, User, DollarSign, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Play, X, TrendingUp, Loader, Trophy, User, DollarSign, RefreshCw } from 'lucide-react';
 import { getAllElections } from '../../redux/api/election/electionApi';
 import { useDrawLotteryMutation } from '../../redux/api/lotteryyy/lotteryDrawApi';
 import { toast } from 'react-toastify';
@@ -27,11 +22,12 @@ export default function ElectionStatsPage() {
     'Content-Type': 'application/json',
   });
 
-  // ✅ Helper: Try fetching from multiple endpoints
+  // Helper: Try fetching from multiple endpoints
   const fetchLotteryData = async (electionId, baseUrl) => {
     const endpoints = [
-      `/lottery/elections/${electionId}/info`,     // Correct endpoint (newer)
-      `/lottery/elections/${electionId}/lottery`,  // Old endpoint (fallback)
+      `/lottery/elections/${electionId}/info`,
+      `/lottery/elections/${electionId}/lottery`,
+      `/lottery/elections/${electionId}/stats`,
     ];
 
     for (const endpoint of endpoints) {
@@ -49,7 +45,7 @@ export default function ElectionStatsPage() {
     return { data: null, endpoint: null };
   };
 
-  // ✅ Helper: Fetch winners separately
+  // Helper: Fetch winners separately
   const fetchWinners = async (electionId, baseUrl) => {
     const endpoints = [
       `/lottery/elections/${electionId}/winners`,
@@ -71,6 +67,44 @@ export default function ElectionStatsPage() {
       }
     }
     return [];
+  };
+
+  // Helper: Fetch participant/vote count separately
+  const fetchParticipantCount = async (electionId, baseUrl) => {
+    const endpoints = [
+      `/lottery/elections/${electionId}/participants`,
+      `/lottery/elections/${electionId}/stats`,
+      `/votes/elections/${electionId}/count`,
+      `/elections/${electionId}/votes/count`,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          const count = 
+            data.data?.participantCount ||
+            data.data?.participant_count ||
+            data.data?.count ||
+            data.data?.totalVotes ||
+            data.data?.total_votes ||
+            data.participantCount ||
+            data.participant_count ||
+            data.count ||
+            data.totalVotes ||
+            data.total_votes;
+          
+          if (count !== undefined && count !== null) {
+            console.log(`✅ Participant count from ${endpoint}:`, count);
+            return parseInt(count);
+          }
+        }
+      } catch (e) {
+        console.log(`❌ Participant count endpoint failed:`, e.message);
+      }
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -104,22 +138,67 @@ export default function ElectionStatsPage() {
                 winners = await fetchWinners(electionId, VOTING_SERVICE_URL);
               }
 
-              // Determine hasBeenDrawn from multiple sources
+              // Get participant count from multiple sources
+              let participantCount = 
+                parseInt(lotteryData?.participantCount) ||
+                parseInt(lotteryData?.participant_count) ||
+                parseInt(lotteryData?.totalParticipants) ||
+                parseInt(lotteryData?.total_participants) ||
+                parseInt(election.vote_count) ||
+                parseInt(election.total_votes) ||
+                parseInt(election.votes_count) ||
+                0;
+
+              // If still 0 and has winners, try fetching participant count separately
+              if (participantCount === 0 && election.lottery_enabled) {
+                const fetchedCount = await fetchParticipantCount(electionId, VOTING_SERVICE_URL);
+                if (fetchedCount !== null) {
+                  participantCount = fetchedCount;
+                }
+              }
+
+              // If we have winners but no participants, use winners count as minimum
+              if (participantCount === 0 && winners.length > 0) {
+                participantCount = winners.length;
+                console.warn(`⚠️ Election ${electionId}: No participant count, using winner count as fallback`);
+              }
+
+              // Determine hasBeenDrawn - WINNERS EXISTING = DEFINITELY DRAWN
               const hasBeenDrawn = 
+                winners.length > 0 ||
                 lotteryData?.hasBeenDrawn === true || 
                 lotteryData?.has_been_drawn === true ||
-                winners.length > 0;
+                lotteryData?.draw_completed === true ||
+                lotteryData?.status === 'drawn' ||
+                lotteryData?.status === 'completed';
 
               const now = new Date();
+              const endDate = election.end_date ? new Date(election.end_date) : null;
               const drawDate = election.lottery_draw_date ? new Date(election.lottery_draw_date) : null;
               
-              // Determine draw status
+              // Determine draw status with correct priority
               let drawStatus = 'pending';
-              if (hasBeenDrawn || winners.length > 0) {
+              
+              // Priority 1: If winners exist, it's ALWAYS completed
+              if (winners.length > 0) {
                 drawStatus = 'completed';
-              } else if (election.lottery_enabled && drawDate && now > drawDate) {
-                drawStatus = 'failed';
               }
+              // Priority 2: If API says drawn
+              else if (hasBeenDrawn) {
+                drawStatus = 'completed';
+              }
+              // Priority 3: If lottery enabled and draw date/end date passed with no winners = failed
+              else if (election.lottery_enabled) {
+                const shouldHaveDrawn = (drawDate && now > drawDate) || (endDate && now > endDate);
+                if (shouldHaveDrawn) {
+                  drawStatus = 'failed';
+                }
+              }
+
+              // Prize distribution status
+              const prizesDistributed = 
+                winners.length > 0 && 
+                winners.some(w => w.claimed === true || w.distributed === true || w.paid === true);
 
               // Debug info for this election
               debugData.push({
@@ -128,8 +207,11 @@ export default function ElectionStatsPage() {
                 usedEndpoint,
                 hasBeenDrawn,
                 winnersCount: winners.length,
+                participantCount,
                 drawStatus,
                 lotteryData: lotteryData ? 'received' : 'null',
+                endDate: election.end_date,
+                drawDate: election.lottery_draw_date,
               });
 
               return {
@@ -139,11 +221,11 @@ export default function ElectionStatsPage() {
                 endDate: election.end_date,
                 drawDate: election.lottery_draw_date,
                 status: election.status || 'draft',
-                totalVotes: parseInt(lotteryData?.participantCount || lotteryData?.participant_count || 0),
+                totalVotes: participantCount,
                 prizePool: parseFloat(lotteryData?.totalPrizePool || lotteryData?.total_prize_pool || election.lottery_total_prize_pool || 0),
                 winnersCount: winners.length || parseInt(lotteryData?.winnerCount || lotteryData?.winner_count || 0),
                 drawStatus,
-                prizesDistributed: winners.length > 0,
+                prizesDistributed,
                 lotteryEnabled: election.lottery_enabled === true,
                 rewardType: lotteryData?.rewardType || lotteryData?.reward_type,
                 winners,
@@ -228,18 +310,55 @@ export default function ElectionStatsPage() {
     drawn: enrichedElections.filter(e => e.drawStatus === 'completed').length,
   }), [enrichedElections]);
 
+  // ✅ FIXED: Toast confirmation instead of window.confirm + actual error messages
   const handleManualDraw = async (electionId) => {
     if (drawLoading) return;
-    if (!confirm('Are you sure you want to trigger a manual lottery draw?')) return;
     
-    try {
-      await triggerDraw(electionId).unwrap();
-      toast.success('Lottery draw completed successfully!');
-      refetch();
-    } catch (error) {
-      console.error('Manual draw error:', error);
-      toast.error(error?.data?.message || 'Failed to trigger lottery draw');
-    }
+    toast.info(
+      ({ closeToast }) => (
+        <div>
+          <p className="font-medium">Confirm Manual Draw</p>
+          <p className="text-sm mt-1 text-gray-600">Are you sure you want to trigger a manual lottery draw?</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={async () => {
+                closeToast();
+                try {
+                  await triggerDraw(electionId).unwrap();
+                  toast.success('🎉 Lottery draw completed successfully!');
+                  refetch();
+                } catch (error) {
+                  console.error('Manual draw error:', error);
+                  // Show actual error message from API
+                  const errorMessage = 
+                    error?.data?.message || 
+                    error?.data?.error || 
+                    error?.message || 
+                    'Failed to trigger lottery draw';
+                  toast.error(`❌ ${errorMessage}`);
+                }
+              }}
+              className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+            >
+              Yes, Draw
+            </button>
+            <button
+              onClick={closeToast}
+              className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        closeButton: false,
+        position: "top-center",
+      }
+    );
   };
 
   const formatDate = (dateString) => {
@@ -250,7 +369,8 @@ export default function ElectionStatsPage() {
       return 'Invalid Date';
     }
   };
-/*eslint-disable*/
+
+  /*eslint-disable*/
   const getDaysUntilDraw = (drawDate) => {
     if (!drawDate) return null;
     try {
@@ -328,7 +448,7 @@ export default function ElectionStatsPage() {
             <div>
               <p className="text-sm text-red-700 font-medium">Failed Draws</p>
               <p className="text-3xl font-bold text-red-600 mt-1">{stats.failedDraws}</p>
-              <p className="text-xs text-red-600 mt-1">Requires manual draw, this is a fallback, if any case autodraw fails</p>
+              <p className="text-xs text-red-600 mt-1">Requires manual draw</p>
             </div>
             <AlertTriangle className="w-10 h-10 text-red-400" />
           </div>
@@ -363,7 +483,7 @@ export default function ElectionStatsPage() {
               <p className="text-2xl font-bold text-purple-600 mt-1">
                 ${(stats.totalPrizePool || 0).toLocaleString()}
               </p>
-              <p className="text-xs text-purple-600 mt-1">All elections</p>
+              <p className="text-xs text-purple-600 mt-1">{stats.totalVotes} participants</p>
             </div>
             <DollarSign className="w-10 h-10 text-purple-400" />
           </div>
@@ -434,7 +554,7 @@ export default function ElectionStatsPage() {
                 </tr>
               ) : (
                 filteredElections.map(e => (
-                  <tr key={e.id} className={`hover:bg-gray-50 ${e.drawStatus === 'completed' ? 'bg-green-50/50' : ''}`}>
+                  <tr key={e.id} className={`hover:bg-gray-50 ${e.drawStatus === 'completed' ? 'bg-green-50/30' : e.drawStatus === 'failed' ? 'bg-red-50/30' : ''}`}>
                     <td className="px-4 py-4">
                       <div className="text-xs space-y-1">
                         <div className="text-gray-600">Start: {formatDate(e.startDate)}</div>
@@ -453,20 +573,38 @@ export default function ElectionStatsPage() {
                       <div className="text-sm font-medium text-gray-900">{e.title}</div>
                       <div className="text-xs text-gray-500">ID: #{e.id}</div>
                       <span className={`mt-1 inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        e.status==='active'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'
+                        e.status === 'active' ? 'bg-green-100 text-green-800' :
+                        e.status === 'published' ? 'bg-blue-100 text-blue-800' :
+                        e.status === 'ended' ? 'bg-gray-100 text-gray-800' :
+                        e.status === 'completed' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
                       }`}>
                         {e.status}
                       </span>
                     </td>
                     <td className="px-4 py-4">
                       <div className="text-xs space-y-1">
-                        <div>Participants: <span className="font-semibold">{e.totalVotes}</span></div>
+                        <div className="flex items-center gap-1">
+                          <User size={12} className="text-gray-400" />
+                          Participants: <span className={`font-semibold ${e.totalVotes === 0 && e.winnersCount > 0 ? 'text-orange-600' : ''}`}>
+                            {e.totalVotes}
+                            {e.totalVotes === 0 && e.winnersCount > 0 && (
+                              <span className="text-orange-500 ml-1" title="Data sync issue">⚠️</span>
+                            )}
+                          </span>
+                        </div>
                         {e.lotteryEnabled && (
                           <>
-                            <div>Prize: <span className="font-semibold text-green-600">${e.prizePool.toLocaleString()}</span></div>
-                            <div>Winners: <span className={`font-semibold ${e.winnersCount > 0 ? 'text-green-600' : ''}`}>
-                              {e.winnersCount > 0 ? `${e.winnersCount} selected` : 'TBD'}
-                            </span></div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign size={12} className="text-gray-400" />
+                              Prize: <span className="font-semibold text-green-600">${e.prizePool.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Trophy size={12} className="text-gray-400" />
+                              Winners: <span className={`font-semibold ${e.winnersCount > 0 ? 'text-green-600' : ''}`}>
+                                {e.winnersCount > 0 ? `${e.winnersCount} selected` : 'TBD'}
+                              </span>
+                            </div>
                           </>
                         )}
                       </div>
@@ -475,16 +613,16 @@ export default function ElectionStatsPage() {
                       {e.lotteryEnabled ? (
                         <div className="space-y-2">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                            e.drawStatus==='pending'?'bg-yellow-100 text-yellow-800':
-                            e.drawStatus==='completed'?'bg-green-100 text-green-800':
+                            e.drawStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            e.drawStatus === 'completed' ? 'bg-green-100 text-green-800' :
                             'bg-red-100 text-red-800'
                           }`}>
-                            {e.drawStatus==='pending'&&<Clock size={12}/>}
-                            {e.drawStatus==='completed'&&<CheckCircle size={12}/>}
-                            {e.drawStatus==='failed'&&<AlertTriangle size={12}/>}
+                            {e.drawStatus === 'pending' && <Clock size={12}/>}
+                            {e.drawStatus === 'completed' && <CheckCircle size={12}/>}
+                            {e.drawStatus === 'failed' && <AlertTriangle size={12}/>}
                             {e.drawStatus === 'completed' ? 'Drawn ✓' : e.drawStatus}
                           </span>
-                          {e.drawStatus==='failed'&&(
+                          {e.drawStatus === 'failed' && (
                             <button
                               onClick={() => handleManualDraw(e.id)}
                               disabled={drawLoading}
@@ -502,10 +640,12 @@ export default function ElectionStatsPage() {
                     <td className="px-4 py-4">
                       {e.lotteryEnabled ? (
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          e.prizesDistributed?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'
+                          e.prizesDistributed ? 'bg-green-100 text-green-800' :
+                          e.winnersCount > 0 ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {e.prizesDistributed?<CheckCircle size={12}/>:<Clock size={12}/>}
-                          {e.prizesDistributed?'Distributed':'Pending'}
+                          {e.prizesDistributed ? <CheckCircle size={12}/> : <Clock size={12}/>}
+                          {e.prizesDistributed ? 'Distributed' : e.winnersCount > 0 ? 'Awaiting Claim' : 'Pending'}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-500">N/A</span>
@@ -527,7 +667,7 @@ export default function ElectionStatsPage() {
         </div>
       </div>
 
-      {/* Debug Panel (remove in production) */}
+      {/* Debug Panel */}
       {debugInfo && (
         <details className="bg-gray-100 rounded-lg p-4">
           <summary className="cursor-pointer font-medium text-gray-700">🔍 Debug Info (click to expand)</summary>
@@ -558,9 +698,14 @@ export default function ElectionStatsPage() {
                   <p className="text-xs text-gray-600">Status</p>
                   <p className="font-semibold capitalize">{selectedElection.status}</p>
                 </div>
-                <div className="bg-gray-50 p-3 rounded">
+                <div className={`p-3 rounded ${selectedElection.totalVotes === 0 && selectedElection.winnersCount > 0 ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
                   <p className="text-xs text-gray-600">Participants</p>
-                  <p className="font-semibold">{selectedElection.totalVotes}</p>
+                  <p className="font-semibold">
+                    {selectedElection.totalVotes}
+                    {selectedElection.totalVotes === 0 && selectedElection.winnersCount > 0 && (
+                      <span className="text-orange-500 ml-1 text-xs">(data sync issue)</span>
+                    )}
+                  </p>
                 </div>
                 {selectedElection.lotteryEnabled && (
                   <>
@@ -568,9 +713,9 @@ export default function ElectionStatsPage() {
                       <p className="text-xs text-gray-600">Prize Pool</p>
                       <p className="font-semibold text-green-600">${selectedElection.prizePool.toLocaleString()}</p>
                     </div>
-                    <div className={`p-3 rounded ${selectedElection.drawStatus === 'completed' ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+                    <div className={`p-3 rounded ${selectedElection.drawStatus === 'completed' ? 'bg-green-50 border border-green-200' : selectedElection.drawStatus === 'failed' ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
                       <p className="text-xs text-gray-600">Draw Status</p>
-                      <p className={`font-semibold capitalize ${selectedElection.drawStatus === 'completed' ? 'text-green-600' : ''}`}>
+                      <p className={`font-semibold capitalize ${selectedElection.drawStatus === 'completed' ? 'text-green-600' : selectedElection.drawStatus === 'failed' ? 'text-red-600' : ''}`}>
                         {selectedElection.drawStatus === 'completed' ? '✓ Drawn' : selectedElection.drawStatus}
                       </p>
                     </div>
@@ -603,7 +748,7 @@ export default function ElectionStatsPage() {
                               winner.rank === 2 ? 'bg-gray-200 text-gray-700' :
                               'bg-purple-100 text-purple-700'
                             }`}>
-                              #{winner.rank}
+                              #{winner.rank || idx + 1}
                             </div>
                             <div>
                               <p className="font-semibold flex items-center gap-2">
@@ -664,8 +809,8 @@ export default function ElectionStatsPage() {
                 {selectedElection.drawStatus === 'failed' && (
                   <button
                     onClick={() => {
-                      handleManualDraw(selectedElection.id);
                       setSelectedElection(null);
+                      handleManualDraw(selectedElection.id);
                     }}
                     disabled={drawLoading}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
@@ -685,6 +830,1489 @@ export default function ElectionStatsPage() {
     </div>
   );
 }
+// // src/pages/superAdmin/ElectionStatsPage.jsx - FIXED VERSION
+// import React, { useState, useMemo, useEffect } from 'react';
+// import { AlertTriangle, CheckCircle, Clock, Calendar, Play, X, TrendingUp, Loader, Trophy, User, DollarSign, RefreshCw } from 'lucide-react';
+// import { getAllElections } from '../../redux/api/election/electionApi';
+// import { useDrawLotteryMutation } from '../../redux/api/lotteryyy/lotteryDrawApi';
+// import { toast } from 'react-toastify';
+
+// export default function ElectionStatsPage() {
+//   const [filterStatus, setFilterStatus] = useState('all');
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [selectedElection, setSelectedElection] = useState(null);
+//   const [enrichedElections, setEnrichedElections] = useState([]);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [debugInfo, setDebugInfo] = useState(null);
+
+//   const [triggerDraw, { isLoading: drawLoading }] = useDrawLotteryMutation();
+
+//   const getAuthHeaders = () => ({
+//     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+//     'x-user-data': localStorage.getItem('userData') || '{}',
+//     'Content-Type': 'application/json',
+//   });
+
+//   // ✅ Helper: Try fetching from multiple endpoints
+//   const fetchLotteryData = async (electionId, baseUrl) => {
+//     const endpoints = [
+//       `/lottery/elections/${electionId}/info`,
+//       `/lottery/elections/${electionId}/lottery`,
+//       `/lottery/elections/${electionId}/stats`,
+//     ];
+
+//     for (const endpoint of endpoints) {
+//       try {
+//         const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+//         if (res.ok) {
+//           const data = await res.json();
+//           console.log(`✅ Success from ${endpoint}:`, data);
+//           return { data: data.data || data, endpoint };
+//         }
+//       } catch (e) {
+//         console.log(`❌ Failed ${endpoint}:`, e.message);
+//       }
+//     }
+//     return { data: null, endpoint: null };
+//   };
+
+//   // ✅ Helper: Fetch winners separately
+//   const fetchWinners = async (electionId, baseUrl) => {
+//     const endpoints = [
+//       `/lottery/elections/${electionId}/winners`,
+//     ];
+
+//     for (const endpoint of endpoints) {
+//       try {
+//         const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+//         if (res.ok) {
+//           const data = await res.json();
+//           const winners = data.data?.winners || data.winners || data.data || [];
+//           if (Array.isArray(winners) && winners.length > 0) {
+//             console.log(`✅ Winners from ${endpoint}:`, winners);
+//             return winners;
+//           }
+//         }
+//       } catch (e) {
+//         console.log(`❌ Winners endpoint failed:`, e.message);
+//       }
+//     }
+//     return [];
+//   };
+
+//   // ✅ NEW: Fetch participant/vote count separately
+//   const fetchParticipantCount = async (electionId, baseUrl) => {
+//     const endpoints = [
+//       `/lottery/elections/${electionId}/participants`,
+//       `/lottery/elections/${electionId}/stats`,
+//       `/votes/elections/${electionId}/count`,
+//       `/elections/${electionId}/votes/count`,
+//     ];
+
+//     for (const endpoint of endpoints) {
+//       try {
+//         const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+//         if (res.ok) {
+//           const data = await res.json();
+//           const count = 
+//             data.data?.participantCount ||
+//             data.data?.participant_count ||
+//             data.data?.count ||
+//             data.data?.totalVotes ||
+//             data.data?.total_votes ||
+//             data.participantCount ||
+//             data.participant_count ||
+//             data.count ||
+//             data.totalVotes ||
+//             data.total_votes;
+          
+//           if (count !== undefined && count !== null) {
+//             console.log(`✅ Participant count from ${endpoint}:`, count);
+//             return parseInt(count);
+//           }
+//         }
+//       } catch (e) {
+//         console.log(`❌ Participant count endpoint failed:`, e.message);
+//       }
+//     }
+//     return null;
+//   };
+
+//   useEffect(() => {
+//     const fetchAllElections = async () => {
+//       setIsLoading(true);
+//       setError(null);
+      
+//       const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+      
+//       try {
+//         const response = await getAllElections(1, 100, 'all');
+//         const elections = response.data?.elections || response.elections || [];
+//         console.log('📊 Total elections:', elections.length);
+        
+//         const debugData = [];
+        
+//         const enrichedData = await Promise.all(
+//           elections.map(async (election) => {
+//             const electionId = election.election_id || election.id;
+//             if (!electionId) return null;
+
+//             try {
+//               // Fetch lottery info (tries multiple endpoints)
+//               const { data: lotteryData, endpoint: usedEndpoint } = await fetchLotteryData(electionId, VOTING_SERVICE_URL);
+              
+//               // Get winners from lottery data or fetch separately
+//               let winners = lotteryData?.winners || [];
+              
+//               // If no winners in lottery data, try fetching separately
+//               if (winners.length === 0 && election.lottery_enabled) {
+//                 winners = await fetchWinners(electionId, VOTING_SERVICE_URL);
+//               }
+
+//               // ✅ FIX: Get participant count from multiple sources
+//               let participantCount = 
+//                 parseInt(lotteryData?.participantCount) ||
+//                 parseInt(lotteryData?.participant_count) ||
+//                 parseInt(lotteryData?.totalParticipants) ||
+//                 parseInt(lotteryData?.total_participants) ||
+//                 parseInt(election.vote_count) ||
+//                 parseInt(election.total_votes) ||
+//                 parseInt(election.votes_count) ||
+//                 0;
+
+//               // If still 0 and has winners, try fetching participant count separately
+//               if (participantCount === 0 && election.lottery_enabled) {
+//                 const fetchedCount = await fetchParticipantCount(electionId, VOTING_SERVICE_URL);
+//                 if (fetchedCount !== null) {
+//                   participantCount = fetchedCount;
+//                 }
+//               }
+
+//               // ✅ FIX: If we have winners but no participants, use winners count as minimum
+//               if (participantCount === 0 && winners.length > 0) {
+//                 participantCount = winners.length; // At minimum, winners were participants
+//                 console.warn(`⚠️ Election ${electionId}: No participant count, using winner count as fallback`);
+//               }
+
+//               // ✅ FIX: Determine hasBeenDrawn - WINNERS EXISTING = DEFINITELY DRAWN
+//               const hasBeenDrawn = 
+//                 winners.length > 0 ||  // ✅ Priority: If winners exist, it's drawn
+//                 lotteryData?.hasBeenDrawn === true || 
+//                 lotteryData?.has_been_drawn === true ||
+//                 lotteryData?.draw_completed === true ||
+//                 lotteryData?.status === 'drawn' ||
+//                 lotteryData?.status === 'completed';
+
+//               const now = new Date();
+//               const endDate = election.end_date ? new Date(election.end_date) : null;
+//               const drawDate = election.lottery_draw_date ? new Date(election.lottery_draw_date) : null;
+              
+//               // ✅ FIX: Determine draw status with correct priority
+//               let drawStatus = 'pending';
+              
+//               // Priority 1: If winners exist, it's ALWAYS completed
+//               if (winners.length > 0) {
+//                 drawStatus = 'completed';
+//               }
+//               // Priority 2: If API says drawn
+//               else if (hasBeenDrawn) {
+//                 drawStatus = 'completed';
+//               }
+//               // Priority 3: If lottery enabled and draw date/end date passed with no winners = failed
+//               else if (election.lottery_enabled) {
+//                 const shouldHaveDrawn = (drawDate && now > drawDate) || (endDate && now > endDate);
+//                 if (shouldHaveDrawn) {
+//                   drawStatus = 'failed';
+//                 }
+//               }
+
+//               // ✅ FIX: Prize distribution status
+//               const prizesDistributed = 
+//                 winners.length > 0 && 
+//                 winners.some(w => w.claimed === true || w.distributed === true || w.paid === true);
+
+//               // Debug info for this election
+//               debugData.push({
+//                 id: electionId,
+//                 title: election.title,
+//                 usedEndpoint,
+//                 hasBeenDrawn,
+//                 winnersCount: winners.length,
+//                 participantCount,
+//                 drawStatus,
+//                 lotteryData: lotteryData ? 'received' : 'null',
+//                 endDate: election.end_date,
+//                 drawDate: election.lottery_draw_date,
+//               });
+
+//               return {
+//                 id: electionId,
+//                 title: election.title || 'Untitled Election',
+//                 startDate: election.start_date,
+//                 endDate: election.end_date,
+//                 drawDate: election.lottery_draw_date,
+//                 status: election.status || 'draft',
+//                 totalVotes: participantCount,
+//                 prizePool: parseFloat(lotteryData?.totalPrizePool || lotteryData?.total_prize_pool || election.lottery_total_prize_pool || 0),
+//                 winnersCount: winners.length || parseInt(lotteryData?.winnerCount || lotteryData?.winner_count || 0),
+//                 drawStatus,
+//                 prizesDistributed,
+//                 lotteryEnabled: election.lottery_enabled === true,
+//                 rewardType: lotteryData?.rewardType || lotteryData?.reward_type,
+//                 winners,
+//               };
+//             } catch (err) {
+//               console.error(`Error for election ${electionId}:`, err);
+//               return {
+//                 id: electionId,
+//                 title: election.title || 'Untitled Election',
+//                 startDate: election.start_date,
+//                 endDate: election.end_date,
+//                 drawDate: election.lottery_draw_date,
+//                 status: election.status || 'draft',
+//                 totalVotes: 0,
+//                 prizePool: 0,
+//                 winnersCount: 0,
+//                 drawStatus: 'pending',
+//                 prizesDistributed: false,
+//                 lotteryEnabled: election.lottery_enabled === true,
+//                 winners: [],
+//               };
+//             }
+//           })
+//         );
+
+//         console.log('🔍 Debug info:', debugData);
+//         setDebugInfo(debugData);
+//         setEnrichedElections(enrichedData.filter(e => e !== null));
+//       } catch (err) {
+//         console.error('Error fetching elections:', err);
+//         setError(err);
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchAllElections();
+//   }, []);
+
+//   const refetch = () => window.location.reload();
+
+//   const filteredElections = useMemo(() => {
+//     return enrichedElections.filter(e => {
+//       if (filterStatus !== 'all') {
+//         if (filterStatus === 'draft' && e.status !== 'draft') return false;
+//         if (filterStatus === 'active' && e.status !== 'active') return false;
+//         if (filterStatus === 'ended' && e.status !== 'ended') return false;
+//         if (filterStatus === 'completed' && e.status !== 'completed') return false;
+//         if (filterStatus === 'failed' && e.drawStatus !== 'failed') return false;
+//         if (filterStatus === 'drawn' && e.drawStatus !== 'completed') return false;
+//       }
+      
+//       if (searchTerm && !e.title.toLowerCase().includes(searchTerm.toLowerCase()) && !e.id.toString().includes(searchTerm)) {
+//         return false;
+//       }
+      
+//       return true;
+//     });
+//   }, [enrichedElections, searchTerm, filterStatus]);
+
+//   const stats = useMemo(() => {
+//     const totalPrize = enrichedElections.reduce((sum, e) => sum + (parseFloat(e.prizePool) || 0), 0);
+//     const totalVotes = enrichedElections.reduce((sum, e) => sum + (parseInt(e.totalVotes) || 0), 0);
+
+//     return {
+//       totalElections: enrichedElections.length,
+//       activeElections: enrichedElections.filter(e => e.status === 'active').length,
+//       totalPrizePool: totalPrize,
+//       totalVotes: totalVotes,
+//       failedDraws: enrichedElections.filter(e => e.drawStatus === 'failed').length,
+//       completedDraws: enrichedElections.filter(e => e.drawStatus === 'completed').length,
+//     };
+//   }, [enrichedElections]);
+
+//   const filterCounts = useMemo(() => ({
+//     all: enrichedElections.length,
+//     draft: enrichedElections.filter(e => e.status === 'draft').length,
+//     active: enrichedElections.filter(e => e.status === 'active').length,
+//     ended: enrichedElections.filter(e => e.status === 'ended').length,
+//     completed: enrichedElections.filter(e => e.status === 'completed').length,
+//     failed: enrichedElections.filter(e => e.drawStatus === 'failed').length,
+//     drawn: enrichedElections.filter(e => e.drawStatus === 'completed').length,
+//   }), [enrichedElections]);
+
+//   const handleManualDraw = async (electionId) => {
+//     if (drawLoading) return;
+//     if (!confirm('Are you sure you want to trigger a manual lottery draw?')) return;
+    
+//     try {
+//       await triggerDraw(electionId).unwrap();
+//       toast.success('Lottery draw completed successfully!');
+//       refetch();
+//     } catch (error) {
+//       console.error('Manual draw error:', error);
+//       toast.error(error?.data?.message || 'Failed to trigger lottery draw');
+//     }
+//   };
+
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'N/A';
+//     try {
+//       return new Date(dateString).toLocaleDateString();
+//     } catch {
+//       return 'Invalid Date';
+//     }
+//   };
+
+//   /*eslint-disable*/
+//   const getDaysUntilDraw = (drawDate) => {
+//     if (!drawDate) return null;
+//     try {
+//       const now = new Date();
+//       const draw = new Date(drawDate);
+//       return Math.ceil((draw - now) / (1000 * 60 * 60 * 24));
+//     } catch {
+//       return null;
+//     }
+//   };
+
+//   if (error) {
+//     return (
+//       <div className="space-y-6">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//         </div>
+        
+//         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+//           <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-3" />
+//           <p className="text-red-800 font-semibold mb-2">Error Loading Elections</p>
+//           <p className="text-sm text-red-600">{error?.message || 'Failed to load elections'}</p>
+//           <button onClick={refetch} className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Retry</button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (isLoading) {
+//     return (
+//       <div className="space-y-6">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//         </div>
+        
+//         <div className="flex items-center justify-center min-h-[400px]">
+//           <div className="text-center">
+//             <Loader className="animate-spin text-purple-600 mx-auto mb-4" size={48} />
+//             <p className="text-gray-600">Loading elections with lottery data...</p>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex items-center justify-between">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//           <p className="text-gray-600 mt-2">Election oversight, draw management, and prize tracking</p>
+//         </div>
+//         <button 
+//           onClick={refetch}
+//           className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2"
+//         >
+//           <RefreshCw size={18} />
+//           Refresh
+//         </button>
+//       </div>
+
+//       {/* Stats Cards */}
+//       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+//         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-red-700 font-medium">Failed Draws</p>
+//               <p className="text-3xl font-bold text-red-600 mt-1">{stats.failedDraws}</p>
+//               <p className="text-xs text-red-600 mt-1">Requires manual draw</p>
+//             </div>
+//             <AlertTriangle className="w-10 h-10 text-red-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-green-700 font-medium">Completed Draws</p>
+//               <p className="text-3xl font-bold text-green-600 mt-1">{stats.completedDraws}</p>
+//               <p className="text-xs text-green-600 mt-1">Winners selected</p>
+//             </div>
+//             <Trophy className="w-10 h-10 text-green-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-blue-700 font-medium">Total Elections</p>
+//               <p className="text-3xl font-bold text-blue-600 mt-1">{stats.totalElections}</p>
+//               <p className="text-xs text-blue-600 mt-1">{stats.activeElections} active</p>
+//             </div>
+//             <Clock className="w-10 h-10 text-blue-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-purple-700 font-medium">Total Prize Pool</p>
+//               <p className="text-2xl font-bold text-purple-600 mt-1">
+//                 ${(stats.totalPrizePool || 0).toLocaleString()}
+//               </p>
+//               <p className="text-xs text-purple-600 mt-1">{stats.totalVotes} participants</p>
+//             </div>
+//             <DollarSign className="w-10 h-10 text-purple-400" />
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Filters */}
+//       <div className="bg-white rounded-lg shadow p-4">
+//         <p className="text-sm font-medium text-gray-700 mb-3">Filter by Status</p>
+//         <div className="flex flex-wrap gap-2">
+//           {[
+//             {id:'all', label:'All', count: filterCounts.all},
+//             {id:'active', label:'Active', count: filterCounts.active},
+//             {id:'ended', label:'Ended', count: filterCounts.ended},
+//             {id:'drawn', label:'✓ Draw Completed', count: filterCounts.drawn, color: 'green'},
+//             {id:'failed', label:'⚠ Failed Draws', count: filterCounts.failed, color: 'red'},
+//           ].map(f => (
+//             <button
+//               key={f.id}
+//               onClick={() => setFilterStatus(f.id)}
+//               className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+//                 filterStatus === f.id 
+//                   ? f.color === 'green' ? 'bg-green-600 text-white'
+//                   : f.color === 'red' ? 'bg-red-600 text-white'
+//                   : 'bg-purple-600 text-white'
+//                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+//               }`}
+//             >
+//               {f.label} ({f.count})
+//             </button>
+//           ))}
+//         </div>
+//       </div>
+
+//       {/* Search */}
+//       <div className="bg-white rounded-lg shadow p-4">
+//         <input
+//           type="text"
+//           placeholder="Search by name, election ID..."
+//           value={searchTerm}
+//           onChange={e => setSearchTerm(e.target.value)}
+//           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500"
+//         />
+//       </div>
+
+//       <p className="text-sm text-gray-600">Showing {filteredElections.length} elections</p>
+
+//       {/* Table */}
+//       <div className="bg-white rounded-lg shadow overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gray-50 border-b border-gray-200">
+//               <tr>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timeline</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Election</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statistics</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Draw Status</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prize Status</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody className="divide-y divide-gray-200">
+//               {filteredElections.length === 0 ? (
+//                 <tr>
+//                   <td colSpan="6" className="px-6 py-12 text-center">
+//                     <p className="text-gray-600">No elections found</p>
+//                   </td>
+//                 </tr>
+//               ) : (
+//                 filteredElections.map(e => (
+//                   <tr key={e.id} className={`hover:bg-gray-50 ${e.drawStatus === 'completed' ? 'bg-green-50/30' : e.drawStatus === 'failed' ? 'bg-red-50/30' : ''}`}>
+//                     <td className="px-4 py-4">
+//                       <div className="text-xs space-y-1">
+//                         <div className="text-gray-600">Start: {formatDate(e.startDate)}</div>
+//                         <div className="text-gray-600">End: {formatDate(e.endDate)}</div>
+//                         {e.lotteryEnabled && e.drawDate && (
+//                           <div className="text-purple-600 font-medium pt-1 border-t">
+//                             Draw: {formatDate(e.drawDate)}
+//                             {e.drawStatus === 'completed' && (
+//                               <span className="ml-1 text-green-600">✓</span>
+//                             )}
+//                           </div>
+//                         )}
+//                       </div>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <div className="text-sm font-medium text-gray-900">{e.title}</div>
+//                       <div className="text-xs text-gray-500">ID: #{e.id}</div>
+//                       <span className={`mt-1 inline-block px-2 py-0.5 rounded text-xs font-medium ${
+//                         e.status === 'active' ? 'bg-green-100 text-green-800' :
+//                         e.status === 'published' ? 'bg-blue-100 text-blue-800' :
+//                         e.status === 'ended' ? 'bg-gray-100 text-gray-800' :
+//                         e.status === 'completed' ? 'bg-purple-100 text-purple-800' :
+//                         'bg-gray-100 text-gray-800'
+//                       }`}>
+//                         {e.status}
+//                       </span>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <div className="text-xs space-y-1">
+//                         <div className="flex items-center gap-1">
+//                           <User size={12} className="text-gray-400" />
+//                           Participants: <span className={`font-semibold ${e.totalVotes === 0 && e.winnersCount > 0 ? 'text-orange-600' : ''}`}>
+//                             {e.totalVotes}
+//                             {e.totalVotes === 0 && e.winnersCount > 0 && (
+//                               <span className="text-orange-500 ml-1" title="Data sync issue">⚠️</span>
+//                             )}
+//                           </span>
+//                         </div>
+//                         {e.lotteryEnabled && (
+//                           <>
+//                             <div className="flex items-center gap-1">
+//                               <DollarSign size={12} className="text-gray-400" />
+//                               Prize: <span className="font-semibold text-green-600">${e.prizePool.toLocaleString()}</span>
+//                             </div>
+//                             <div className="flex items-center gap-1">
+//                               <Trophy size={12} className="text-gray-400" />
+//                               Winners: <span className={`font-semibold ${e.winnersCount > 0 ? 'text-green-600' : ''}`}>
+//                                 {e.winnersCount > 0 ? `${e.winnersCount} selected` : 'TBD'}
+//                               </span>
+//                             </div>
+//                           </>
+//                         )}
+//                       </div>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       {e.lotteryEnabled ? (
+//                         <div className="space-y-2">
+//                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+//                             e.drawStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+//                             e.drawStatus === 'completed' ? 'bg-green-100 text-green-800' :
+//                             'bg-red-100 text-red-800'
+//                           }`}>
+//                             {e.drawStatus === 'pending' && <Clock size={12}/>}
+//                             {e.drawStatus === 'completed' && <CheckCircle size={12}/>}
+//                             {e.drawStatus === 'failed' && <AlertTriangle size={12}/>}
+//                             {e.drawStatus === 'completed' ? 'Drawn ✓' : e.drawStatus}
+//                           </span>
+//                           {e.drawStatus === 'failed' && (
+//                             <button
+//                               onClick={() => handleManualDraw(e.id)}
+//                               disabled={drawLoading}
+//                               className="w-full px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium flex items-center justify-center gap-1"
+//                             >
+//                               {drawLoading ? <Loader className="animate-spin" size={12} /> : <Play size={12}/>}
+//                               Manual Draw
+//                             </button>
+//                           )}
+//                         </div>
+//                       ) : (
+//                         <span className="text-xs text-gray-500">No lottery</span>
+//                       )}
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       {e.lotteryEnabled ? (
+//                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+//                           e.prizesDistributed ? 'bg-green-100 text-green-800' :
+//                           e.winnersCount > 0 ? 'bg-blue-100 text-blue-800' :
+//                           'bg-yellow-100 text-yellow-800'
+//                         }`}>
+//                           {e.prizesDistributed ? <CheckCircle size={12}/> : <Clock size={12}/>}
+//                           {e.prizesDistributed ? 'Distributed' : e.winnersCount > 0 ? 'Awaiting Claim' : 'Pending'}
+//                         </span>
+//                       ) : (
+//                         <span className="text-xs text-gray-500">N/A</span>
+//                       )}
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <button
+//                         onClick={() => setSelectedElection(e)}
+//                         className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-xs font-medium"
+//                       >
+//                         Details
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+
+//       {/* Debug Panel */}
+//       {debugInfo && (
+//         <details className="bg-gray-100 rounded-lg p-4">
+//           <summary className="cursor-pointer font-medium text-gray-700">🔍 Debug Info (click to expand)</summary>
+//           <pre className="mt-2 text-xs overflow-auto max-h-64 bg-white p-2 rounded">
+//             {JSON.stringify(debugInfo, null, 2)}
+//           </pre>
+//         </details>
+//       )}
+
+//       {/* Modal */}
+//       {selectedElection && (
+//         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+//           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+//             <div className="p-6 border-b flex justify-between items-start">
+//               <div>
+//                 <h2 className="text-xl font-bold">{selectedElection.title}</h2>
+//                 <p className="text-sm text-gray-600">ID: #{selectedElection.id}</p>
+//               </div>
+//               <button onClick={() => setSelectedElection(null)} className="text-gray-400 hover:text-gray-600">
+//                 <X size={24}/>
+//               </button>
+//             </div>
+            
+//             <div className="p-6 space-y-6">
+//               {/* Stats */}
+//               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+//                 <div className="bg-gray-50 p-3 rounded">
+//                   <p className="text-xs text-gray-600">Status</p>
+//                   <p className="font-semibold capitalize">{selectedElection.status}</p>
+//                 </div>
+//                 <div className={`p-3 rounded ${selectedElection.totalVotes === 0 && selectedElection.winnersCount > 0 ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
+//                   <p className="text-xs text-gray-600">Participants</p>
+//                   <p className="font-semibold">
+//                     {selectedElection.totalVotes}
+//                     {selectedElection.totalVotes === 0 && selectedElection.winnersCount > 0 && (
+//                       <span className="text-orange-500 ml-1 text-xs">(data sync issue)</span>
+//                     )}
+//                   </p>
+//                 </div>
+//                 {selectedElection.lotteryEnabled && (
+//                   <>
+//                     <div className="bg-green-50 p-3 rounded border border-green-200">
+//                       <p className="text-xs text-gray-600">Prize Pool</p>
+//                       <p className="font-semibold text-green-600">${selectedElection.prizePool.toLocaleString()}</p>
+//                     </div>
+//                     <div className={`p-3 rounded ${selectedElection.drawStatus === 'completed' ? 'bg-green-50 border border-green-200' : selectedElection.drawStatus === 'failed' ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+//                       <p className="text-xs text-gray-600">Draw Status</p>
+//                       <p className={`font-semibold capitalize ${selectedElection.drawStatus === 'completed' ? 'text-green-600' : selectedElection.drawStatus === 'failed' ? 'text-red-600' : ''}`}>
+//                         {selectedElection.drawStatus === 'completed' ? '✓ Drawn' : selectedElection.drawStatus}
+//                       </p>
+//                     </div>
+//                     <div className={`p-3 rounded ${selectedElection.winnersCount > 0 ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+//                       <p className="text-xs text-gray-600">Winners</p>
+//                       <p className={`font-semibold ${selectedElection.winnersCount > 0 ? 'text-green-600' : ''}`}>
+//                         {selectedElection.winnersCount > 0 ? `${selectedElection.winnersCount} selected` : 'TBD'}
+//                       </p>
+//                     </div>
+//                   </>
+//                 )}
+//               </div>
+
+//               {/* Winners List */}
+//               {selectedElection.lotteryEnabled && selectedElection.winners?.length > 0 && (
+//                 <div className="border rounded-lg overflow-hidden">
+//                   <div className="bg-green-50 px-4 py-3 border-b">
+//                     <h3 className="font-bold flex items-center gap-2">
+//                       <Trophy className="w-5 h-5 text-yellow-600" />
+//                       Winners ({selectedElection.winners.length})
+//                     </h3>
+//                   </div>
+//                   <div className="divide-y max-h-64 overflow-y-auto">
+//                     {selectedElection.winners.map((winner, idx) => (
+//                       <div key={winner.winner_id || idx} className={`p-4 ${winner.rank === 1 ? 'bg-yellow-50' : ''}`}>
+//                         <div className="flex items-center justify-between">
+//                           <div className="flex items-center gap-3">
+//                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+//                               winner.rank === 1 ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' :
+//                               winner.rank === 2 ? 'bg-gray-200 text-gray-700' :
+//                               'bg-purple-100 text-purple-700'
+//                             }`}>
+//                               #{winner.rank || idx + 1}
+//                             </div>
+//                             <div>
+//                               <p className="font-semibold flex items-center gap-2">
+//                                 <User size={14} className="text-gray-500" />
+//                                 {winner.winner_name || winner.display_name || `User #${winner.user_id}`}
+//                               </p>
+//                               <div className="flex items-center gap-2 text-xs text-gray-600">
+//                                 <span>ID: {winner.user_id}</span>
+//                                 {winner.ball_number && (
+//                                   <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+//                                     Ball #{winner.ball_number}
+//                                   </span>
+//                                 )}
+//                               </div>
+//                             </div>
+//                           </div>
+//                           <div className="text-right">
+//                             <p className="text-lg font-bold text-green-600">
+//                               ${parseFloat(winner.prize_amount || 0).toFixed(2)}
+//                             </p>
+//                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+//                               winner.claimed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+//                             }`}>
+//                               {winner.claimed ? <CheckCircle size={10}/> : <Clock size={10}/>}
+//                               {winner.claimed ? 'Claimed' : 'Unclaimed'}
+//                             </span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
+//               )}
+
+//               {/* No Winners */}
+//               {selectedElection.lotteryEnabled && (!selectedElection.winners || selectedElection.winners.length === 0) && (
+//                 <div className={`rounded-lg p-4 text-center ${
+//                   selectedElection.drawStatus === 'failed' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
+//                 }`}>
+//                   {selectedElection.drawStatus === 'failed' ? (
+//                     <>
+//                       <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+//                       <p className="text-red-800 font-medium">Draw Failed</p>
+//                       <p className="text-xs text-red-700 mt-1">Use Manual Draw to select winners</p>
+//                     </>
+//                   ) : (
+//                     <>
+//                       <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+//                       <p className="text-yellow-800 font-medium">No Winners Yet</p>
+//                       <p className="text-xs text-yellow-700 mt-1">Lottery draw pending</p>
+//                     </>
+//                   )}
+//                 </div>
+//               )}
+              
+//               {/* Actions */}
+//               <div className="flex gap-3 pt-4 border-t">
+//                 {selectedElection.drawStatus === 'failed' && (
+//                   <button
+//                     onClick={() => {
+//                       handleManualDraw(selectedElection.id);
+//                       setSelectedElection(null);
+//                     }}
+//                     disabled={drawLoading}
+//                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+//                   >
+//                     {drawLoading ? <Loader className="animate-spin" size={18} /> : <Play size={18}/>}
+//                     Manual Draw
+//                   </button>
+//                 )}
+//                 <button onClick={() => setSelectedElection(null)} className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+//                   Close
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+//last workable code
+// // src/pages/superAdmin/ElectionStatsPage.jsx - DEFINITIVE FIX
+// /**
+//  * This version tries BOTH /info AND /lottery endpoints to handle
+//  * different backend configurations. It also checks the winners
+//  * endpoint as a fallback.
+//  */
+// import React, { useState, useMemo, useEffect } from 'react';
+// import { AlertTriangle, CheckCircle, Clock, Calendar, Play, X, TrendingUp, Loader, Trophy, User, DollarSign, RefreshCw } from 'lucide-react';
+// import { getAllElections } from '../../redux/api/election/electionApi';
+// import { useDrawLotteryMutation } from '../../redux/api/lotteryyy/lotteryDrawApi';
+// import { toast } from 'react-toastify';
+
+// export default function ElectionStatsPage() {
+//   const [filterStatus, setFilterStatus] = useState('all');
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [selectedElection, setSelectedElection] = useState(null);
+//   const [enrichedElections, setEnrichedElections] = useState([]);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [debugInfo, setDebugInfo] = useState(null);
+
+//   const [triggerDraw, { isLoading: drawLoading }] = useDrawLotteryMutation();
+
+//   const getAuthHeaders = () => ({
+//     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+//     'x-user-data': localStorage.getItem('userData') || '{}',
+//     'Content-Type': 'application/json',
+//   });
+
+//   // ✅ Helper: Try fetching from multiple endpoints
+//   const fetchLotteryData = async (electionId, baseUrl) => {
+//     const endpoints = [
+//       `/lottery/elections/${electionId}/info`,     // Correct endpoint (newer)
+//       `/lottery/elections/${electionId}/lottery`,  // Old endpoint (fallback)
+//     ];
+
+//     for (const endpoint of endpoints) {
+//       try {
+//         const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+//         if (res.ok) {
+//           const data = await res.json();
+//           console.log(`✅ Success from ${endpoint}:`, data);
+//           return { data: data.data || data, endpoint };
+//         }
+//       } catch (e) {
+//         console.log(`❌ Failed ${endpoint}:`, e.message);
+//       }
+//     }
+//     return { data: null, endpoint: null };
+//   };
+
+//   // ✅ Helper: Fetch winners separately
+//   const fetchWinners = async (electionId, baseUrl) => {
+//     const endpoints = [
+//       `/lottery/elections/${electionId}/winners`,
+//     ];
+
+//     for (const endpoint of endpoints) {
+//       try {
+//         const res = await fetch(`${baseUrl}${endpoint}`, { headers: getAuthHeaders() });
+//         if (res.ok) {
+//           const data = await res.json();
+//           const winners = data.data?.winners || data.winners || data.data || [];
+//           if (Array.isArray(winners) && winners.length > 0) {
+//             console.log(`✅ Winners from ${endpoint}:`, winners);
+//             return winners;
+//           }
+//         }
+//       } catch (e) {
+//         console.log(`❌ Winners endpoint failed:`, e.message);
+//       }
+//     }
+//     return [];
+//   };
+
+//   useEffect(() => {
+//     const fetchAllElections = async () => {
+//       setIsLoading(true);
+//       setError(null);
+      
+//       const VOTING_SERVICE_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+      
+//       try {
+//         const response = await getAllElections(1, 100, 'all');
+//         const elections = response.data?.elections || response.elections || [];
+//         console.log('📊 Total elections:', elections.length);
+        
+//         const debugData = [];
+        
+//         const enrichedData = await Promise.all(
+//           elections.map(async (election) => {
+//             const electionId = election.election_id || election.id;
+//             if (!electionId) return null;
+
+//             try {
+//               // Fetch lottery info (tries multiple endpoints)
+//               const { data: lotteryData, endpoint: usedEndpoint } = await fetchLotteryData(electionId, VOTING_SERVICE_URL);
+              
+//               // Get winners from lottery data or fetch separately
+//               let winners = lotteryData?.winners || [];
+              
+//               // If no winners in lottery data, try fetching separately
+//               if (winners.length === 0 && election.lottery_enabled) {
+//                 winners = await fetchWinners(electionId, VOTING_SERVICE_URL);
+//               }
+
+//               // Determine hasBeenDrawn from multiple sources
+//               const hasBeenDrawn = 
+//                 lotteryData?.hasBeenDrawn === true || 
+//                 lotteryData?.has_been_drawn === true ||
+//                 winners.length > 0;
+
+//               const now = new Date();
+//               const drawDate = election.lottery_draw_date ? new Date(election.lottery_draw_date) : null;
+              
+//               // Determine draw status
+//               let drawStatus = 'pending';
+//               if (hasBeenDrawn || winners.length > 0) {
+//                 drawStatus = 'completed';
+//               } else if (election.lottery_enabled && drawDate && now > drawDate) {
+//                 drawStatus = 'failed';
+//               }
+
+//               // Debug info for this election
+//               debugData.push({
+//                 id: electionId,
+//                 title: election.title,
+//                 usedEndpoint,
+//                 hasBeenDrawn,
+//                 winnersCount: winners.length,
+//                 drawStatus,
+//                 lotteryData: lotteryData ? 'received' : 'null',
+//               });
+
+//               return {
+//                 id: electionId,
+//                 title: election.title || 'Untitled Election',
+//                 startDate: election.start_date,
+//                 endDate: election.end_date,
+//                 drawDate: election.lottery_draw_date,
+//                 status: election.status || 'draft',
+//                 totalVotes: parseInt(lotteryData?.participantCount || lotteryData?.participant_count || 0),
+//                 prizePool: parseFloat(lotteryData?.totalPrizePool || lotteryData?.total_prize_pool || election.lottery_total_prize_pool || 0),
+//                 winnersCount: winners.length || parseInt(lotteryData?.winnerCount || lotteryData?.winner_count || 0),
+//                 drawStatus,
+//                 prizesDistributed: winners.length > 0,
+//                 lotteryEnabled: election.lottery_enabled === true,
+//                 rewardType: lotteryData?.rewardType || lotteryData?.reward_type,
+//                 winners,
+//               };
+//             } catch (err) {
+//               console.error(`Error for election ${electionId}:`, err);
+//               return {
+//                 id: electionId,
+//                 title: election.title || 'Untitled Election',
+//                 startDate: election.start_date,
+//                 endDate: election.end_date,
+//                 drawDate: election.lottery_draw_date,
+//                 status: election.status || 'draft',
+//                 totalVotes: 0,
+//                 prizePool: 0,
+//                 winnersCount: 0,
+//                 drawStatus: 'pending',
+//                 prizesDistributed: false,
+//                 lotteryEnabled: election.lottery_enabled === true,
+//                 winners: [],
+//               };
+//             }
+//           })
+//         );
+
+//         console.log('🔍 Debug info:', debugData);
+//         setDebugInfo(debugData);
+//         setEnrichedElections(enrichedData.filter(e => e !== null));
+//       } catch (err) {
+//         console.error('Error fetching elections:', err);
+//         setError(err);
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchAllElections();
+//   }, []);
+
+//   const refetch = () => window.location.reload();
+
+//   const filteredElections = useMemo(() => {
+//     return enrichedElections.filter(e => {
+//       if (filterStatus !== 'all') {
+//         if (filterStatus === 'draft' && e.status !== 'draft') return false;
+//         if (filterStatus === 'active' && e.status !== 'active') return false;
+//         if (filterStatus === 'ended' && e.status !== 'ended') return false;
+//         if (filterStatus === 'completed' && e.status !== 'completed') return false;
+//         if (filterStatus === 'failed' && e.drawStatus !== 'failed') return false;
+//         if (filterStatus === 'drawn' && e.drawStatus !== 'completed') return false;
+//       }
+      
+//       if (searchTerm && !e.title.toLowerCase().includes(searchTerm.toLowerCase()) && !e.id.toString().includes(searchTerm)) {
+//         return false;
+//       }
+      
+//       return true;
+//     });
+//   }, [enrichedElections, searchTerm, filterStatus]);
+
+//   const stats = useMemo(() => {
+//     const totalPrize = enrichedElections.reduce((sum, e) => sum + (parseFloat(e.prizePool) || 0), 0);
+//     const totalVotes = enrichedElections.reduce((sum, e) => sum + (parseInt(e.totalVotes) || 0), 0);
+
+//     return {
+//       totalElections: enrichedElections.length,
+//       activeElections: enrichedElections.filter(e => e.status === 'active').length,
+//       totalPrizePool: totalPrize,
+//       totalVotes: totalVotes,
+//       failedDraws: enrichedElections.filter(e => e.drawStatus === 'failed').length,
+//       completedDraws: enrichedElections.filter(e => e.drawStatus === 'completed').length,
+//     };
+//   }, [enrichedElections]);
+
+//   const filterCounts = useMemo(() => ({
+//     all: enrichedElections.length,
+//     draft: enrichedElections.filter(e => e.status === 'draft').length,
+//     active: enrichedElections.filter(e => e.status === 'active').length,
+//     ended: enrichedElections.filter(e => e.status === 'ended').length,
+//     completed: enrichedElections.filter(e => e.status === 'completed').length,
+//     failed: enrichedElections.filter(e => e.drawStatus === 'failed').length,
+//     drawn: enrichedElections.filter(e => e.drawStatus === 'completed').length,
+//   }), [enrichedElections]);
+
+//   const handleManualDraw = async (electionId) => {
+//     if (drawLoading) return;
+//     if (!confirm('Are you sure you want to trigger a manual lottery draw?')) return;
+    
+//     try {
+//       await triggerDraw(electionId).unwrap();
+//       toast.success('Lottery draw completed successfully!');
+//       refetch();
+//     } catch (error) {
+//       console.error('Manual draw error:', error);
+//       toast.error(error?.data?.message || 'Failed to trigger lottery draw');
+//     }
+//   };
+
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'N/A';
+//     try {
+//       return new Date(dateString).toLocaleDateString();
+//     } catch {
+//       return 'Invalid Date';
+//     }
+//   };
+// /*eslint-disable*/
+//   const getDaysUntilDraw = (drawDate) => {
+//     if (!drawDate) return null;
+//     try {
+//       const now = new Date();
+//       const draw = new Date(drawDate);
+//       return Math.ceil((draw - now) / (1000 * 60 * 60 * 24));
+//     } catch {
+//       return null;
+//     }
+//   };
+
+//   if (error) {
+//     return (
+//       <div className="space-y-6">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//         </div>
+        
+//         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+//           <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-3" />
+//           <p className="text-red-800 font-semibold mb-2">Error Loading Elections</p>
+//           <p className="text-sm text-red-600">{error?.message || 'Failed to load elections'}</p>
+//           <button onClick={refetch} className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Retry</button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (isLoading) {
+//     return (
+//       <div className="space-y-6">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//         </div>
+        
+//         <div className="flex items-center justify-center min-h-[400px]">
+//           <div className="text-center">
+//             <Loader className="animate-spin text-purple-600 mx-auto mb-4" size={48} />
+//             <p className="text-gray-600">Loading elections with lottery data...</p>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex items-center justify-between">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+//             <TrendingUp className="w-8 h-8 text-purple-600" />
+//             Election Statistics & Monitoring
+//           </h1>
+//           <p className="text-gray-600 mt-2">Election oversight, draw management, and prize tracking</p>
+//         </div>
+//         <button 
+//           onClick={refetch}
+//           className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2"
+//         >
+//           <RefreshCw size={18} />
+//           Refresh
+//         </button>
+//       </div>
+
+//       {/* Stats Cards */}
+//       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+//         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-red-700 font-medium">Failed Draws</p>
+//               <p className="text-3xl font-bold text-red-600 mt-1">{stats.failedDraws}</p>
+//               <p className="text-xs text-red-600 mt-1">Requires manual draw, this is a fallback, if any case autodraw fails</p>
+//             </div>
+//             <AlertTriangle className="w-10 h-10 text-red-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-green-700 font-medium">Completed Draws</p>
+//               <p className="text-3xl font-bold text-green-600 mt-1">{stats.completedDraws}</p>
+//               <p className="text-xs text-green-600 mt-1">Winners selected</p>
+//             </div>
+//             <Trophy className="w-10 h-10 text-green-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-blue-700 font-medium">Total Elections</p>
+//               <p className="text-3xl font-bold text-blue-600 mt-1">{stats.totalElections}</p>
+//               <p className="text-xs text-blue-600 mt-1">{stats.activeElections} active</p>
+//             </div>
+//             <Clock className="w-10 h-10 text-blue-400" />
+//           </div>
+//         </div>
+
+//         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm text-purple-700 font-medium">Total Prize Pool</p>
+//               <p className="text-2xl font-bold text-purple-600 mt-1">
+//                 ${(stats.totalPrizePool || 0).toLocaleString()}
+//               </p>
+//               <p className="text-xs text-purple-600 mt-1">All elections</p>
+//             </div>
+//             <DollarSign className="w-10 h-10 text-purple-400" />
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Filters */}
+//       <div className="bg-white rounded-lg shadow p-4">
+//         <p className="text-sm font-medium text-gray-700 mb-3">Filter by Status</p>
+//         <div className="flex flex-wrap gap-2">
+//           {[
+//             {id:'all', label:'All', count: filterCounts.all},
+//             {id:'active', label:'Active', count: filterCounts.active},
+//             {id:'ended', label:'Ended', count: filterCounts.ended},
+//             {id:'drawn', label:'✓ Draw Completed', count: filterCounts.drawn, color: 'green'},
+//             {id:'failed', label:'⚠ Failed Draws', count: filterCounts.failed, color: 'red'},
+//           ].map(f => (
+//             <button
+//               key={f.id}
+//               onClick={() => setFilterStatus(f.id)}
+//               className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+//                 filterStatus === f.id 
+//                   ? f.color === 'green' ? 'bg-green-600 text-white'
+//                   : f.color === 'red' ? 'bg-red-600 text-white'
+//                   : 'bg-purple-600 text-white'
+//                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+//               }`}
+//             >
+//               {f.label} ({f.count})
+//             </button>
+//           ))}
+//         </div>
+//       </div>
+
+//       {/* Search */}
+//       <div className="bg-white rounded-lg shadow p-4">
+//         <input
+//           type="text"
+//           placeholder="Search by name, election ID..."
+//           value={searchTerm}
+//           onChange={e => setSearchTerm(e.target.value)}
+//           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500"
+//         />
+//       </div>
+
+//       <p className="text-sm text-gray-600">Showing {filteredElections.length} elections</p>
+
+//       {/* Table */}
+//       <div className="bg-white rounded-lg shadow overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gray-50 border-b border-gray-200">
+//               <tr>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timeline</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Election</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statistics</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Draw Status</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prize Status</th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody className="divide-y divide-gray-200">
+//               {filteredElections.length === 0 ? (
+//                 <tr>
+//                   <td colSpan="6" className="px-6 py-12 text-center">
+//                     <p className="text-gray-600">No elections found</p>
+//                   </td>
+//                 </tr>
+//               ) : (
+//                 filteredElections.map(e => (
+//                   <tr key={e.id} className={`hover:bg-gray-50 ${e.drawStatus === 'completed' ? 'bg-green-50/50' : ''}`}>
+//                     <td className="px-4 py-4">
+//                       <div className="text-xs space-y-1">
+//                         <div className="text-gray-600">Start: {formatDate(e.startDate)}</div>
+//                         <div className="text-gray-600">End: {formatDate(e.endDate)}</div>
+//                         {e.lotteryEnabled && e.drawDate && (
+//                           <div className="text-purple-600 font-medium pt-1 border-t">
+//                             Draw: {formatDate(e.drawDate)}
+//                             {e.drawStatus === 'completed' && (
+//                               <span className="ml-1 text-green-600">✓</span>
+//                             )}
+//                           </div>
+//                         )}
+//                       </div>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <div className="text-sm font-medium text-gray-900">{e.title}</div>
+//                       <div className="text-xs text-gray-500">ID: #{e.id}</div>
+//                       <span className={`mt-1 inline-block px-2 py-0.5 rounded text-xs font-medium ${
+//                         e.status==='active'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'
+//                       }`}>
+//                         {e.status}
+//                       </span>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <div className="text-xs space-y-1">
+//                         <div>Participants: <span className="font-semibold">{e.totalVotes}</span></div>
+//                         {e.lotteryEnabled && (
+//                           <>
+//                             <div>Prize: <span className="font-semibold text-green-600">${e.prizePool.toLocaleString()}</span></div>
+//                             <div>Winners: <span className={`font-semibold ${e.winnersCount > 0 ? 'text-green-600' : ''}`}>
+//                               {e.winnersCount > 0 ? `${e.winnersCount} selected` : 'TBD'}
+//                             </span></div>
+//                           </>
+//                         )}
+//                       </div>
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       {e.lotteryEnabled ? (
+//                         <div className="space-y-2">
+//                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+//                             e.drawStatus==='pending'?'bg-yellow-100 text-yellow-800':
+//                             e.drawStatus==='completed'?'bg-green-100 text-green-800':
+//                             'bg-red-100 text-red-800'
+//                           }`}>
+//                             {e.drawStatus==='pending'&&<Clock size={12}/>}
+//                             {e.drawStatus==='completed'&&<CheckCircle size={12}/>}
+//                             {e.drawStatus==='failed'&&<AlertTriangle size={12}/>}
+//                             {e.drawStatus === 'completed' ? 'Drawn ✓' : e.drawStatus}
+//                           </span>
+//                           {e.drawStatus==='failed'&&(
+//                             <button
+//                               onClick={() => handleManualDraw(e.id)}
+//                               disabled={drawLoading}
+//                               className="w-full px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium flex items-center justify-center gap-1"
+//                             >
+//                               {drawLoading ? <Loader className="animate-spin" size={12} /> : <Play size={12}/>}
+//                               Manual Draw
+//                             </button>
+//                           )}
+//                         </div>
+//                       ) : (
+//                         <span className="text-xs text-gray-500">No lottery</span>
+//                       )}
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       {e.lotteryEnabled ? (
+//                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+//                           e.prizesDistributed?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'
+//                         }`}>
+//                           {e.prizesDistributed?<CheckCircle size={12}/>:<Clock size={12}/>}
+//                           {e.prizesDistributed?'Distributed':'Pending'}
+//                         </span>
+//                       ) : (
+//                         <span className="text-xs text-gray-500">N/A</span>
+//                       )}
+//                     </td>
+//                     <td className="px-4 py-4">
+//                       <button
+//                         onClick={() => setSelectedElection(e)}
+//                         className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-xs font-medium"
+//                       >
+//                         Details
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+
+//       {/* Debug Panel (remove in production) */}
+//       {debugInfo && (
+//         <details className="bg-gray-100 rounded-lg p-4">
+//           <summary className="cursor-pointer font-medium text-gray-700">🔍 Debug Info (click to expand)</summary>
+//           <pre className="mt-2 text-xs overflow-auto max-h-64 bg-white p-2 rounded">
+//             {JSON.stringify(debugInfo, null, 2)}
+//           </pre>
+//         </details>
+//       )}
+
+//       {/* Modal */}
+//       {selectedElection && (
+//         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+//           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+//             <div className="p-6 border-b flex justify-between items-start">
+//               <div>
+//                 <h2 className="text-xl font-bold">{selectedElection.title}</h2>
+//                 <p className="text-sm text-gray-600">ID: #{selectedElection.id}</p>
+//               </div>
+//               <button onClick={() => setSelectedElection(null)} className="text-gray-400 hover:text-gray-600">
+//                 <X size={24}/>
+//               </button>
+//             </div>
+            
+//             <div className="p-6 space-y-6">
+//               {/* Stats */}
+//               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+//                 <div className="bg-gray-50 p-3 rounded">
+//                   <p className="text-xs text-gray-600">Status</p>
+//                   <p className="font-semibold capitalize">{selectedElection.status}</p>
+//                 </div>
+//                 <div className="bg-gray-50 p-3 rounded">
+//                   <p className="text-xs text-gray-600">Participants</p>
+//                   <p className="font-semibold">{selectedElection.totalVotes}</p>
+//                 </div>
+//                 {selectedElection.lotteryEnabled && (
+//                   <>
+//                     <div className="bg-green-50 p-3 rounded border border-green-200">
+//                       <p className="text-xs text-gray-600">Prize Pool</p>
+//                       <p className="font-semibold text-green-600">${selectedElection.prizePool.toLocaleString()}</p>
+//                     </div>
+//                     <div className={`p-3 rounded ${selectedElection.drawStatus === 'completed' ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+//                       <p className="text-xs text-gray-600">Draw Status</p>
+//                       <p className={`font-semibold capitalize ${selectedElection.drawStatus === 'completed' ? 'text-green-600' : ''}`}>
+//                         {selectedElection.drawStatus === 'completed' ? '✓ Drawn' : selectedElection.drawStatus}
+//                       </p>
+//                     </div>
+//                     <div className={`p-3 rounded ${selectedElection.winnersCount > 0 ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+//                       <p className="text-xs text-gray-600">Winners</p>
+//                       <p className={`font-semibold ${selectedElection.winnersCount > 0 ? 'text-green-600' : ''}`}>
+//                         {selectedElection.winnersCount > 0 ? `${selectedElection.winnersCount} selected` : 'TBD'}
+//                       </p>
+//                     </div>
+//                   </>
+//                 )}
+//               </div>
+
+//               {/* Winners List */}
+//               {selectedElection.lotteryEnabled && selectedElection.winners?.length > 0 && (
+//                 <div className="border rounded-lg overflow-hidden">
+//                   <div className="bg-green-50 px-4 py-3 border-b">
+//                     <h3 className="font-bold flex items-center gap-2">
+//                       <Trophy className="w-5 h-5 text-yellow-600" />
+//                       Winners ({selectedElection.winners.length})
+//                     </h3>
+//                   </div>
+//                   <div className="divide-y max-h-64 overflow-y-auto">
+//                     {selectedElection.winners.map((winner, idx) => (
+//                       <div key={winner.winner_id || idx} className={`p-4 ${winner.rank === 1 ? 'bg-yellow-50' : ''}`}>
+//                         <div className="flex items-center justify-between">
+//                           <div className="flex items-center gap-3">
+//                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+//                               winner.rank === 1 ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' :
+//                               winner.rank === 2 ? 'bg-gray-200 text-gray-700' :
+//                               'bg-purple-100 text-purple-700'
+//                             }`}>
+//                               #{winner.rank}
+//                             </div>
+//                             <div>
+//                               <p className="font-semibold flex items-center gap-2">
+//                                 <User size={14} className="text-gray-500" />
+//                                 {winner.winner_name || winner.display_name || `User #${winner.user_id}`}
+//                               </p>
+//                               <div className="flex items-center gap-2 text-xs text-gray-600">
+//                                 <span>ID: {winner.user_id}</span>
+//                                 {winner.ball_number && (
+//                                   <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+//                                     Ball #{winner.ball_number}
+//                                   </span>
+//                                 )}
+//                               </div>
+//                             </div>
+//                           </div>
+//                           <div className="text-right">
+//                             <p className="text-lg font-bold text-green-600">
+//                               ${parseFloat(winner.prize_amount || 0).toFixed(2)}
+//                             </p>
+//                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+//                               winner.claimed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+//                             }`}>
+//                               {winner.claimed ? <CheckCircle size={10}/> : <Clock size={10}/>}
+//                               {winner.claimed ? 'Claimed' : 'Unclaimed'}
+//                             </span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
+//               )}
+
+//               {/* No Winners */}
+//               {selectedElection.lotteryEnabled && (!selectedElection.winners || selectedElection.winners.length === 0) && (
+//                 <div className={`rounded-lg p-4 text-center ${
+//                   selectedElection.drawStatus === 'failed' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
+//                 }`}>
+//                   {selectedElection.drawStatus === 'failed' ? (
+//                     <>
+//                       <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+//                       <p className="text-red-800 font-medium">Draw Failed</p>
+//                       <p className="text-xs text-red-700 mt-1">Use Manual Draw to select winners</p>
+//                     </>
+//                   ) : (
+//                     <>
+//                       <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+//                       <p className="text-yellow-800 font-medium">No Winners Yet</p>
+//                       <p className="text-xs text-yellow-700 mt-1">Lottery draw pending</p>
+//                     </>
+//                   )}
+//                 </div>
+//               )}
+              
+//               {/* Actions */}
+//               <div className="flex gap-3 pt-4 border-t">
+//                 {selectedElection.drawStatus === 'failed' && (
+//                   <button
+//                     onClick={() => {
+//                       handleManualDraw(selectedElection.id);
+//                       setSelectedElection(null);
+//                     }}
+//                     disabled={drawLoading}
+//                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+//                   >
+//                     {drawLoading ? <Loader className="animate-spin" size={18} /> : <Play size={18}/>}
+//                     Manual Draw
+//                   </button>
+//                 )}
+//                 <button onClick={() => setSelectedElection(null)} className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+//                   Close
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 // // src/pages/superAdmin/ElectionStatsPage.jsx - FIXED VERSION
 // /**
 //  * FIXED: Proper detection of draw status and prize distribution

@@ -44,7 +44,7 @@ export default function AdminLayout({ children }) {
         { path: '/admin/encryption-status', label: 'Encryption Status', icon: '🛡️' },
         { path: '/admin/verification-tools', label: 'Verification Tools', icon: '✓' },
         { path: '/admin/compliance-reports', label: 'Compliance Reports', icon: '📊' },
-        { path: '/admin/election-stats', label: 'Election Stats', icon: '📊' }
+        { path: '/admin/election-stats', label: 'Election Status', icon: '📊' }
       ],
     },
     {
