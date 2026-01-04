@@ -266,7 +266,7 @@ export default function UserRoleAssignment() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">User Role Assignments</h2>
-          <p className="text-gray-600 mt-1">Manage user role assignments and permissions </p>
+          <p className="text-gray-600 mt-1">Manage user role assignments and permissions</p>
         </div>
         <button
           onClick={() => setShowAssignModal(true)}
