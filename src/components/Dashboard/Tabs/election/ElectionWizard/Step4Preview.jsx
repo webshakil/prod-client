@@ -33,6 +33,7 @@ import { publishElection, updateDraft } from '../../../../../redux/api/election/
 
 export default function Step4Preview({ data, onBack, onPublish, electionId }) {
   const navigate = useNavigate();
+  /*eslint-disable*/
   
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);

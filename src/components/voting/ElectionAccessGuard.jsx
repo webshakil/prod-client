@@ -1,5 +1,5 @@
 // src/components/voting/ElectionAccessGuard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 /*eslint-disable*/
 import { useSelector } from 'react-redux';

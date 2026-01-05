@@ -1,209 +1,403 @@
 // src/components/Dashboard/Tabs/voting/RankedChoiceBallot.jsx
-// ✅ Clean Ranked Choice Ballot - No embedded pie chart
-import React, { useState } from 'react';
+// ✅ Ranked Choice Voting - Rank candidates by preference (1st, 2nd, 3rd, etc.)
+import React from 'react';
+import { AlertCircle } from 'lucide-react';
 
 export default function RankedChoiceBallot({ 
   ballot,
-  answers,
+  answers = {},
   onAnswersChange,
   disabled = false,
   /*eslint-disable*/
   validationErrors = [],
   electionId,
 }) {
-  const question = ballot?.questions?.[0];
-  const candidates = question?.options || [];
-  const questionId = question?.id;
-  
-  const [rankings, setRankings] = useState(answers[questionId] || {});
+  const questions = ballot?.questions || [];
 
-  const handleRankSelect = (candidateId, rank) => {
+  // answers format: { questionId: { candidateId: rank, candidateId2: rank2, ... } }
+  const handleRankSelect = (questionId, candidateId, rank) => {
     if (disabled) return;
-
-    const candidateWithThisRank = Object.entries(rankings).find(
-      ([id, r]) => r === rank && parseInt(id) !== candidateId
-    );
-
-    let newRankings = { ...rankings };
-
-    if (candidateWithThisRank) {
-      const [otherId] = candidateWithThisRank;
-      newRankings[otherId] = rankings[candidateId] || null;
-    }
-
-    newRankings[candidateId] = rank;
-
-    setRankings(newRankings);
+    
+    const currentAnswers = answers[questionId] || {};
+    
+    // Remove this rank from any other candidate
+    const newAnswers = {};
+    Object.keys(currentAnswers).forEach(cId => {
+      if (currentAnswers[cId] !== rank) {
+        newAnswers[cId] = currentAnswers[cId];
+      }
+    });
+    
+    // Remove any existing rank for this candidate
+    delete newAnswers[candidateId];
+    
+    // Assign new rank to this candidate
+    newAnswers[candidateId] = rank;
+    
     onAnswersChange({
-      [questionId]: newRankings,
+      ...answers,
+      [questionId]: newAnswers,
     });
   };
 
-  const clearRank = (candidateId) => {
+  const clearRank = (questionId, candidateId) => {
     if (disabled) return;
-    const newRankings = { ...rankings };
-    delete newRankings[candidateId];
-    setRankings(newRankings);
+    
+    const currentAnswers = { ...(answers[questionId] || {}) };
+    delete currentAnswers[candidateId];
+    
     onAnswersChange({
-      [questionId]: newRankings,
+      ...answers,
+      [questionId]: currentAnswers,
     });
   };
 
-  if (!question) {
+  if (!questions || questions.length === 0) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
         <p className="text-yellow-800 font-semibold">No ballot questions available</p>
       </div>
     );
   }
 
-  const rankColumns = [1, 2, 3, 4, 5];
-
   return (
-    <div className="bg-white rounded-lg border-3 border-gray-400 shadow-lg overflow-hidden">
-      <div className="bg-gray-100 border-b-3 border-gray-400 px-6 py-4">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-1">
-          RANKED-CHOICE VOTING
-        </h2>
-        <p className="text-center text-gray-700 font-medium">
-          {question.question_text}
-        </p>
-      </div>
+    <div className="space-y-8">
+      {questions.map((question, questionIndex) => {
+        const candidates = question?.options || [];
+        const questionId = question?.id;
+        const questionAnswers = answers[questionId] || {};
+        const questionTitle = question?.question_text || question?.title || `Question ${questionIndex + 1}`;
+        const maxRanks = Math.min(candidates.length, 5); // Show up to 5 rank columns
 
-      <div className="bg-purple-50 border-b-2 border-purple-200 px-6 py-3">
-        <p className="text-sm text-purple-900 font-semibold text-center">
-          Rank candidates by preference. Elimination rounds until majority.
-        </p>
-      </div>
+        return (
+          <div 
+            key={questionId || questionIndex} 
+            className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-300"
+          >
+            {/* Question Header */}
+            <div className="bg-indigo-800 text-white py-4 px-6">
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-indigo-800 text-sm font-bold px-3 py-1 rounded">
+                  Q{questionIndex + 1}
+                </span>
+                <h3 className="text-lg font-bold flex-1">
+                  {questionTitle}
+                </h3>
+              </div>
+            </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-200 border-b-2 border-gray-400">
-              <th className="text-left px-4 py-3 font-bold text-gray-800 border-r border-gray-300 text-sm">
-                Candidate
-              </th>
-              {rankColumns.map(rank => (
-                <th 
-                  key={rank}
-                  className="text-center px-2 py-3 font-bold text-gray-800 border-r border-gray-300 w-16 text-sm"
-                >
-                  {rank === 1 && '1st'}
-                  {rank === 2 && '2nd'}
-                  {rank === 3 && '3rd'}
-                  {rank === 4 && '4th'}
-                  {rank === 5 && '5th'}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {candidates.map((candidate, index) => {
-              const candidateRank = rankings[candidate.id];
-              const candidateLetter = String.fromCharCode(65 + index);
-              
-              return (
-                <tr 
-                  key={candidate.id}
-                  className="border-b border-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-4 border-r border-gray-300">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {candidateLetter}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {candidate.option_text}
-                        </p>
-                        {candidateRank && (
-                          <p className="text-xs text-purple-600 font-semibold">
-                            Ranked: {candidateRank === 1 ? '1st' : candidateRank === 2 ? '2nd' : candidateRank === 3 ? '3rd' : `${candidateRank}th`}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
+            {/* Ballot Title */}
+            <div className="text-center py-4 border-b border-gray-300 bg-indigo-50">
+              <h2 className="text-lg font-bold text-indigo-900">
+                RANKED-CHOICE VOTING
+              </h2>
+              <p className="text-sm text-indigo-700 mt-1">
+                Rank candidates in order of preference (1st = most preferred)
+              </p>
+            </div>
 
-                  {rankColumns.map(rank => {
-                    const isSelected = candidateRank === rank;
-                    
-                    return (
-                      <td 
-                        key={rank}
-                        className="px-2 py-4 border-r border-gray-300 text-center"
+            {/* Ballot Table */}
+            <div className="p-4 overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left pb-3 pr-4 text-indigo-900 font-bold border-b-2 border-indigo-300">
+                      Candidate
+                    </th>
+                    {Array.from({ length: maxRanks }, (_, i) => (
+                      <th 
+                        key={i} 
+                        className="text-center pb-3 px-2 text-indigo-700 text-xs font-bold w-12 border-b-2 border-indigo-300"
                       >
-                        <div className="flex justify-center">
-                          <button
-                            onClick={() => 
-                              isSelected 
-                                ? clearRank(candidate.id)
-                                : handleRankSelect(candidate.id, rank)
-                            }
-                            disabled={disabled}
-                            className={`w-10 h-10 rounded-full border-3 flex items-center justify-center font-bold text-lg transition-all ${
-                              isSelected
-                                ? 'border-purple-600 bg-purple-600 text-white shadow-lg'
-                                : 'border-gray-400 bg-white hover:border-purple-400 hover:bg-purple-50 text-gray-600'
-                            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                          >
-                            {isSelected && '●'}
-                          </button>
-                        </div>
-                      </td>
+                        {i + 1}{i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th'}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates.map((candidate, index) => {
+                    const candidateName = candidate?.option_text || candidate?.name || `Candidate ${index + 1}`;
+                    const candidateRank = questionAnswers[candidate.id];
+
+                    return (
+                      <tr 
+                        key={candidate.id || index} 
+                        className={`border-b border-gray-200 ${candidateRank ? 'bg-indigo-50' : ''}`}
+                      >
+                        <td className="py-3 pr-4">
+                          <span className="font-semibold text-indigo-900">
+                            {candidateName}
+                          </span>
+                        </td>
+
+                        {Array.from({ length: maxRanks }, (_, colIndex) => {
+                          const rank = colIndex + 1;
+                          const isSelected = candidateRank === rank;
+                          // Check if this rank is used by another candidate
+                          const rankUsedBy = Object.keys(questionAnswers).find(
+                            cId => questionAnswers[cId] === rank && cId !== String(candidate.id)
+                          );
+
+                          return (
+                            <td key={colIndex} className="text-center py-3 px-2">
+                              <div className="flex justify-center">
+                                <div 
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      clearRank(questionId, candidate.id);
+                                    } else {
+                                      handleRankSelect(questionId, candidate.id, rank);
+                                    }
+                                  }}
+                                  className={`
+                                    w-7 h-7 rounded-full border-2 cursor-pointer transition-all
+                                    flex items-center justify-center
+                                    ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-indigo-500'}
+                                    ${isSelected 
+                                      ? 'border-indigo-800 bg-indigo-800' 
+                                      : 'border-gray-400 bg-white'
+                                    }
+                                  `}
+                                >
+                                  {isSelected && (
+                                    <span className="text-white text-xs font-bold">●</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
                     );
                   })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                </tbody>
+              </table>
+            </div>
 
-      <div className="bg-gray-50 border-t-2 border-gray-300 px-6 py-3">
-        <p className="text-xs text-gray-700 text-center italic">
-          Voters rank candidates by preference. Elimination rounds until majority.
-        </p>
-      </div>
-
-      <div className="bg-purple-50 border-t-2 border-purple-300 px-6 py-3">
-        <p className="text-purple-900 font-bold text-center mb-2 text-sm">Your Ranking:</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {rankColumns.map(rank => {
-            const candidateId = Object.keys(rankings).find(id => rankings[id] === rank);
-            const candidate = candidates.find(c => c.id === parseInt(candidateId));
-            
-            return (
-              <div 
-                key={rank}
-                className={`px-3 py-1 rounded-lg border-2 text-sm ${
-                  candidate 
-                    ? 'bg-purple-100 border-purple-400' 
-                    : 'bg-gray-100 border-gray-300'
-                }`}
-              >
-                <span className="font-bold text-gray-700">
-                  {rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`}:
-                </span>
-                <span className="ml-1 text-gray-900 text-xs">
-                  {candidate ? candidate.option_text : '—'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {Object.keys(rankings).length === 0 && question.is_required && (
-        <div className="bg-orange-50 border-t-2 border-orange-300 px-6 py-3">
-          <p className="text-orange-800 font-semibold text-center text-sm">
-            ⚠️ Please rank at least one candidate
-          </p>
-        </div>
-      )}
+            {/* Selection Summary */}
+            <div className="bg-indigo-50 border-t border-indigo-200 px-4 py-3">
+              <p className="text-indigo-800 text-sm font-medium">
+                {Object.keys(questionAnswers).length > 0 ? (
+                  <>✓ You have ranked {Object.keys(questionAnswers).length} candidate(s)</>
+                ) : (
+                  <>⚠ Please rank at least one candidate</>
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
+//last workable code
+// // src/components/Dashboard/Tabs/voting/RankedChoiceBallot.jsx
+// // ✅ Clean Ranked Choice Ballot - No embedded pie chart
+// import React, { useState } from 'react';
+
+// export default function RankedChoiceBallot({ 
+//   ballot,
+//   answers,
+//   onAnswersChange,
+//   disabled = false,
+//   /*eslint-disable*/
+//   validationErrors = [],
+//   electionId,
+// }) {
+//   const question = ballot?.questions?.[0];
+//   const candidates = question?.options || [];
+//   const questionId = question?.id;
+  
+//   const [rankings, setRankings] = useState(answers[questionId] || {});
+
+//   const handleRankSelect = (candidateId, rank) => {
+//     if (disabled) return;
+
+//     const candidateWithThisRank = Object.entries(rankings).find(
+//       ([id, r]) => r === rank && parseInt(id) !== candidateId
+//     );
+
+//     let newRankings = { ...rankings };
+
+//     if (candidateWithThisRank) {
+//       const [otherId] = candidateWithThisRank;
+//       newRankings[otherId] = rankings[candidateId] || null;
+//     }
+
+//     newRankings[candidateId] = rank;
+
+//     setRankings(newRankings);
+//     onAnswersChange({
+//       [questionId]: newRankings,
+//     });
+//   };
+
+//   const clearRank = (candidateId) => {
+//     if (disabled) return;
+//     const newRankings = { ...rankings };
+//     delete newRankings[candidateId];
+//     setRankings(newRankings);
+//     onAnswersChange({
+//       [questionId]: newRankings,
+//     });
+//   };
+
+//   if (!question) {
+//     return (
+//       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+//         <p className="text-yellow-800 font-semibold">No ballot questions available</p>
+//       </div>
+//     );
+//   }
+
+//   const rankColumns = [1, 2, 3, 4, 5];
+
+//   return (
+//     <div className="bg-white rounded-lg border-3 border-gray-400 shadow-lg overflow-hidden">
+//       <div className="bg-gray-100 border-b-3 border-gray-400 px-6 py-4">
+//         <h2 className="text-2xl font-bold text-gray-900 text-center mb-1">
+//           RANKED-CHOICE VOTING
+//         </h2>
+//         <p className="text-center text-gray-700 font-medium">
+//           {question.question_text}
+//         </p>
+//       </div>
+
+//       <div className="bg-purple-50 border-b-2 border-purple-200 px-6 py-3">
+//         <p className="text-sm text-purple-900 font-semibold text-center">
+//           Rank candidates by preference. Elimination rounds until majority.
+//         </p>
+//       </div>
+
+//       <div className="overflow-x-auto">
+//         <table className="w-full border-collapse">
+//           <thead>
+//             <tr className="bg-gray-200 border-b-2 border-gray-400">
+//               <th className="text-left px-4 py-3 font-bold text-gray-800 border-r border-gray-300 text-sm">
+//                 Candidate
+//               </th>
+//               {rankColumns.map(rank => (
+//                 <th 
+//                   key={rank}
+//                   className="text-center px-2 py-3 font-bold text-gray-800 border-r border-gray-300 w-16 text-sm"
+//                 >
+//                   {rank === 1 && '1st'}
+//                   {rank === 2 && '2nd'}
+//                   {rank === 3 && '3rd'}
+//                   {rank === 4 && '4th'}
+//                   {rank === 5 && '5th'}
+//                 </th>
+//               ))}
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {candidates.map((candidate, index) => {
+//               const candidateRank = rankings[candidate.id];
+//               const candidateLetter = String.fromCharCode(65 + index);
+              
+//               return (
+//                 <tr 
+//                   key={candidate.id}
+//                   className="border-b border-gray-300 hover:bg-gray-50 transition-colors"
+//                 >
+//                   <td className="px-4 py-4 border-r border-gray-300">
+//                     <div className="flex items-center gap-2">
+//                       <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+//                         {candidateLetter}
+//                       </div>
+//                       <div>
+//                         <p className="font-semibold text-gray-900 text-sm">
+//                           {candidate.option_text}
+//                         </p>
+//                         {candidateRank && (
+//                           <p className="text-xs text-purple-600 font-semibold">
+//                             Ranked: {candidateRank === 1 ? '1st' : candidateRank === 2 ? '2nd' : candidateRank === 3 ? '3rd' : `${candidateRank}th`}
+//                           </p>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </td>
+
+//                   {rankColumns.map(rank => {
+//                     const isSelected = candidateRank === rank;
+                    
+//                     return (
+//                       <td 
+//                         key={rank}
+//                         className="px-2 py-4 border-r border-gray-300 text-center"
+//                       >
+//                         <div className="flex justify-center">
+//                           <button
+//                             onClick={() => 
+//                               isSelected 
+//                                 ? clearRank(candidate.id)
+//                                 : handleRankSelect(candidate.id, rank)
+//                             }
+//                             disabled={disabled}
+//                             className={`w-10 h-10 rounded-full border-3 flex items-center justify-center font-bold text-lg transition-all ${
+//                               isSelected
+//                                 ? 'border-purple-600 bg-purple-600 text-white shadow-lg'
+//                                 : 'border-gray-400 bg-white hover:border-purple-400 hover:bg-purple-50 text-gray-600'
+//                             } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+//                           >
+//                             {isSelected && '●'}
+//                           </button>
+//                         </div>
+//                       </td>
+//                     );
+//                   })}
+//                 </tr>
+//               );
+//             })}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       <div className="bg-gray-50 border-t-2 border-gray-300 px-6 py-3">
+//         <p className="text-xs text-gray-700 text-center italic">
+//           Voters rank candidates by preference. Elimination rounds until majority.
+//         </p>
+//       </div>
+
+//       <div className="bg-purple-50 border-t-2 border-purple-300 px-6 py-3">
+//         <p className="text-purple-900 font-bold text-center mb-2 text-sm">Your Ranking:</p>
+//         <div className="flex flex-wrap justify-center gap-2">
+//           {rankColumns.map(rank => {
+//             const candidateId = Object.keys(rankings).find(id => rankings[id] === rank);
+//             const candidate = candidates.find(c => c.id === parseInt(candidateId));
+            
+//             return (
+//               <div 
+//                 key={rank}
+//                 className={`px-3 py-1 rounded-lg border-2 text-sm ${
+//                   candidate 
+//                     ? 'bg-purple-100 border-purple-400' 
+//                     : 'bg-gray-100 border-gray-300'
+//                 }`}
+//               >
+//                 <span className="font-bold text-gray-700">
+//                   {rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`}:
+//                 </span>
+//                 <span className="ml-1 text-gray-900 text-xs">
+//                   {candidate ? candidate.option_text : '—'}
+//                 </span>
+//               </div>
+//             );
+//           })}
+//         </div>
+//       </div>
+
+//       {Object.keys(rankings).length === 0 && question.is_required && (
+//         <div className="bg-orange-50 border-t-2 border-orange-300 px-6 py-3">
+//           <p className="text-orange-800 font-semibold text-center text-sm">
+//             ⚠️ Please rank at least one candidate
+//           </p>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 //last workable code
 // // src/components/Dashboard/Tabs/voting/RankedChoiceBallot.jsx
 // // ✅ 100% PDF #10 COMPLIANT - Ranked Choice with Real-time Pie Chart (5 columns)

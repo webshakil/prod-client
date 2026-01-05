@@ -42,6 +42,8 @@ import electionReducer from './slices/electionSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import notificationReducer from './slices/notificationSlice';
 import walletReducer from './slices/wallletSlice';
+import votingNewReducer from './slices/votingNewSlice'; // ⭐ ADD THIS IMPORT
+import lotteryyReducer from './slices/lotteryySlice'; 
 
 const persistConfig = {
   key: 'root',
@@ -94,6 +96,8 @@ const rootReducer = combineReducers({
   subscription: subscriptionReducer,
   notifications: notificationReducer,
   wallet: walletReducer,
+  votingNew: votingNewReducer, // ⭐ ADD THIS LINE
+  lotteryyy: lotteryyReducer,  // ⭐ ADD THIS LINE (if not already)
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -1,3 +1,4 @@
+
 // src/redux/slices/votingNewSlice.js
 // ✨ Enhanced voting state management
 import { createSlice } from '@reduxjs/toolkit';

@@ -1,239 +1,458 @@
 // src/components/Dashboard/Tabs/voting/CompactLiveResults.jsx
-// ✅ FINAL FIXED VERSION
-import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { useGetLiveResultsQuery } from '../../../../redux/api/voting/ballotApi';
-import io from 'socket.io-client';
-import { RefreshCw } from 'lucide-react';
+// ✅ Compact Live Results with Pie Chart
+import React from 'react';
+import { RefreshCw, Users } from 'lucide-react';
+import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
 
-const SOCKET_URL = import.meta.env.VITE_VOTING_SERVICE_URL?.replace('/api', '') || 'http://localhost:3007';
-/*eslint-disable*/
 export default function CompactLiveResults({ electionId, questionId }) {
-  const [liveData, setLiveData] = useState(null);
-  const [socket, setSocket] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { data: results, isLoading, refetch, isFetching } = useGetLiveResultsQuery(
+    { electionId, questionId },
+    { pollingInterval: 10000 } // Auto-refresh every 10 seconds
+  );
 
-  const PDF_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+  const candidates = results?.candidates || results?.options || [];
+  const totalVotes = results?.totalVotes || candidates.reduce((sum, c) => sum + (c.votes || c.count || 0), 0);
 
-  const { data: initialData, isLoading, refetch } = useGetLiveResultsQuery(electionId);
+  // Colors for pie chart segments
+  const colors = [
+    { bg: '#3B82F6', label: 'A' }, // Blue
+    { bg: '#EF4444', label: 'B' }, // Red
+    { bg: '#22C55E', label: 'C' }, // Green
+    { bg: '#F59E0B', label: 'D' }, // Amber
+    { bg: '#8B5CF6', label: 'E' }, // Purple
+    { bg: '#EC4899', label: 'F' }, // Pink
+    { bg: '#06B6D4', label: 'G' }, // Cyan
+    { bg: '#84CC16', label: 'H' }, // Lime
+  ];
 
-  useEffect(() => {
-    if (initialData) {
-      console.log('📊 Compact chart - RAW API response:', initialData);
-      setLiveData(initialData);
-    }
-  }, [initialData]);
-
-  useEffect(() => {
-    if (!electionId) return;
-
-    const newSocket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
+  // Calculate pie chart segments
+  const calculatePieSegments = () => {
+    if (totalVotes === 0) return [];
+    
+    let currentAngle = 0;
+    return candidates.map((candidate, index) => {
+      const votes = candidate.votes || candidate.count || 0;
+      const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+      const angle = (percentage / 100) * 360;
+      const startAngle = currentAngle;
+      currentAngle += angle;
+      
+      return {
+        ...candidate,
+        percentage,
+        startAngle,
+        endAngle: currentAngle,
+        color: colors[index % colors.length].bg,
+        label: colors[index % colors.length].label,
+      };
     });
-
-    newSocket.on('connect', () => {
-      console.log('✅ Compact chart - Socket connected');
-      setIsConnected(true);
-      newSocket.emit('join-election', electionId);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('❌ Compact chart - Socket disconnected');
-      setIsConnected(false);
-    });
-
-    newSocket.on('vote-cast', () => {
-      console.log('🗳️ Compact chart - Vote detected, refreshing...');
-      refetch();
-    });
-
-    newSocket.on('live-results-update', (updatedResults) => {
-      console.log('📊 Compact chart - Live update received:', updatedResults);
-      setLiveData({ success: true, data: updatedResults });
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      if (newSocket) {
-        newSocket.emit('leave-election', electionId);
-        newSocket.disconnect();
-      }
-    };
-  }, [electionId, refetch]);
-
-  // ⭐ CRITICAL FIX: Extract data properly
-  const rawData = liveData || initialData;
-  const resultsData = rawData?.data || rawData;
-  
-  const apiTotalVotes = resultsData?.totalVotes || 0;
-  const question = resultsData?.questions?.[0];
-  const options = question?.options || [];
-  const questionTotalVotes = options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0);
-
-  console.log('🔍 CompactLiveResults Data Structure:', {
-    hasRawData: !!rawData,
-    hasResultsData: !!resultsData,
-    apiTotalVotes,
-    questionTotalVotes,
-    optionsCount: options.length,
-    firstOption: options[0],
-  });
-
-  const chartData = options.map((option, index) => ({
-    name: option.option_text,
-    value: option.vote_count || 0,
-    percentage: parseFloat(option.percentage || 0),
-    color: PDF_COLORS[index % PDF_COLORS.length],
-    letter: String.fromCharCode(65 + index),
-  }));
-
-  const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    if (percent === 0) return null;
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="font-bold"
-        style={{ fontSize: '14px' }}
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
   };
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload?.[0]) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white px-3 py-2 rounded-lg shadow-lg border-2 border-gray-200">
-          <p className="font-bold text-gray-900 text-sm">{data.name}</p>
-          <p className="text-xs text-gray-600">
-            {data.value} vote{data.value !== 1 ? 's' : ''} ({data.percentage.toFixed(1)}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const pieSegments = calculatePieSegments();
 
-  if (isLoading && !liveData) {
-    return (
-      <div className="bg-white rounded-xl border-2 border-gray-300 shadow-lg p-4">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-48 bg-gray-100 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  // SVG Pie Chart path generator
+/*eslint-disable*/
+  const createPieSlice = (startAngle, endAngle, color) => {
+    const radius = 80;
+    const centerX = 100;
+    const centerY = 100;
+    
+    // Convert angles to radians
+    const startRad = (startAngle - 90) * (Math.PI / 180);
+    const endRad = (endAngle - 90) * (Math.PI / 180);
+    
+    // Calculate start and end points
+    const x1 = centerX + radius * Math.cos(startRad);
+    const y1 = centerY + radius * Math.sin(startRad);
+    const x2 = centerX + radius * Math.cos(endRad);
+    const y2 = centerY + radius * Math.sin(endRad);
+    
+    // Determine if the arc should be drawn the long way
+    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+    
+    // Create SVG path
+    const path = [
+      `M ${centerX} ${centerY}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      'Z'
+    ].join(' ');
+    
+    return path;
+  };
 
   return (
-    <div className="bg-white rounded-xl border-3 border-gray-400 shadow-lg overflow-hidden">
-      <div className="bg-gray-100 border-b-2 border-gray-400 px-4 py-3">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900">
-              Live Results
-            </h3>
-            {/* ⭐ USE apiTotalVotes FROM API */}
-            <p className="text-sm text-gray-600 mt-0.5">
-              {apiTotalVotes} vote{apiTotalVotes !== 1 ? 's' : ''} cast
-            </p>
-          </div>
-          <button
+          <h3 className="font-bold text-lg">Live Results</h3>
+          <button 
             onClick={() => refetch()}
-            className="text-blue-600 hover:text-blue-700 transition p-1"
-            title="Refresh"
+            disabled={isFetching}
+            className="p-2 hover:bg-white/20 rounded-full transition"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
         </div>
+        <div className="flex items-center gap-2 text-blue-100 text-sm mt-1">
+          <Users className="w-4 h-4" />
+          <span>{totalVotes} votes cast</span>
+        </div>
       </div>
 
+      {/* Content */}
       <div className="p-4">
-        {questionTotalVotes > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={renderLabel}
-                outerRadius={80}
-                innerRadius={48}
-                fill="#8884d8"
-                dataKey="value"
-                animationDuration={500}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color} 
-                    stroke="#fff" 
-                    strokeWidth={2} 
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-52 flex items-center justify-center">
-            <p className="text-gray-400 font-semibold">No votes yet</p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
           </div>
+        ) : totalVotes === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="font-medium">No votes yet</p>
+            <p className="text-sm">Results will appear here</p>
+          </div>
+        ) : (
+          <>
+            {/* Pie Chart */}
+            <div className="flex justify-center mb-4">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                {pieSegments.map((segment, index) => {
+                  if (segment.percentage === 0) return null;
+                  
+                  // Handle 100% case
+                  if (segment.percentage >= 99.9) {
+                    return (
+                      <circle
+                        key={index}
+                        cx="100"
+                        cy="100"
+                        r="80"
+                        fill={segment.color}
+                      />
+                    );
+                  }
+                  
+                  return (
+                    <path
+                      key={index}
+                      d={createPieSlice(segment.startAngle, segment.endAngle, segment.color)}
+                      fill={segment.color}
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  );
+                })}
+                
+                {/* Center labels */}
+                {pieSegments.map((segment, index) => {
+                  if (segment.percentage < 5) return null; // Don't show label for tiny slices
+                  
+                  const midAngle = (segment.startAngle + segment.endAngle) / 2;
+                  const midRad = (midAngle - 90) * (Math.PI / 180);
+                  const labelRadius = 50;
+                  const x = 100 + labelRadius * Math.cos(midRad);
+                  const y = 100 + labelRadius * Math.sin(midRad);
+                  
+                  return (
+                    <g key={`label-${index}`}>
+                      <text
+                        x={x}
+                        y={y - 8}
+                        textAnchor="middle"
+                        className="text-xs font-bold fill-white"
+                      >
+                        {segment.label}
+                      </text>
+                      <text
+                        x={x}
+                        y={y + 8}
+                        textAnchor="middle"
+                        className="text-xs font-medium fill-white"
+                      >
+                        {segment.percentage.toFixed(0)}%
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* Legend */}
+            <div className="space-y-2">
+              {pieSegments.map((segment, index) => {
+                const candidateName = segment.option_text || segment.name || `Option ${index + 1}`;
+                const votes = segment.votes || segment.count || 0;
+                
+                return (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      <span className="text-gray-700 truncate max-w-[120px]">
+                        {segment.label} - {candidateName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900">
+                        {segment.percentage.toFixed(1)}%
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        ({votes})
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
-
-      <div className="px-4 pb-4 border-t border-gray-200">
-        <div className="space-y-2 mt-3">
-          {chartData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                <div 
-                  className="w-3 h-3 rounded-sm flex-shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-gray-700 font-medium truncate text-xs">
-                  {item.letter} - {item.name}
-                </span>
-              </div>
-              <div className="text-right flex-shrink-0 min-w-[80px]">
-                <span className="font-bold text-gray-900 text-sm">
-                  {item.percentage.toFixed(1)}%
-                </span>
-                <span className="text-xs text-gray-500 ml-1">
-                  ({item.value})
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {isConnected && questionTotalVotes > 0 && (
-        <div className="bg-green-50 border-t border-green-300 px-4 py-2">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs font-semibold text-green-800">
-              Live • Updates in real-time
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+//last workable code
+// // src/components/Dashboard/Tabs/voting/CompactLiveResults.jsx
+// // ✅ FINAL FIXED VERSION
+// import React, { useState, useEffect } from 'react';
+// import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+// import { useGetLiveResultsQuery } from '../../../../redux/api/voting/ballotApi';
+// import io from 'socket.io-client';
+// import { RefreshCw } from 'lucide-react';
+
+// const SOCKET_URL = import.meta.env.VITE_VOTING_SERVICE_URL?.replace('/api', '') || 'http://localhost:3007';
+// /*eslint-disable*/
+// export default function CompactLiveResults({ electionId, questionId }) {
+//   const [liveData, setLiveData] = useState(null);
+//   const [socket, setSocket] = useState(null);
+//   const [isConnected, setIsConnected] = useState(false);
+
+//   const PDF_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+
+//   const { data: initialData, isLoading, refetch } = useGetLiveResultsQuery(electionId);
+
+//   useEffect(() => {
+//     if (initialData) {
+//       console.log('📊 Compact chart - RAW API response:', initialData);
+//       setLiveData(initialData);
+//     }
+//   }, [initialData]);
+
+//   useEffect(() => {
+//     if (!electionId) return;
+
+//     const newSocket = io(SOCKET_URL, {
+//       transports: ['websocket', 'polling'],
+//       reconnection: true,
+//     });
+
+//     newSocket.on('connect', () => {
+//       console.log('✅ Compact chart - Socket connected');
+//       setIsConnected(true);
+//       newSocket.emit('join-election', electionId);
+//     });
+
+//     newSocket.on('disconnect', () => {
+//       console.log('❌ Compact chart - Socket disconnected');
+//       setIsConnected(false);
+//     });
+
+//     newSocket.on('vote-cast', () => {
+//       console.log('🗳️ Compact chart - Vote detected, refreshing...');
+//       refetch();
+//     });
+
+//     newSocket.on('live-results-update', (updatedResults) => {
+//       console.log('📊 Compact chart - Live update received:', updatedResults);
+//       setLiveData({ success: true, data: updatedResults });
+//     });
+
+//     setSocket(newSocket);
+
+//     return () => {
+//       if (newSocket) {
+//         newSocket.emit('leave-election', electionId);
+//         newSocket.disconnect();
+//       }
+//     };
+//   }, [electionId, refetch]);
+
+//   // ⭐ CRITICAL FIX: Extract data properly
+//   const rawData = liveData || initialData;
+//   const resultsData = rawData?.data || rawData;
+  
+//   const apiTotalVotes = resultsData?.totalVotes || 0;
+//   const question = resultsData?.questions?.[0];
+//   const options = question?.options || [];
+//   const questionTotalVotes = options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0);
+
+//   console.log('🔍 CompactLiveResults Data Structure:', {
+//     hasRawData: !!rawData,
+//     hasResultsData: !!resultsData,
+//     apiTotalVotes,
+//     questionTotalVotes,
+//     optionsCount: options.length,
+//     firstOption: options[0],
+//   });
+
+//   const chartData = options.map((option, index) => ({
+//     name: option.option_text,
+//     value: option.vote_count || 0,
+//     percentage: parseFloat(option.percentage || 0),
+//     color: PDF_COLORS[index % PDF_COLORS.length],
+//     letter: String.fromCharCode(65 + index),
+//   }));
+
+//   const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+//     if (percent === 0) return null;
+//     const RADIAN = Math.PI / 180;
+//     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+//     const x = cx + radius * Math.cos(-midAngle * RADIAN);
+//     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+//     return (
+//       <text
+//         x={x}
+//         y={y}
+//         fill="white"
+//         textAnchor="middle"
+//         dominantBaseline="central"
+//         className="font-bold"
+//         style={{ fontSize: '14px' }}
+//       >
+//         {`${(percent * 100).toFixed(0)}%`}
+//       </text>
+//     );
+//   };
+
+//   const CustomTooltip = ({ active, payload }) => {
+//     if (active && payload?.[0]) {
+//       const data = payload[0].payload;
+//       return (
+//         <div className="bg-white px-3 py-2 rounded-lg shadow-lg border-2 border-gray-200">
+//           <p className="font-bold text-gray-900 text-sm">{data.name}</p>
+//           <p className="text-xs text-gray-600">
+//             {data.value} vote{data.value !== 1 ? 's' : ''} ({data.percentage.toFixed(1)}%)
+//           </p>
+//         </div>
+//       );
+//     }
+//     return null;
+//   };
+
+//   if (isLoading && !liveData) {
+//     return (
+//       <div className="bg-white rounded-xl border-2 border-gray-300 shadow-lg p-4">
+//         <div className="animate-pulse">
+//           <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+//           <div className="h-48 bg-gray-100 rounded"></div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="bg-white rounded-xl border-3 border-gray-400 shadow-lg overflow-hidden">
+//       <div className="bg-gray-100 border-b-2 border-gray-400 px-4 py-3">
+//         <div className="flex items-center justify-between">
+//           <div className="flex-1">
+//             <h3 className="text-lg font-bold text-gray-900">
+//               Live Results
+//             </h3>
+//             {/* ⭐ USE apiTotalVotes FROM API */}
+//             <p className="text-sm text-gray-600 mt-0.5">
+//               {apiTotalVotes} vote{apiTotalVotes !== 1 ? 's' : ''} cast
+//             </p>
+//           </div>
+//           <button
+//             onClick={() => refetch()}
+//             className="text-blue-600 hover:text-blue-700 transition p-1"
+//             title="Refresh"
+//           >
+//             <RefreshCw className="w-4 h-4" />
+//           </button>
+//         </div>
+//       </div>
+
+//       <div className="p-4">
+//         {questionTotalVotes > 0 ? (
+//           <ResponsiveContainer width="100%" height={220}>
+//             <PieChart>
+//               <Pie
+//                 data={chartData}
+//                 cx="50%"
+//                 cy="50%"
+//                 labelLine={false}
+//                 label={renderLabel}
+//                 outerRadius={80}
+//                 innerRadius={48}
+//                 fill="#8884d8"
+//                 dataKey="value"
+//                 animationDuration={500}
+//               >
+//                 {chartData.map((entry, index) => (
+//                   <Cell 
+//                     key={`cell-${index}`} 
+//                     fill={entry.color} 
+//                     stroke="#fff" 
+//                     strokeWidth={2} 
+//                   />
+//                 ))}
+//               </Pie>
+//               <Tooltip content={<CustomTooltip />} />
+//             </PieChart>
+//           </ResponsiveContainer>
+//         ) : (
+//           <div className="h-52 flex items-center justify-center">
+//             <p className="text-gray-400 font-semibold">No votes yet</p>
+//           </div>
+//         )}
+//       </div>
+
+//       <div className="px-4 pb-4 border-t border-gray-200">
+//         <div className="space-y-2 mt-3">
+//           {chartData.map((item, index) => (
+//             <div key={index} className="flex items-center justify-between text-sm">
+//               <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+//                 <div 
+//                   className="w-3 h-3 rounded-sm flex-shrink-0"
+//                   style={{ backgroundColor: item.color }}
+//                 />
+//                 <span className="text-gray-700 font-medium truncate text-xs">
+//                   {item.letter} - {item.name}
+//                 </span>
+//               </div>
+//               <div className="text-right flex-shrink-0 min-w-[80px]">
+//                 <span className="font-bold text-gray-900 text-sm">
+//                   {item.percentage.toFixed(1)}%
+//                 </span>
+//                 <span className="text-xs text-gray-500 ml-1">
+//                   ({item.value})
+//                 </span>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+
+//       {isConnected && questionTotalVotes > 0 && (
+//         <div className="bg-green-50 border-t border-green-300 px-4 py-2">
+//           <div className="flex items-center justify-center gap-2">
+//             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+//             <span className="text-xs font-semibold text-green-800">
+//               Live • Updates in real-time
+//             </span>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 // // src/components/Dashboard/Tabs/voting/CompactLiveResults.jsx
 // // ✅ PDF #10 - Compact Pie Chart beside ballot during voting - IMPROVED DESIGN
 // import React, { useState, useEffect } from 'react';
