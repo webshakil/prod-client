@@ -1,149 +1,225 @@
 // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import { Trophy, Clock, Users, Sparkles } from 'lucide-react';
+// 4D Slot Machine - Displays real voter ball numbers from database
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Clock, Users } from 'lucide-react';
+import { useGetLotteryParticipantsQuery } from '../../../../redux/api/lotteryyy/lotteryApi';
 
 export default function LotterySlotMachine({ 
-    /*eslint-disable*/
   electionId,
   electionEndDate,
-  luckyVotersCount = 1,
-  totalVoters = 0,
+  luckyVotersCount = 1,      // Number of winners to be drawn
   isElectionEnded = false,
-  winners = [],
+  winners = [],              // Winners array from backend
   isActive = true,
 }) {
-  const [displayDigits, setDisplayDigits] = useState(['0', '7', '8', '3', '1', '4']);
+  // Fetch real ball numbers from database
+  /*eslint-disable*/
+  const { data: participantsData, refetch } = useGetLotteryParticipantsQuery(electionId, {
+    pollingInterval: 10000, // Poll every 10 seconds for new voters
+    skip: !electionId,
+  });
+
+  // Extract ball numbers from participants
+  const ballNumbers = participantsData?.participants?.map(p => 
+    String(p.ball_number || p.ballNumber || p.ticket_number || p.ticketNumber || '000000')
+  ) || [];
+  
+  const totalVoters = ballNumbers.length;
+
+  // State
+  const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
   const [isSpinning, setIsSpinning] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [revealedWinners, setRevealedWinners] = useState([]);
-  const spinRef = useRef(null);
+  const [currentRevealIndex, setCurrentRevealIndex] = useState(-1);
+  const [revealingWinner, setRevealingWinner] = useState(false);
+  
+  // Refs
+  const spinIntervalRef = useRef(null);
 
-  // Countdown timer
+  // Get a random ball number from the pool
+  const getRandomBallNumber = useCallback(() => {
+    if (ballNumbers.length > 0) {
+      const randomIndex = Math.floor(Math.random() * ballNumbers.length);
+      return String(ballNumbers[randomIndex]).padStart(6, '0');
+    }
+    // Fallback - should not happen if we have voters
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }, [ballNumbers]);
+
+  // Countdown timer to election end
   useEffect(() => {
     if (!electionEndDate) return;
-    
-    const timer = setInterval(() => {
+
+    const updateCountdown = () => {
       const now = new Date().getTime();
       const end = new Date(electionEndDate).getTime();
       const diff = Math.max(0, end - now);
-      
+
+      if (diff <= 0) {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
       setCountdown({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
       });
-    }, 1000);
+    };
 
-    return () => clearInterval(timer);
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
   }, [electionEndDate]);
 
-  // Start spinning when active and has voters
-  useEffect(() => {
-    if (isActive && totalVoters >= 2 && !isElectionEnded) {
-      startSpinning();
-    } else if (isElectionEnded) {
-      stopSpinning();
-    }
+  // Start spinning - displays random ball numbers from actual voters
+  const startSpinning = useCallback(() => {
+    if (spinIntervalRef.current) return;
     
-    return () => {
-      if (spinRef.current) clearInterval(spinRef.current);
-    };
-  }, [isActive, totalVoters, isElectionEnded]);
-
-  // Reveal winners when election ends
-  useEffect(() => {
-    if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0) {
-      revealWinnersSequentially();
-    }
-  }, [isElectionEnded, winners]);
-
-  const startSpinning = () => {
-    if (spinRef.current) return;
     setIsSpinning(true);
-    
-    spinRef.current = setInterval(() => {
-      setDisplayDigits([
-        String(Math.floor(Math.random() * 10)),
-        String(Math.floor(Math.random() * 10)),
-        String(Math.floor(Math.random() * 10)),
-        String(Math.floor(Math.random() * 10)),
-        String(Math.floor(Math.random() * 10)),
-        String(Math.floor(Math.random() * 10)),
-      ]);
-    }, 100);
-  };
+    spinIntervalRef.current = setInterval(() => {
+      const ballNumber = getRandomBallNumber();
+      setDisplayDigits(ballNumber.split(''));
+    }, 80); // Fast spinning
+  }, [getRandomBallNumber]);
 
-  const stopSpinning = () => {
-    if (spinRef.current) {
-      clearInterval(spinRef.current);
-      spinRef.current = null;
+  // Stop spinning
+  const stopSpinning = useCallback(() => {
+    if (spinIntervalRef.current) {
+      clearInterval(spinIntervalRef.current);
+      spinIntervalRef.current = null;
     }
     setIsSpinning(false);
-  };
+  }, []);
 
+  // Auto-start spinning when 2+ voters have voted (per documentation requirement)
+  useEffect(() => {
+    if (isActive && totalVoters >= 2 && !isElectionEnded && !revealingWinner) {
+      startSpinning();
+    } else if (isElectionEnded || revealingWinner) {
+      stopSpinning();
+    } else if (totalVoters < 2) {
+      stopSpinning();
+      // Show zeros or last ball number when waiting
+      if (totalVoters === 0) {
+        setDisplayDigits(['0', '0', '0', '0', '0', '0']);
+      } else if (totalVoters === 1 && ballNumbers.length > 0) {
+        // Show the single voter's ball number (not spinning)
+        setDisplayDigits(String(ballNumbers[0]).padStart(6, '0').split(''));
+      }
+    }
+
+    return () => stopSpinning();
+  }, [isActive, totalVoters, isElectionEnded, revealingWinner, startSpinning, stopSpinning, ballNumbers]);
+
+  // Reveal winners sequentially when election ends
+  useEffect(() => {
+    if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
+      revealWinnersSequentially();
+    }
+  }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
+
+  // Sequential winner reveal - one after another (per documentation)
   const revealWinnersSequentially = async () => {
+    setRevealingWinner(true);
     stopSpinning();
     
     for (let i = 0; i < winners.length; i++) {
-      // Slow down spinning
-      for (let j = 0; j < 15; j++) {
-        await new Promise(resolve => setTimeout(resolve, 100 + j * 30));
-        setDisplayDigits([
-          String(Math.floor(Math.random() * 10)),
-          String(Math.floor(Math.random() * 10)),
-          String(Math.floor(Math.random() * 10)),
-          String(Math.floor(Math.random() * 10)),
-          String(Math.floor(Math.random() * 10)),
-          String(Math.floor(Math.random() * 10)),
-        ]);
+      setCurrentRevealIndex(i);
+      
+      // Slow down spinning effect before revealing each winner
+      for (let j = 0; j < 20; j++) {
+        await new Promise(resolve => setTimeout(resolve, 80 + j * 20));
+        const ballNumber = getRandomBallNumber();
+        setDisplayDigits(ballNumber.split(''));
       }
       
-      // Show winner ID
-      const winnerId = String(winners[i].oddjobVoterId || winners[i].id || '000000');
-      setDisplayDigits(winnerId.padStart(6, '0').slice(-6).split(''));
-      setRevealedWinners(prev => [...prev, winners[i]]);
+      // Final slowdown
+      for (let k = 0; k < 10; k++) {
+        await new Promise(resolve => setTimeout(resolve, 150 + k * 50));
+        const ballNumber = getRandomBallNumber();
+        setDisplayDigits(ballNumber.split(''));
+      }
       
-      // Wait before next winner
+      // Reveal the actual winner's ball number
+      const winnerBallNumber = String(
+        winners[i].ball_number || 
+        winners[i].ballNumber || 
+        winners[i].ticket_number ||
+        winners[i].ticketNumber ||
+        '000000'
+      ).padStart(6, '0');
+      
+      setDisplayDigits(winnerBallNumber.split(''));
+      
+      // Add to revealed winners list
+      setRevealedWinners(prev => [...prev, {
+        ...winners[i],
+        ballNumber: winnerBallNumber,
+        rank: i + 1
+      }]);
+      
+      // Wait before revealing next winner (if there are more)
       if (i < winners.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
+    
+    setCurrentRevealIndex(-1);
+    setRevealingWinner(false);
   };
 
-  const pad = (n) => String(n).padStart(2, '0');
-
+  // Format countdown display
   const formatCountdown = () => {
     const { days, hours, minutes, seconds } = countdown;
+    const pad = (n) => String(n).padStart(2, '0');
+    
     if (days > 0) {
-      return `${days}d ${pad(hours)}:${pad(minutes)}`;
+      return `${pad(days)}d ${pad(hours)}:${pad(minutes)}`;
     }
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
+  // Get ordinal suffix (1st, 2nd, 3rd, etc.)
+  const getOrdinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
   return (
-    <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-2xl overflow-hidden border-4 border-yellow-500 shadow-2xl">
-      {/* Header with countdown and winners count */}
-      <div className="bg-black/50 px-6 py-4 flex justify-between items-center border-b-2 border-yellow-500/50">
-        <div className="flex items-center gap-3">
-          <Clock className="w-5 h-5 text-red-500" />
+    <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-black rounded-xl overflow-hidden border-4 border-yellow-500 shadow-2xl">
+      {/* Header - Date/Time and Lucky Voters Count */}
+      <div className="bg-black px-4 py-3 flex justify-between items-center border-b-2 border-yellow-600">
+        {/* Date & Time Countdown */}
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-gray-400" />
           <span className="text-gray-400 text-sm">Date & Time:</span>
-          <div className="bg-black px-4 py-2 rounded border border-red-900">
+          <div className="bg-gray-900 px-3 py-1 rounded border border-gray-700">
             <span 
-              className="font-mono text-red-500 text-xl font-bold tracking-wider"
-              style={{ fontFamily: 'monospace' }}
+              className="font-mono text-red-500 text-lg font-bold tracking-wider"
+              style={{ 
+                fontFamily: 'Courier New, monospace',
+                textShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+              }}
             >
               {formatCountdown()}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Lucky Voters Number (Winners Count) */}
+        <div className="flex items-center gap-2">
           <span className="text-gray-400 text-sm">Lucky Voters No:</span>
-          <div className="bg-black px-4 py-2 rounded border border-red-900">
+          <div className="bg-gray-900 px-3 py-1 rounded border border-gray-700">
             <span 
-              className="font-mono text-red-500 text-xl font-bold"
-              style={{ fontFamily: 'monospace' }}
+              className="font-mono text-red-500 text-lg font-bold"
+              style={{ 
+                fontFamily: 'Courier New, monospace',
+                textShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+              }}
             >
               {String(luckyVotersCount).padStart(2, '0')}
             </span>
@@ -151,57 +227,48 @@ export default function LotterySlotMachine({
         </div>
       </div>
 
-      {/* Main Slot Machine Display */}
-      <div className="p-8 relative">
-        {/* Glow effect */}
-        {isSpinning && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-80 h-32 bg-yellow-500/20 blur-3xl rounded-full animate-pulse" />
-          </div>
-        )}
-
+      {/* Main Slot Machine Display - Large Numbers */}
+      <div className="p-6 bg-gradient-to-b from-gray-800 to-gray-900">
         {/* Digit Display */}
-        <div className="flex justify-center gap-2 relative z-10 mb-6">
+        <div className="flex justify-center gap-1 mb-4">
           {displayDigits.map((digit, index) => (
             <div 
               key={index}
               className="relative"
             >
+              {/* Single Digit Container */}
               <div 
                 className={`
-                  w-14 h-20 md:w-16 md:h-24 bg-gradient-to-b from-white via-gray-100 to-gray-200 
-                  rounded-lg shadow-lg flex items-center justify-center
-                  border-4 border-gray-400 relative overflow-hidden
-                  ${isSpinning ? 'animate-pulse' : ''}
+                  w-12 h-20 sm:w-14 sm:h-24 md:w-16 md:h-28
+                  bg-gradient-to-b from-gray-100 via-white to-gray-200
+                  rounded-lg flex items-center justify-center
+                  border-2 border-gray-400 shadow-lg
+                  relative overflow-hidden
                 `}
               >
-                {/* Top shine effect */}
-                <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/80 to-transparent" />
+                {/* Top reflection */}
+                <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/60 to-transparent" />
                 
-                {/* Middle divider line */}
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-300 transform -translate-y-1/2" />
+                {/* Middle line */}
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-300 transform -translate-y-1/2 z-10" />
                 
-                {/* Digit */}
+                {/* The Digit */}
                 <span 
                   className={`
-                    font-mono text-4xl md:text-5xl font-black text-gray-900 relative z-10
-                    ${isSpinning ? 'animate-bounce' : ''}
+                    text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 relative z-20
+                    ${isSpinning ? 'animate-pulse' : ''}
                   `}
                   style={{ 
                     fontFamily: 'Impact, Arial Black, sans-serif',
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
                   }}
                 >
                   {digit}
                 </span>
 
                 {/* Bottom shadow */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-gray-300/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-gray-300/40 to-transparent" />
               </div>
-
-              {/* 3D side effects */}
-              <div className="absolute -left-1 top-2 bottom-2 w-1 bg-gray-600 rounded-l" />
-              <div className="absolute -right-1 top-2 bottom-2 w-1 bg-gray-600 rounded-r" />
             </div>
           ))}
         </div>
@@ -210,8 +277,8 @@ export default function LotterySlotMachine({
         <div className="text-center">
           {!isElectionEnded && totalVoters < 2 && (
             <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500 rounded-full px-4 py-2">
-              <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
-              <span className="text-yellow-400 font-medium">
+              <Clock className="w-4 h-4 text-yellow-400" />
+              <span className="text-yellow-400 text-sm font-medium">
                 Waiting for voters... ({totalVoters}/2 minimum)
               </span>
             </div>
@@ -219,84 +286,397 @@ export default function LotterySlotMachine({
 
           {!isElectionEnded && totalVoters >= 2 && isSpinning && (
             <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500 rounded-full px-4 py-2">
-              <Sparkles className="w-5 h-5 text-green-400 animate-spin" />
-              <span className="text-green-400 font-medium">
-                🎰 Machine is SPINNING! Drawing at election end...
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-green-400 text-sm font-medium">
+                Machine is spinning... Drawing at election end
               </span>
             </div>
           )}
 
-          {isElectionEnded && revealedWinners.length === 0 && (
+          {isElectionEnded && revealingWinner && currentRevealIndex >= 0 && (
             <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-500 rounded-full px-4 py-2">
-              <span className="text-purple-400 font-medium">
-                🎊 Election ended! Drawing winners...
+              <span className="text-purple-400 text-sm font-medium animate-pulse">
+                🎊 Revealing {getOrdinal(currentRevealIndex + 1)} Lucky Voter Winner...
               </span>
             </div>
           )}
 
-          {isElectionEnded && revealedWinners.length > 0 && revealedWinners.length === winners.length && (
+          {isElectionEnded && !revealingWinner && revealedWinners.length > 0 && (
             <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500 rounded-full px-4 py-2">
-              <Trophy className="w-5 h-5 text-green-400" />
-              <span className="text-green-400 font-medium">
-                ✅ All {winners.length} winner(s) revealed!
+              <span className="text-green-400 text-sm font-medium">
+                ✅ All {revealedWinners.length} Lucky Voter(s) Revealed!
               </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Winners Section */}
+      {/* Winners Display Section - Shows after winners are revealed */}
       {revealedWinners.length > 0 && (
-        <div className="bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 px-6 py-5 border-t-4 border-yellow-400">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-7 h-7 text-yellow-900" />
-            <h3 className="text-yellow-900 font-black text-xl">🎉 LUCKY WINNERS!</h3>
-          </div>
+        <div className="bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 px-4 py-4 border-t-2 border-yellow-400">
+          <h3 className="text-yellow-900 font-bold text-lg mb-3 text-center">
+            🏆 LUCKY VOTERS WINNERS 🏆
+          </h3>
           
           <div className="space-y-2">
             {revealedWinners.map((winner, index) => (
               <div 
                 key={index}
-                className="bg-white rounded-xl px-5 py-4 flex items-center justify-between shadow-lg"
+                className="bg-white rounded-lg px-4 py-3 flex items-center justify-between shadow-md"
               >
-                <div className="flex items-center gap-4">
-                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md">
-                    {index + 1}
+                <div className="flex items-center gap-3">
+                  {/* Rank Badge */}
+                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-sm shadow">
+                    {getOrdinal(index + 1)}
                   </div>
+                  
+                  {/* Winner Info */}
                   <div>
-                    <p className="font-bold text-gray-900 text-lg">
-                      {winner.displayName || winner.username || `Lucky Voter`}
+                    <p className="font-bold text-gray-900">
+                      {winner.displayName || winner.username || winner.name || `Lucky Voter`}
                     </p>
                     <p className="text-gray-500 text-sm font-mono">
-                      Voter ID: {winner.oddjobVoterId || winner.id}
+                      Ball Number: {winner.ballNumber}
                     </p>
                   </div>
                 </div>
-                <div className="text-4xl">🏆</div>
+                
+                {/* Trophy */}
+                <span className="text-3xl">🏆</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Footer Stats */}
-      <div className="bg-black/60 px-6 py-3 border-t border-gray-700 flex justify-between items-center">
+      {/* Footer - Total Entries and Status */}
+      <div className="bg-black/80 px-4 py-2 border-t border-gray-700 flex justify-between items-center">
         <div className="flex items-center gap-2 text-gray-400">
           <Users className="w-4 h-4" />
-          <span className="text-sm">Total Entries: <strong className="text-white">{totalVoters}</strong></span>
+          <span className="text-sm">
+            Total Entries: <strong className="text-white">{totalVoters}</strong>
+          </span>
         </div>
+        
         <div className={`flex items-center gap-2 text-sm ${
-          isSpinning ? 'text-green-400' : isElectionEnded ? 'text-blue-400' : 'text-yellow-400'
+          isSpinning ? 'text-green-400' : 
+          isElectionEnded ? 'text-blue-400' : 
+          'text-yellow-400'
         }`}>
           <span className={`w-2 h-2 rounded-full ${
-            isSpinning ? 'bg-green-400 animate-pulse' : isElectionEnded ? 'bg-blue-400' : 'bg-yellow-400'
+            isSpinning ? 'bg-green-400 animate-pulse' : 
+            isElectionEnded ? 'bg-blue-400' : 
+            'bg-yellow-400'
           }`} />
-          {isSpinning ? 'LIVE SPINNING' : isElectionEnded ? 'DRAW COMPLETE' : 'WAITING'}
+          <span>
+            {isSpinning ? 'SPINNING' : 
+             isElectionEnded ? 'COMPLETED' : 
+             'WAITING'}
+          </span>
         </div>
       </div>
     </div>
   );
 }
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// import React, { useState, useEffect, useRef } from 'react';
+// import { Trophy, Clock, Users, Sparkles } from 'lucide-react';
+
+// export default function LotterySlotMachine({ 
+//     /*eslint-disable*/
+//   electionId,
+//   electionEndDate,
+//   luckyVotersCount = 1,
+//   totalVoters = 0,
+//   isElectionEnded = false,
+//   winners = [],
+//   isActive = true,
+// }) {
+//   const [displayDigits, setDisplayDigits] = useState(['0', '7', '8', '3', '1', '4']);
+//   const [isSpinning, setIsSpinning] = useState(false);
+//   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+//   const [revealedWinners, setRevealedWinners] = useState([]);
+//   const spinRef = useRef(null);
+
+//   // Countdown timer
+//   useEffect(() => {
+//     if (!electionEndDate) return;
+    
+//     const timer = setInterval(() => {
+//       const now = new Date().getTime();
+//       const end = new Date(electionEndDate).getTime();
+//       const diff = Math.max(0, end - now);
+      
+//       setCountdown({
+//         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+//         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+//         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+//         seconds: Math.floor((diff % (1000 * 60)) / 1000),
+//       });
+//     }, 1000);
+
+//     return () => clearInterval(timer);
+//   }, [electionEndDate]);
+
+//   // Start spinning when active and has voters
+//   useEffect(() => {
+//     if (isActive && totalVoters >= 2 && !isElectionEnded) {
+//       startSpinning();
+//     } else if (isElectionEnded) {
+//       stopSpinning();
+//     }
+    
+//     return () => {
+//       if (spinRef.current) clearInterval(spinRef.current);
+//     };
+//   }, [isActive, totalVoters, isElectionEnded]);
+
+//   // Reveal winners when election ends
+//   useEffect(() => {
+//     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0) {
+//       revealWinnersSequentially();
+//     }
+//   }, [isElectionEnded, winners]);
+
+//   const startSpinning = () => {
+//     if (spinRef.current) return;
+//     setIsSpinning(true);
+    
+//     spinRef.current = setInterval(() => {
+//       setDisplayDigits([
+//         String(Math.floor(Math.random() * 10)),
+//         String(Math.floor(Math.random() * 10)),
+//         String(Math.floor(Math.random() * 10)),
+//         String(Math.floor(Math.random() * 10)),
+//         String(Math.floor(Math.random() * 10)),
+//         String(Math.floor(Math.random() * 10)),
+//       ]);
+//     }, 100);
+//   };
+
+//   const stopSpinning = () => {
+//     if (spinRef.current) {
+//       clearInterval(spinRef.current);
+//       spinRef.current = null;
+//     }
+//     setIsSpinning(false);
+//   };
+
+//   const revealWinnersSequentially = async () => {
+//     stopSpinning();
+    
+//     for (let i = 0; i < winners.length; i++) {
+//       // Slow down spinning
+//       for (let j = 0; j < 15; j++) {
+//         await new Promise(resolve => setTimeout(resolve, 100 + j * 30));
+//         setDisplayDigits([
+//           String(Math.floor(Math.random() * 10)),
+//           String(Math.floor(Math.random() * 10)),
+//           String(Math.floor(Math.random() * 10)),
+//           String(Math.floor(Math.random() * 10)),
+//           String(Math.floor(Math.random() * 10)),
+//           String(Math.floor(Math.random() * 10)),
+//         ]);
+//       }
+      
+//       // Show winner ID
+//       const winnerId = String(winners[i].oddjobVoterId || winners[i].id || '000000');
+//       setDisplayDigits(winnerId.padStart(6, '0').slice(-6).split(''));
+//       setRevealedWinners(prev => [...prev, winners[i]]);
+      
+//       // Wait before next winner
+//       if (i < winners.length - 1) {
+//         await new Promise(resolve => setTimeout(resolve, 3000));
+//       }
+//     }
+//   };
+
+//   const pad = (n) => String(n).padStart(2, '0');
+
+//   const formatCountdown = () => {
+//     const { days, hours, minutes, seconds } = countdown;
+//     if (days > 0) {
+//       return `${days}d ${pad(hours)}:${pad(minutes)}`;
+//     }
+//     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+//   };
+
+//   return (
+//     <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-2xl overflow-hidden border-4 border-yellow-500 shadow-2xl">
+//       {/* Header with countdown and winners count */}
+//       <div className="bg-black/50 px-6 py-4 flex justify-between items-center border-b-2 border-yellow-500/50">
+//         <div className="flex items-center gap-3">
+//           <Clock className="w-5 h-5 text-red-500" />
+//           <span className="text-gray-400 text-sm">Date & Time:</span>
+//           <div className="bg-black px-4 py-2 rounded border border-red-900">
+//             <span 
+//               className="font-mono text-red-500 text-xl font-bold tracking-wider"
+//               style={{ fontFamily: 'monospace' }}
+//             >
+//               {formatCountdown()}
+//             </span>
+//           </div>
+//         </div>
+
+//         <div className="flex items-center gap-3">
+//           <span className="text-gray-400 text-sm">Lucky Voters No:</span>
+//           <div className="bg-black px-4 py-2 rounded border border-red-900">
+//             <span 
+//               className="font-mono text-red-500 text-xl font-bold"
+//               style={{ fontFamily: 'monospace' }}
+//             >
+//               {String(luckyVotersCount).padStart(2, '0')}
+//             </span>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Main Slot Machine Display */}
+//       <div className="p-8 relative">
+//         {/* Glow effect */}
+//         {isSpinning && (
+//           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+//             <div className="w-80 h-32 bg-yellow-500/20 blur-3xl rounded-full animate-pulse" />
+//           </div>
+//         )}
+
+//         {/* Digit Display */}
+//         <div className="flex justify-center gap-2 relative z-10 mb-6">
+//           {displayDigits.map((digit, index) => (
+//             <div 
+//               key={index}
+//               className="relative"
+//             >
+//               <div 
+//                 className={`
+//                   w-14 h-20 md:w-16 md:h-24 bg-gradient-to-b from-white via-gray-100 to-gray-200 
+//                   rounded-lg shadow-lg flex items-center justify-center
+//                   border-4 border-gray-400 relative overflow-hidden
+//                   ${isSpinning ? 'animate-pulse' : ''}
+//                 `}
+//               >
+//                 {/* Top shine effect */}
+//                 <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/80 to-transparent" />
+                
+//                 {/* Middle divider line */}
+//                 <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-300 transform -translate-y-1/2" />
+                
+//                 {/* Digit */}
+//                 <span 
+//                   className={`
+//                     font-mono text-4xl md:text-5xl font-black text-gray-900 relative z-10
+//                     ${isSpinning ? 'animate-bounce' : ''}
+//                   `}
+//                   style={{ 
+//                     fontFamily: 'Impact, Arial Black, sans-serif',
+//                     textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+//                   }}
+//                 >
+//                   {digit}
+//                 </span>
+
+//                 {/* Bottom shadow */}
+//                 <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-gray-300/50 to-transparent" />
+//               </div>
+
+//               {/* 3D side effects */}
+//               <div className="absolute -left-1 top-2 bottom-2 w-1 bg-gray-600 rounded-l" />
+//               <div className="absolute -right-1 top-2 bottom-2 w-1 bg-gray-600 rounded-r" />
+//             </div>
+//           ))}
+//         </div>
+
+//         {/* Status Message */}
+//         <div className="text-center">
+//           {!isElectionEnded && totalVoters < 2 && (
+//             <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500 rounded-full px-4 py-2">
+//               <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
+//               <span className="text-yellow-400 font-medium">
+//                 Waiting for voters... ({totalVoters}/2 minimum)
+//               </span>
+//             </div>
+//           )}
+
+//           {!isElectionEnded && totalVoters >= 2 && isSpinning && (
+//             <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500 rounded-full px-4 py-2">
+//               <Sparkles className="w-5 h-5 text-green-400 animate-spin" />
+//               <span className="text-green-400 font-medium">
+//                 🎰 Machine is SPINNING! Drawing at election end...
+//               </span>
+//             </div>
+//           )}
+
+//           {isElectionEnded && revealedWinners.length === 0 && (
+//             <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-500 rounded-full px-4 py-2">
+//               <span className="text-purple-400 font-medium">
+//                 🎊 Election ended! Drawing winners...
+//               </span>
+//             </div>
+//           )}
+
+//           {isElectionEnded && revealedWinners.length > 0 && revealedWinners.length === winners.length && (
+//             <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500 rounded-full px-4 py-2">
+//               <Trophy className="w-5 h-5 text-green-400" />
+//               <span className="text-green-400 font-medium">
+//                 ✅ All {winners.length} winner(s) revealed!
+//               </span>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Winners Section */}
+//       {revealedWinners.length > 0 && (
+//         <div className="bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 px-6 py-5 border-t-4 border-yellow-400">
+//           <div className="flex items-center gap-2 mb-4">
+//             <Trophy className="w-7 h-7 text-yellow-900" />
+//             <h3 className="text-yellow-900 font-black text-xl">🎉 LUCKY WINNERS!</h3>
+//           </div>
+          
+//           <div className="space-y-2">
+//             {revealedWinners.map((winner, index) => (
+//               <div 
+//                 key={index}
+//                 className="bg-white rounded-xl px-5 py-4 flex items-center justify-between shadow-lg"
+//               >
+//                 <div className="flex items-center gap-4">
+//                   <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md">
+//                     {index + 1}
+//                   </div>
+//                   <div>
+//                     <p className="font-bold text-gray-900 text-lg">
+//                       {winner.displayName || winner.username || `Lucky Voter`}
+//                     </p>
+//                     <p className="text-gray-500 text-sm font-mono">
+//                       Voter ID: {winner.oddjobVoterId || winner.id}
+//                     </p>
+//                   </div>
+//                 </div>
+//                 <div className="text-4xl">🏆</div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Footer Stats */}
+//       <div className="bg-black/60 px-6 py-3 border-t border-gray-700 flex justify-between items-center">
+//         <div className="flex items-center gap-2 text-gray-400">
+//           <Users className="w-4 h-4" />
+//           <span className="text-sm">Total Entries: <strong className="text-white">{totalVoters}</strong></span>
+//         </div>
+//         <div className={`flex items-center gap-2 text-sm ${
+//           isSpinning ? 'text-green-400' : isElectionEnded ? 'text-blue-400' : 'text-yellow-400'
+//         }`}>
+//           <span className={`w-2 h-2 rounded-full ${
+//             isSpinning ? 'bg-green-400 animate-pulse' : isElectionEnded ? 'bg-blue-400' : 'bg-yellow-400'
+//           }`} />
+//           {isSpinning ? 'LIVE SPINNING' : isElectionEnded ? 'DRAW COMPLETE' : 'WAITING'}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 // // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
 // import React, { useState, useEffect, useRef } from 'react';
 // import { Trophy, Clock, Users, Sparkles } from 'lucide-react';
