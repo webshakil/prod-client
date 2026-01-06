@@ -179,7 +179,7 @@ export default function RankedChoiceBallot({
             <div className="bg-indigo-50 border-t border-indigo-200 px-4 py-3">
               <p className="text-indigo-800 text-sm font-medium">
                 {Object.keys(questionAnswers).length > 0 ? (
-                  <>✓ You have ranked {Object.keys(questionAnswers).length} candidate(s)</>
+                  <>✓ You have ranked {Object.keys(questionAnswers).length} items(s)</>
                 ) : (
                   <>⚠ Please rank at least one candidate</>
                 )}
