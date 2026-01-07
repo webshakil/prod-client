@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock, Users, RefreshCw } from 'lucide-react';
 
 // API base URL for lottery service
-const LOTTERY_API_URL = import.meta.env.VITE_LOTTERY_SERVICE_URL || 'http://localhost:3007/api';
+const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
 export default function LotterySlotMachine({ 
   electionId,
