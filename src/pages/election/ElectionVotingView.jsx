@@ -33,7 +33,10 @@ export default function ElectionVotingView() {
   const [flyingBallNumber, setFlyingBallNumber] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: ballotData, isLoading, error } = useGetBallotQuery(electionId);
+  // ✅ FIXED: Skip refetch after vote is submitted to prevent hasVoted check from interfering
+  const { data: ballotData, isLoading, error } = useGetBallotQuery(electionId, {
+    skip: voteSubmitted, // Don't refetch after voting!
+  });
   const [castVote, { isLoading: submitting }] = useCastVoteMutation();
 
   // ==================== NORMALIZED FLAGS (handles both snake_case and camelCase) ====================
@@ -74,6 +77,7 @@ export default function ElectionVotingView() {
   console.log('📊 Show Live Results:', showLiveResults);
   console.log('🎯 Lucky Voters Count:', luckyVotersCount);
   console.log('📝 Current answers:', answers);
+  console.log('✅ Vote Submitted State:', voteSubmitted);
 
   useEffect(() => {
     if (ballotData?.videoWatchRequired && ballotData?.videoProgress) {
@@ -114,9 +118,9 @@ export default function ElectionVotingView() {
       });
 
       setShowAbstentionModal(false);
-      setTimeout(() => {
-        setVoteSubmitted(true);
-      }, 1500);
+      
+      // Set vote submitted state to show success screen
+      setVoteSubmitted(true);
 
     } catch (err) {
       console.error('❌ Abstention error:', err);
@@ -198,6 +202,7 @@ export default function ElectionVotingView() {
         dispatch(setMyTicket(result.ticket));
       }
 
+      // ✅ Set vote submitted IMMEDIATELY to show success screen
       setVoteSubmitted(true);
 
       if (isLotteryEnabled) {
@@ -242,43 +247,7 @@ export default function ElectionVotingView() {
     toast.success('Copied to clipboard!', { position: 'top-center', autoClose: 2000 });
   };
 
-  // ==================== LOADING STATE ====================
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="text-center">
-          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
-          <p className="text-gray-600 font-medium">Loading ballot...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ==================== ERROR STATE ====================
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
-          <button
-            onClick={() => window.location.href = '/dashboard'}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
-          >
-            <ArrowLeft size={20} />
-            Go Back
-          </button>
-        </div>
-        <div className="flex items-center justify-center px-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-            <p className="text-red-800 font-bold text-center mb-2">Error Loading Ballot</p>
-            <p className="text-red-600 text-sm text-center">{error.data?.error || 'Unknown error'}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==================== VOTE SUBMITTED STATE ====================
+  // ==================== VOTE SUBMITTED STATE (PRIORITY #1 - Show this first!) ====================
   if (voteSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
@@ -288,7 +257,7 @@ export default function ElectionVotingView() {
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
           >
             <ArrowLeft size={20} />
-            Go Back
+            Go to Dashboard
           </button>
         </div>
 
@@ -338,6 +307,25 @@ export default function ElectionVotingView() {
                       <Copy size={16} />
                     </button>
                   </div>
+                  {receiptData.voteHash && (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-600 mb-1">Vote Hash:</p>
+                      <p className="font-mono text-xs break-all text-gray-700">{receiptData.voteHash}</p>
+                    </div>
+                  )}
+                  {receiptData.verificationCode && (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-600 mb-1">Verification Code:</p>
+                      <p className="font-mono text-lg font-bold text-gray-900">{receiptData.verificationCode}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {isLotteryEnabled && (
+                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-400 rounded-lg p-4 mb-6">
+                  <p className="text-yellow-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+                  <p className="text-yellow-700 text-sm">Your lottery ticket has been created! Watch the slot machine below.</p>
                 </div>
               )}
 
@@ -345,7 +333,7 @@ export default function ElectionVotingView() {
                 onClick={() => window.location.href = '/dashboard'}
                 className="w-full bg-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-purple-700 transition shadow-lg"
               >
-                Go Back
+                Go to Dashboard
               </button>
             </div>
           ) : (
@@ -361,10 +349,22 @@ export default function ElectionVotingView() {
                     <p className="text-sm text-gray-600 mb-1">Receipt ID:</p>
                     <p className="font-mono text-sm font-bold break-all">{receiptData.receiptId}</p>
                   </div>
+                  {receiptData.voteHash && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-gray-600 mb-1">Vote Hash:</p>
+                      <p className="font-mono text-xs break-all">{receiptData.voteHash}</p>
+                    </div>
+                  )}
                   {receiptData.verificationCode && (
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <p className="text-sm text-gray-600 mb-1">Verification Code:</p>
                       <p className="font-mono text-lg font-bold">{receiptData.verificationCode}</p>
+                    </div>
+                  )}
+                  {receiptData.votingId && (
+                    <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-blue-600 mb-1">Voting ID:</p>
+                      <p className="font-mono text-sm font-bold break-all text-blue-800">{receiptData.votingId}</p>
                     </div>
                   )}
                   {receiptData.ballNumber && (
@@ -387,7 +387,7 @@ export default function ElectionVotingView() {
                 onClick={() => window.location.href = '/dashboard'}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
               >
-                Go Back
+                Go to Dashboard
               </button>
             </div>
           )}
@@ -421,11 +421,23 @@ export default function ElectionVotingView() {
     );
   }
 
-  // ==================== ALREADY VOTED STATE ====================
-  if (ballotData?.hasVoted && !ballotData?.voteEditingAllowed) {
+  // ==================== LOADING STATE ====================
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-        <div className="max-w-4xl mx-auto pb-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="text-center">
+          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+          <p className="text-gray-600 font-medium">Loading ballot...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== ERROR STATE ====================
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
           <button
             onClick={() => window.location.href = '/dashboard'}
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
@@ -434,46 +446,44 @@ export default function ElectionVotingView() {
             Go Back
           </button>
         </div>
-        <div className="max-w-4xl mx-auto space-y-8 py-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-center mb-4">You Have Already Voted!</h2>
-            <p className="text-gray-600 text-center mb-6">Thank you for participating in this election.</p>
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
-            >
-              Go Back
-            </button>
+        <div className="flex items-center justify-center px-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <p className="text-red-800 font-bold text-center mb-2">Error Loading Ballot</p>
+            <p className="text-red-600 text-sm text-center">{error.data?.error || 'Unknown error'}</p>
           </div>
-
-          {/* Show lottery machine even after voting */}
-          {isLotteryEnabled && (
-            <LotterySlotMachine
-              electionId={electionId}
-              electionEndDate={ballotData?.election?.endDate || ballotData?.election?.end_date}
-              luckyVotersCount={luckyVotersCount}
-              isElectionEnded={false}
-              winners={[]}
-              isActive={true}
-            />
-          )}
-
-          {/* Show live results after voting */}
-          {showLiveResults && (
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold mb-4">Live Results</h3>
-              <LiveResultsChart
-                electionId={electionId}
-                liveResultsVisible={true}
-                votingType={votingTypeToUse}
-              />
-            </div>
-          )}
         </div>
       </div>
     );
   }
+
+  // ==================== NO BALLOT DATA ====================
+  if (!ballotData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+          >
+            <ArrowLeft size={20} />
+            Go Back
+          </button>
+        </div>
+        <div className="flex items-center justify-center px-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md">
+            <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+            <p className="text-yellow-800 font-bold text-center mb-2">No Ballot Data</p>
+            <p className="text-yellow-600 text-sm text-center">Unable to load ballot information.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ REMOVED: The hasVoted check - it's now ONLY in ElectionAccessGuard.jsx
+  // The user should never reach this component if they've already voted
+  // ElectionAccessGuard handles the hasVoted check BEFORE rendering ElectionVotingView
 
   // ==================== MAIN VOTING VIEW ====================
   return (
