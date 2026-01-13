@@ -4,7 +4,10 @@ import DashboardPage from '../../pages/DashboardPage';
 import ProfilePage from '../Profile/ProfilePage';
 import AdminSubscriptionManager from '../../pages/admin/AdminSubscriptionManager';
 
-// ✅ NEW IMPORTS - Role Management Pages
+// ✅ NEW: Sngine Callback Handler
+import SngineCallbackHandler from '../Auth/SngineCallbackHandler';
+
+// ✅ Role Management Pages
 import RoleManagementPage from '../../pages/admin/RoleManagementPage';
 import PermissionManagementPage from '../../pages/admin/PermissionManagementPage';
 import UserRoleAssignmentPage from '../../pages/admin/UserRoleAssignmentPage';
@@ -16,6 +19,13 @@ export const PUBLIC_ROUTES = [
     path: '/auth',
     element: <AuthPage />,
     label: 'Authentication',
+    requiresAuth: false,
+  },
+  // ✅ NEW: Sngine callback route
+  {
+    path: '/auth/sngine/callback',
+    element: <SngineCallbackHandler />,
+    label: 'Sngine Callback',
     requiresAuth: false,
   },
 ];
@@ -56,7 +66,7 @@ export const ADMIN_ROUTES = [
     requiredRole: 'manager',
     inNav: true,
   },
-  // ✅ NEW: Role Management Routes
+  // ✅ Role Management Routes
   {
     path: '/admin/roles',
     element: <RoleManagementPage />,
@@ -91,7 +101,7 @@ export const ADMIN_ROUTES = [
     requiresAuth: true,
     roles: ['manager', 'admin', 'auditor'],
     requiredRole: 'manager',
-    requiredRoles: ['manager', 'admin', 'auditor'], // ✅ NEW: Multiple roles support
+    requiredRoles: ['manager', 'admin', 'auditor'],
     inNav: true,
   },
 ];
@@ -103,12 +113,18 @@ export const ALL_ROUTES = [
   ...SUBSCRIPTION_ROUTES,
   ...ADMIN_ROUTES,
 ];
-//last workable codes
+//last workable code only to integrate api above code
 // import React from 'react';
 // import AuthPage from '../../pages/AuthPage';
 // import DashboardPage from '../../pages/DashboardPage';
 // import ProfilePage from '../Profile/ProfilePage';
 // import AdminSubscriptionManager from '../../pages/admin/AdminSubscriptionManager';
+
+// // ✅ NEW IMPORTS - Role Management Pages
+// import RoleManagementPage from '../../pages/admin/RoleManagementPage';
+// import PermissionManagementPage from '../../pages/admin/PermissionManagementPage';
+// import UserRoleAssignmentPage from '../../pages/admin/UserRoleAssignmentPage';
+// import RoleAssignmentHistoryPage from '../../pages/admin/RoleAssignmentHistoryPage';
 
 // // Public Routes - No authentication required
 // export const PUBLIC_ROUTES = [
@@ -154,6 +170,44 @@ export const ALL_ROUTES = [
 //     requiresAuth: true,
 //     roles: ['manager', 'admin'],
 //     requiredRole: 'manager',
+//     inNav: true,
+//   },
+//   // ✅ NEW: Role Management Routes
+//   {
+//     path: '/admin/roles',
+//     element: <RoleManagementPage />,
+//     label: 'Role Management',
+//     requiresAuth: true,
+//     roles: ['manager', 'admin'],
+//     requiredRole: 'manager',
+//     inNav: true,
+//   },
+//   {
+//     path: '/admin/permissions',
+//     element: <PermissionManagementPage />,
+//     label: 'Permission Management',
+//     requiresAuth: true,
+//     roles: ['manager', 'admin'],
+//     requiredRole: 'manager',
+//     inNav: true,
+//   },
+//   {
+//     path: '/admin/user-roles',
+//     element: <UserRoleAssignmentPage />,
+//     label: 'User Role Assignment',
+//     requiresAuth: true,
+//     roles: ['manager', 'admin'],
+//     requiredRole: 'manager',
+//     inNav: true,
+//   },
+//   {
+//     path: '/admin/role-history',
+//     element: <RoleAssignmentHistoryPage />,
+//     label: 'Role History',
+//     requiresAuth: true,
+//     roles: ['manager', 'admin', 'auditor'],
+//     requiredRole: 'manager',
+//     requiredRoles: ['manager', 'admin', 'auditor'], // ✅ NEW: Multiple roles support
 //     inNav: true,
 //   },
 // ];
