@@ -47,10 +47,26 @@ const LANGUAGES = [
   { code: 'bn', label: 'Bengali' },
 ];
 
+// Helper to get gender label
+const getGenderLabel = (value) => {
+  if (!value) return '';
+  const gender = GENDERS.find(g => g.toLowerCase() === value.toLowerCase());
+  return gender || value;
+};
+
+// Helper to get language label
+const getLanguageLabel = (code) => {
+  const lang = LANGUAGES.find(l => l.code === code);
+  return lang ? lang.label : code || 'English (US)';
+};
+
 export default function UserDetailsForm({ sessionId, onNext }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const auth = useAuth();
+  
+  // Check if user came from Sngine API
+  const isFromSngine = sessionStorage.getItem('auth_method') === 'sngine_token';
   
   // Form state
   const [formData, setFormData] = useState({
@@ -66,7 +82,7 @@ export default function UserDetailsForm({ sessionId, onNext }) {
 
   const [saveUserDetails, { isLoading }] = useSaveUserDetailsMutation();
 
-  // ✅ NEW: Check for Sngine prefill data on mount
+  // Load prefill data on mount
   useEffect(() => {
     const loadPrefillData = () => {
       // First, try to get prefill data from sessionStorage (from Sngine callback)
@@ -88,12 +104,6 @@ export default function UserDetailsForm({ sessionId, onNext }) {
             timezone: prefillData.timezone || prev.timezone,
             language: prefillData.language || prev.language,
           }));
-
-          // Show success message that data was pre-filled
-          dispatch(setSuccess(t('userDetails.prefilled', 'Your information has been pre-filled from Sngine. Please review and confirm.')));
-          
-          // Clear the prefill data after loading
-          sessionStorage.removeItem('sngine_prefill_data');
         } catch (e) {
           console.error('[USER-DETAILS] Failed to parse prefill data:', e);
         }
@@ -110,13 +120,14 @@ export default function UserDetailsForm({ sessionId, onNext }) {
     };
 
     loadPrefillData();
-  }, [auth.firstName, auth.lastName, dispatch, t]);
+  }, [auth.firstName, auth.lastName]);
 
-  // Auto-detect timezone
+  // Auto-detect timezone (only for manual flow)
   useEffect(() => {
+    if (isFromSngine) return; // Skip for Sngine flow
+    
     try {
       /*eslint-disable*/
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const offset = new Date().getTimezoneOffset();
       const hours = Math.abs(Math.floor(offset / 60));
       const sign = offset <= 0 ? '+' : '-';
@@ -128,9 +139,12 @@ export default function UserDetailsForm({ sessionId, onNext }) {
     } catch (e) {
       console.log('Could not auto-detect timezone');
     }
-  }, []);
+  }, [isFromSngine]);
 
   const handleChange = (e) => {
+    // If from Sngine, don't allow changes (read-only)
+    if (isFromSngine) return;
+    
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -138,16 +152,19 @@ export default function UserDetailsForm({ sessionId, onNext }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.firstName || !formData.lastName || !formData.age || !formData.gender || !formData.country) {
-      dispatch(setError(t('userDetails.errors.required', 'Please fill in all required fields')));
-      return;
-    }
+    // For Sngine flow, skip validation since fields are pre-filled and read-only
+    if (!isFromSngine) {
+      // Validation for manual flow
+      if (!formData.firstName || !formData.lastName || !formData.age || !formData.gender || !formData.country) {
+        dispatch(setError(t('userDetails.errors.required', 'Please fill in all required fields')));
+        return;
+      }
 
-    const age = parseInt(formData.age);
-    if (isNaN(age) || age < 13 || age > 150) {
-      dispatch(setError(t('userDetails.errors.invalidAge', 'Age must be between 13 and 150')));
-      return;
+      const age = parseInt(formData.age);
+      if (isNaN(age) || age < 13 || age > 150) {
+        dispatch(setError(t('userDetails.errors.invalidAge', 'Age must be between 13 and 150')));
+        return;
+      }
     }
 
     try {
@@ -157,7 +174,7 @@ export default function UserDetailsForm({ sessionId, onNext }) {
         sessionId,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        age: parseInt(formData.age),
+        age: formData.age ? parseInt(formData.age) : null,
         gender: formData.gender,
         country: formData.country,
         city: formData.city,
@@ -171,7 +188,7 @@ export default function UserDetailsForm({ sessionId, onNext }) {
       dispatch(setUserDetails({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        age: parseInt(formData.age),
+        age: formData.age ? parseInt(formData.age) : null,
         gender: formData.gender,
         country: formData.country,
         city: formData.city,
@@ -186,8 +203,9 @@ export default function UserDetailsForm({ sessionId, onNext }) {
 
       dispatch(setSuccess(t('userDetails.success', 'Details saved successfully')));
       
-      // Clear auth method from session storage
+      // Clear session storage data
       sessionStorage.removeItem('auth_method');
+      sessionStorage.removeItem('sngine_prefill_data');
       
       onNext();
     } catch (error) {
@@ -196,35 +214,168 @@ export default function UserDetailsForm({ sessionId, onNext }) {
     }
   };
 
-  // Check if data came from Sngine
-  const isFromSngine = sessionStorage.getItem('auth_method') === 'sngine_token';
+  // ========================================
+  // RENDER: Sngine API Flow (Read-Only)
+  // ========================================
+  if (isFromSngine) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-green-600">
+            {t('userDetails.titleSngine', 'This is Your Profile')}
+          </h2>
+          <p className="text-gray-600 mt-2">
+            {t('userDetails.subtitleSngineReadOnly', 'Your information has been retrieved from your Sngine account. Please review and confirm to continue.')}
+          </p>
+        </div>
 
+        {auth.error && <ErrorAlert message={auth.error} />}
+        {auth.successMessage && <SuccessAlert message={auth.successMessage} />}
+
+        {/* Sngine Badge */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center">
+          <svg className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <div>
+            <p className="text-blue-800 font-medium">
+              {t('userDetails.sngineVerified', 'Verified Sngine Account')}
+            </p>
+            <p className="text-blue-600 text-sm">
+              {t('userDetails.sngineVerifiedDesc', 'This information is synced from your Sngine profile and cannot be edited here.')}
+            </p>
+          </div>
+        </div>
+
+        {/* Read-Only Profile Display */}
+        <div className="space-y-4">
+          {/* Name Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.firstName', 'First Name')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.firstName || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.lastName', 'Last Name')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.lastName || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Age and Gender Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.age', 'Age')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.age || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.gender', 'Gender')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {getGenderLabel(formData.gender) || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Country and City Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.country', 'Country')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.country || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.city', 'City')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.city || <span className="text-gray-400 italic">Not provided</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Timezone and Language Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.timezone', 'Timezone')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {formData.timezone || 'UTC+00:00'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {t('userDetails.language', 'Language')}
+              </label>
+              <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
+                {getLanguageLabel(formData.language)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Confirm Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 mt-8 flex items-center justify-center"
+        >
+          {isLoading ? (
+            <Loading />
+          ) : (
+            <>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {t('userDetails.confirmButton', 'Confirm & Continue')}
+            </>
+          )}
+        </button>
+
+        {/* Info Note */}
+        <p className="text-center text-gray-500 text-sm mt-4">
+          {t('userDetails.editNote', 'To update your profile information, please visit your Sngine account settings.')}
+        </p>
+      </div>
+    );
+  }
+
+  // ========================================
+  // RENDER: Manual Flow (Editable Form)
+  // ========================================
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-2 text-center text-blue-600">
         {t('userDetails.title', 'Complete Your Profile')}
       </h2>
       <p className="text-center text-gray-600 mb-6">
-        {isFromSngine 
-          ? t('userDetails.subtitleSngine', 'Please review and confirm your information from Sngine')
-          : t('userDetails.subtitle', 'Tell us a bit about yourself')
-        }
+        {t('userDetails.subtitle', 'Tell us a bit about yourself')}
       </p>
 
       {auth.error && <ErrorAlert message={auth.error} />}
       {auth.successMessage && <SuccessAlert message={auth.successMessage} />}
-
-      {/* Show badge if data is pre-filled from Sngine */}
-      {isFromSngine && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
-          <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-green-700 text-sm">
-            {t('userDetails.prefilledBadge', 'Information pre-filled from your Sngine account')}
-          </span>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name Row */}
@@ -375,6 +526,384 @@ export default function UserDetailsForm({ sessionId, onNext }) {
     </div>
   );
 }
+//last wrokable code but above is read only 
+// import React, { useState, useEffect } from 'react';
+// import { useDispatch } from 'react-redux';
+// import { useTranslation } from 'react-i18next';
+// import { useSaveUserDetailsMutation } from '../../redux/api/auth/userDetailsApi';
+// import { setUserDetails, setSessionFlags, setError, setSuccess } from '../../redux/slices/authSlice';
+// import ErrorAlert from '../Common/ErrorAlert';
+// import SuccessAlert from '../Common/SuccessAlert';
+// import Loading from '../Common/Loading';
+// import { useAuth } from '../../redux/hooks';
+
+// // Country list for dropdown
+// const COUNTRIES = [
+//   'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria',
+//   'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Colombia',
+//   'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Greece',
+//   'Hong Kong', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
+//   'Japan', 'Jordan', 'Kenya', 'Kuwait', 'Lebanon', 'Malaysia', 'Mexico',
+//   'Morocco', 'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 'Pakistan',
+//   'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia',
+//   'Saudi Arabia', 'Singapore', 'South Africa', 'South Korea', 'Spain', 'Sri Lanka',
+//   'Sweden', 'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'UAE', 'UK', 'Ukraine',
+//   'USA', 'Vietnam', 'Other'
+// ];
+
+// const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+
+// const TIMEZONES = [
+//   'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00', 'UTC-07:00',
+//   'UTC-06:00', 'UTC-05:00', 'UTC-04:00', 'UTC-03:00', 'UTC-02:00', 'UTC-01:00',
+//   'UTC+00:00', 'UTC+01:00', 'UTC+02:00', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
+//   'UTC+05:30', 'UTC+06:00', 'UTC+07:00', 'UTC+08:00', 'UTC+09:00', 'UTC+10:00',
+//   'UTC+11:00', 'UTC+12:00'
+// ];
+
+// const LANGUAGES = [
+//   { code: 'en_us', label: 'English (US)' },
+//   { code: 'en_gb', label: 'English (UK)' },
+//   { code: 'es', label: 'Spanish' },
+//   { code: 'fr', label: 'French' },
+//   { code: 'de', label: 'German' },
+//   { code: 'pt', label: 'Portuguese' },
+//   { code: 'ar', label: 'Arabic' },
+//   { code: 'zh', label: 'Chinese' },
+//   { code: 'ja', label: 'Japanese' },
+//   { code: 'ko', label: 'Korean' },
+//   { code: 'hi', label: 'Hindi' },
+//   { code: 'bn', label: 'Bengali' },
+// ];
+
+// export default function UserDetailsForm({ sessionId, onNext }) {
+//   const { t } = useTranslation();
+//   const dispatch = useDispatch();
+//   const auth = useAuth();
+  
+//   // Form state
+//   const [formData, setFormData] = useState({
+//     firstName: '',
+//     lastName: '',
+//     age: '',
+//     gender: '',
+//     country: '',
+//     city: '',
+//     timezone: 'UTC+00:00',
+//     language: 'en_us',
+//   });
+
+//   const [saveUserDetails, { isLoading }] = useSaveUserDetailsMutation();
+
+//   // ✅ NEW: Check for Sngine prefill data on mount
+//   useEffect(() => {
+//     const loadPrefillData = () => {
+//       // First, try to get prefill data from sessionStorage (from Sngine callback)
+//       const sngineData = sessionStorage.getItem('sngine_prefill_data');
+      
+//       if (sngineData) {
+//         try {
+//           const prefillData = JSON.parse(sngineData);
+//           console.log('[USER-DETAILS] Loading prefill data from Sngine:', prefillData);
+          
+//           setFormData(prev => ({
+//             ...prev,
+//             firstName: prefillData.firstName || prev.firstName,
+//             lastName: prefillData.lastName || prev.lastName,
+//             age: prefillData.age ? String(prefillData.age) : prev.age,
+//             gender: prefillData.gender || prev.gender,
+//             country: prefillData.country || prev.country,
+//             city: prefillData.city || prev.city,
+//             timezone: prefillData.timezone || prev.timezone,
+//             language: prefillData.language || prev.language,
+//           }));
+
+//           // Show success message that data was pre-filled
+//           dispatch(setSuccess(t('userDetails.prefilled', 'Your information has been pre-filled from Sngine. Please review and confirm.')));
+          
+//           // Clear the prefill data after loading
+//           sessionStorage.removeItem('sngine_prefill_data');
+//         } catch (e) {
+//           console.error('[USER-DETAILS] Failed to parse prefill data:', e);
+//         }
+//       }
+
+//       // Also check Redux state for any existing data
+//       if (auth.firstName || auth.lastName) {
+//         setFormData(prev => ({
+//           ...prev,
+//           firstName: prev.firstName || auth.firstName || '',
+//           lastName: prev.lastName || auth.lastName || '',
+//         }));
+//       }
+//     };
+
+//     loadPrefillData();
+//   }, [auth.firstName, auth.lastName, dispatch, t]);
+
+//   // Auto-detect timezone
+//   useEffect(() => {
+//     try {
+//       /*eslint-disable*/
+//       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+//       const offset = new Date().getTimezoneOffset();
+//       const hours = Math.abs(Math.floor(offset / 60));
+//       const sign = offset <= 0 ? '+' : '-';
+//       const tzString = `UTC${sign}${hours.toString().padStart(2, '0')}:00`;
+      
+//       if (TIMEZONES.includes(tzString) && !formData.timezone) {
+//         setFormData(prev => ({ ...prev, timezone: tzString }));
+//       }
+//     } catch (e) {
+//       console.log('Could not auto-detect timezone');
+//     }
+//   }, []);
+
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     // Validation
+//     if (!formData.firstName || !formData.lastName || !formData.age || !formData.gender || !formData.country) {
+//       dispatch(setError(t('userDetails.errors.required', 'Please fill in all required fields')));
+//       return;
+//     }
+
+//     const age = parseInt(formData.age);
+//     if (isNaN(age) || age < 13 || age > 150) {
+//       dispatch(setError(t('userDetails.errors.invalidAge', 'Age must be between 13 and 150')));
+//       return;
+//     }
+
+//     try {
+//       console.log('[USER-DETAILS] Saving user details:', { sessionId, ...formData });
+      
+//       const result = await saveUserDetails({
+//         sessionId,
+//         firstName: formData.firstName,
+//         lastName: formData.lastName,
+//         age: parseInt(formData.age),
+//         gender: formData.gender,
+//         country: formData.country,
+//         city: formData.city,
+//         timezone: formData.timezone,
+//         language: formData.language,
+//       }).unwrap();
+
+//       console.log('[USER-DETAILS] Save result:', result);
+
+//       // Update Redux
+//       dispatch(setUserDetails({
+//         firstName: formData.firstName,
+//         lastName: formData.lastName,
+//         age: parseInt(formData.age),
+//         gender: formData.gender,
+//         country: formData.country,
+//         city: formData.city,
+//         timezone: formData.timezone,
+//         language: formData.language,
+//       }));
+
+//       // Update session flags if returned
+//       if (result.data?.sessionFlags) {
+//         dispatch(setSessionFlags(result.data.sessionFlags));
+//       }
+
+//       dispatch(setSuccess(t('userDetails.success', 'Details saved successfully')));
+      
+//       // Clear auth method from session storage
+//       sessionStorage.removeItem('auth_method');
+      
+//       onNext();
+//     } catch (error) {
+//       const errorMessage = error.data?.message || t('userDetails.errors.saveFailed', 'Failed to save details');
+//       dispatch(setError(errorMessage));
+//     }
+//   };
+
+//   // Check if data came from Sngine
+//   const isFromSngine = sessionStorage.getItem('auth_method') === 'sngine_token';
+
+//   return (
+//     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
+//       <h2 className="text-2xl font-bold mb-2 text-center text-blue-600">
+//         {t('userDetails.title', 'Complete Your Profile')}
+//       </h2>
+//       <p className="text-center text-gray-600 mb-6">
+//         {isFromSngine 
+//           ? t('userDetails.subtitleSngine', 'Please review and confirm your information from Sngine')
+//           : t('userDetails.subtitle', 'Tell us a bit about yourself')
+//         }
+//       </p>
+
+//       {auth.error && <ErrorAlert message={auth.error} />}
+//       {auth.successMessage && <SuccessAlert message={auth.successMessage} />}
+
+//       {/* Show badge if data is pre-filled from Sngine */}
+//       {isFromSngine && (
+//         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
+//           <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+//           </svg>
+//           <span className="text-green-700 text-sm">
+//             {t('userDetails.prefilledBadge', 'Information pre-filled from your Sngine account')}
+//           </span>
+//         </div>
+//       )}
+
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         {/* Name Row */}
+//         <div className="grid grid-cols-2 gap-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.firstName', 'First Name')} *
+//             </label>
+//             <input
+//               type="text"
+//               name="firstName"
+//               value={formData.firstName}
+//               onChange={handleChange}
+//               placeholder={t('userDetails.firstNamePlaceholder', 'Enter first name')}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//               required
+//             />
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.lastName', 'Last Name')} *
+//             </label>
+//             <input
+//               type="text"
+//               name="lastName"
+//               value={formData.lastName}
+//               onChange={handleChange}
+//               placeholder={t('userDetails.lastNamePlaceholder', 'Enter last name')}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//               required
+//             />
+//           </div>
+//         </div>
+
+//         {/* Age and Gender Row */}
+//         <div className="grid grid-cols-2 gap-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.age', 'Age')} *
+//             </label>
+//             <input
+//               type="number"
+//               name="age"
+//               value={formData.age}
+//               onChange={handleChange}
+//               placeholder={t('userDetails.agePlaceholder', 'Enter age')}
+//               min="13"
+//               max="150"
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//               required
+//             />
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.gender', 'Gender')} *
+//             </label>
+//             <select
+//               name="gender"
+//               value={formData.gender}
+//               onChange={handleChange}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//               required
+//             >
+//               <option value="">{t('userDetails.selectGender', 'Select gender')}</option>
+//               {GENDERS.map(g => (
+//                 <option key={g} value={g.toLowerCase()}>{g}</option>
+//               ))}
+//             </select>
+//           </div>
+//         </div>
+
+//         {/* Country and City Row */}
+//         <div className="grid grid-cols-2 gap-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.country', 'Country')} *
+//             </label>
+//             <select
+//               name="country"
+//               value={formData.country}
+//               onChange={handleChange}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//               required
+//             >
+//               <option value="">{t('userDetails.selectCountry', 'Select country')}</option>
+//               {COUNTRIES.map(c => (
+//                 <option key={c} value={c}>{c}</option>
+//               ))}
+//             </select>
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.city', 'City')}
+//             </label>
+//             <input
+//               type="text"
+//               name="city"
+//               value={formData.city}
+//               onChange={handleChange}
+//               placeholder={t('userDetails.cityPlaceholder', 'Enter city')}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//             />
+//           </div>
+//         </div>
+
+//         {/* Timezone and Language Row */}
+//         <div className="grid grid-cols-2 gap-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.timezone', 'Timezone')}
+//             </label>
+//             <select
+//               name="timezone"
+//               value={formData.timezone}
+//               onChange={handleChange}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//             >
+//               {TIMEZONES.map(tz => (
+//                 <option key={tz} value={tz}>{tz}</option>
+//               ))}
+//             </select>
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">
+//               {t('userDetails.language', 'Language')}
+//             </label>
+//             <select
+//               name="language"
+//               value={formData.language}
+//               onChange={handleChange}
+//               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+//             >
+//               {LANGUAGES.map(lang => (
+//                 <option key={lang.code} value={lang.code}>{lang.label}</option>
+//               ))}
+//             </select>
+//           </div>
+//         </div>
+
+//         <button
+//           type="submit"
+//           disabled={isLoading}
+//           className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 mt-6"
+//         >
+//           {isLoading ? <Loading /> : t('userDetails.saveButton', 'Save & Continue')}
+//         </button>
+//       </form>
+//     </div>
+//   );
+// }
 //last working code only to add api above code
 // import React, { useState } from 'react';
 // import { useDispatch } from 'react-redux';
