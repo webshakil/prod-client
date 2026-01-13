@@ -47,10 +47,17 @@ const LANGUAGES = [
   { code: 'bn', label: 'Bengali' },
 ];
 
-// Helper to get gender label
+// Helper to get gender label (handles numeric values from API)
 const getGenderLabel = (value) => {
   if (!value) return '';
-  const gender = GENDERS.find(g => g.toLowerCase() === value.toLowerCase());
+  
+  // Handle numeric gender values from Sngine API
+  if (value === '1' || value === 1) return 'Male';
+  if (value === '2' || value === 2) return 'Female';
+  if (value === '3' || value === 3) return 'Other';
+  
+  // Handle string values
+  const gender = GENDERS.find(g => g.toLowerCase() === String(value).toLowerCase());
   return gender || value;
 };
 
@@ -58,6 +65,20 @@ const getGenderLabel = (value) => {
 const getLanguageLabel = (code) => {
   const lang = LANGUAGES.find(l => l.code === code);
   return lang ? lang.label : code || 'English (US)';
+};
+
+// Helper to get country name (handles country codes/IDs)
+const getCountryLabel = (value) => {
+  if (!value) return '';
+  
+  // If it's a number (country ID from Sngine), we can't map it without a lookup
+  // Just show it as is or mark as "Country ID: X"
+  if (!isNaN(value) && !COUNTRIES.includes(value)) {
+    // Could be a country code/ID - for now just don't display raw numbers
+    return ''; // Will show "Not provided"
+  }
+  
+  return value;
 };
 
 export default function UserDetailsForm({ sessionId, onNext }) {
@@ -150,11 +171,11 @@ export default function UserDetailsForm({ sessionId, onNext }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    // For Sngine flow, skip validation since fields are pre-filled and read-only
+    // For Sngine flow, skip ALL validation - just confirm and continue
     if (!isFromSngine) {
-      // Validation for manual flow
+      // Validation for manual flow only
       if (!formData.firstName || !formData.lastName || !formData.age || !formData.gender || !formData.country) {
         dispatch(setError(t('userDetails.errors.required', 'Please fill in all required fields')));
         return;
@@ -168,18 +189,19 @@ export default function UserDetailsForm({ sessionId, onNext }) {
     }
 
     try {
-      console.log('[USER-DETAILS] Saving user details:', { sessionId, ...formData });
+      console.log('[USER-DETAILS] Saving user details:', { sessionId, ...formData, isFromSngine });
       
+      // For Sngine flow, send whatever data we have (all optional)
       const result = await saveUserDetails({
         sessionId,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.firstName || null,
+        lastName: formData.lastName || null,
         age: formData.age ? parseInt(formData.age) : null,
-        gender: formData.gender,
-        country: formData.country,
-        city: formData.city,
-        timezone: formData.timezone,
-        language: formData.language,
+        gender: formData.gender || null,
+        country: formData.country || null,
+        city: formData.city || null,
+        timezone: formData.timezone || 'UTC+00:00',
+        language: formData.language || 'en_us',
       }).unwrap();
 
       console.log('[USER-DETAILS] Save result:', result);
@@ -302,7 +324,7 @@ export default function UserDetailsForm({ sessionId, onNext }) {
                 {t('userDetails.country', 'Country')}
               </label>
               <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-medium">
-                {formData.country || <span className="text-gray-400 italic">Not provided</span>}
+                {getCountryLabel(formData.country) || <span className="text-gray-400 italic">Not provided</span>}
               </div>
             </div>
             <div>
