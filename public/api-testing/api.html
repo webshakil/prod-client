@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sngine Token Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+    textarea { width: 100%; height: 120px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+    button { background: #4F46E5; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #4338CA; }
+    .info { background: #F3F4F6; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    .success { background: #D1FAE5; border: 1px solid #10B981; }
+    .token-info { background: #FEF3C7; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    code { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; }
+    h3 { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Sngine Integration Test</h1>
+  
+  <div class="info">
+    <strong>This simulates what Sngine does when user clicks "Vote Now"</strong><br><br>
+    <strong>Flow:</strong> Sngine → Backend API → Redirect → Frontend
+  </div>
+
+  <form 
+    action="https://prod-auth-service-6lxe.onrender.com/api/v1/sngine/callback" 
+    method="POST"
+  >
+    <label><strong>Sngine Token:</strong></label>
+    <textarea name="token">eyJ1c2VyX2lkIjoiNCIsInVzZXJuYW1lIjoic2hha2lsIiwidXNlcl9lbWFpbCI6InNoYWtpbGthbXJhbkBnbWFpbC5jb20iLCJ1c2VyX2ZpcnN0bmFtZSI6IlNoYWtpbCIsInVzZXJfbGFzdG5hbWUiOiJLYW1yYW4iLCJvcmdfbWVtYmVyIjoiTm8iLCJ1c2VyX2NvdW50cnkiOm51bGwsInVzZXJfYWdlIjpudWxsLCJ1c2VyX2dlbmRlciI6IjEiLCJpYXQiOjE3NjgyMTUwNjQsImV4cCI6MTc2ODgxOTg2NCwibm9uY2UiOiJlNjFmODRkNmRlOGU1MjhjIn0=.41e86853eabe09ea882bc3eb76b0f8e6b6a6b919af67def4c01845f188c925b6</textarea>
+    <br>
+    <button type="submit">🗳️ Test "Vote Now" (Full Flow)</button>
+  </form>
+
+  <div class="token-info">
+    <strong>📋 Token Details (Decoded):</strong><br><br>
+    <code>user_id:</code> 4<br>
+    <code>username:</code> shakil<br>
+    <code>user_email:</code> shakilkamran@gmail.com<br>
+    <code>user_firstname:</code> Shakil<br>
+    <code>user_lastname:</code> Kamran<br>
+    <code>org_member:</code> No<br>
+    <code>user_gender:</code> 1<br>
+    <code>exp:</code> 1768819864 (Valid until ~7 days from creation)
+  </div>
+
+  <hr style="margin: 30px 0;">
+
+  <h3>✅ Expected Flow When Working:</h3>
+  <ol>
+    <li>Form POSTs token to <code>https://prod-auth-service-6lxe.onrender.com/api/v1/sngine/callback</code></li>
+    <li>Backend verifies token signature</li>
+    <li>Backend finds user in <code>public.users</code></li>
+    <li>Backend creates session in <code>votteryy_auth_sessions</code></li>
+    <li>Backend saves data to <code>votteryy_user_details</code></li>
+    <li><strong>Backend REDIRECTS to:</strong> <code>https://prod-client-omega.vercel.app/auth/sngine/callback?data=...</code></li>
+    <li>Frontend <code>SngineCallbackHandler</code> decodes data</li>
+    <li>Frontend sets Redux state</li>
+    <li>Frontend navigates to <code>/auth</code> (Step 2: Email OTP)</li>
+  </ol>
+
+  <h3>❌ Possible Errors:</h3>
+  <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+    <tr>
+      <th>Error</th>
+      <th>Meaning</th>
+    </tr>
+    <tr>
+      <td><code>INVALID_SIGNATURE</code></td>
+      <td>Secret key mismatch between Sngine and Backend</td>
+    </tr>
+    <tr>
+      <td><code>TOKEN_EXPIRED</code></td>
+      <td>Token has expired, need fresh token from Sngine</td>
+    </tr>
+    <tr>
+      <td><code>USER_NOT_FOUND</code></td>
+      <td>User doesn't exist in <code>public.users</code> table</td>
+    </tr>
+    <tr>
+      <td><code>USER_BANNED</code></td>
+      <td>User is banned in the system</td>
+    </tr>
+    <tr>
+      <td>CORS Error</td>
+      <td>Backend CORS not configured (shouldn't happen with form POST)</td>
+    </tr>
+    <tr>
+      <td>White page</td>
+      <td>Frontend route <code>/auth/sngine/callback</code> not deployed</td>
+    </tr>
+  </table>
+
+  <h3>🔧 Quick Backend Test (API Only):</h3>
+  <p>Open browser console and run:</p>
+  <pre style="background: #1F2937; color: #10B981; padding: 15px; border-radius: 6px; overflow-x: auto;">
+fetch('https://prod-auth-service-6lxe.onrender.com/api/v1/sngine/health')
+  .then(r => r.json())
+  .then(console.log)
+  .catch(console.error)
+  </pre>
+
+</body>
+</html>
