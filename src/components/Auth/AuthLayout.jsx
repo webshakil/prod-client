@@ -18,9 +18,13 @@ export default function AuthLayout() {
   const navigate = useNavigate();
   const auth = useAuth();
   
-  // ✅ CHANGE 1: Initialize localStep from Redux state (for Sngine flow)
+  // ✅ FIXED: Only skip Step 1 if coming from Sngine (check sessionStorage)
   const [localStep, setLocalStep] = useState(() => {
-    if (auth.completedAuthSteps?.userCheck && auth.sessionId) {
+    const authMethod = sessionStorage.getItem('auth_method');
+    // Only skip Step 1 if:
+    // 1. auth_method is 'sngine_token' (set by SngineCallbackHandler)
+    // 2. AND sessionId exists (meaning Sngine flow completed)
+    if (authMethod === 'sngine_token' && auth.sessionId) {
       console.log('[AUTH-LAYOUT] ✅ Sngine flow detected, starting at step 2');
       return 2;
     }
@@ -31,13 +35,14 @@ export default function AuthLayout() {
 
   const totalSteps = auth.isFirstTimeUser ? 7 : 3;
 
-  // ✅ CHANGE 2: Sync localStep when Redux state changes (for Sngine flow)
+  // ✅ FIXED: Only sync for Sngine flow
   useEffect(() => {
-    if (auth.completedAuthSteps?.userCheck && auth.sessionId && localStep === 1) {
-      console.log('[AUTH-LAYOUT] ✅ User check already complete, moving to step 2');
+    const authMethod = sessionStorage.getItem('auth_method');
+    if (authMethod === 'sngine_token' && auth.sessionId && localStep === 1) {
+      console.log('[AUTH-LAYOUT] ✅ Sngine flow - moving to step 2');
       setLocalStep(2);
     }
-  }, [auth.completedAuthSteps?.userCheck, auth.sessionId, localStep]);
+  }, [auth.sessionId, localStep]);
 
   useEffect(() => {
   // ✅ CRITICAL: First-time users MUST complete all steps before redirect
@@ -295,6 +300,7 @@ export default function AuthLayout() {
     isAuthenticated: auth.isAuthenticated,
     authStatus: auth.authenticationStatus,
     hasToken: !!auth.accessToken,
+    authMethod: sessionStorage.getItem('auth_method'), // ✅ NEW: Log this
   });
 
   return (
