@@ -26,10 +26,10 @@ export const verificationApi = indexApi.injectEndpoints({
 
     // Verify OTP (email or SMS)
     verifyOTP: builder.mutation({
-      query: ({ sessionId, otp, otpType, skipVerification }) => ({
+      query: ({ sessionId, otp, otpType, skipVerification,phone }) => ({
         url: '/verification/verify-otp',
         method: 'POST',
-        body: { sessionId, otp, otpType, skipVerification },
+        body: { sessionId, otp, otpType, skipVerification,phone },
       }),
       invalidatesTags: ['Verification'],
     }),

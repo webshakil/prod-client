@@ -45,7 +45,7 @@ export default function SMSVerificationForm({ sessionId, phone, onNext }) {
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     try {
-      await verifyOTP({ sessionId, otp, otpType: 'sms', skipVerification: false }).unwrap();
+      await verifyOTP({ sessionId, otp, otpType: 'sms', skipVerification: false,phone }).unwrap();
 
       // ✅ Get fresh session data to check first-time user status
       try {
