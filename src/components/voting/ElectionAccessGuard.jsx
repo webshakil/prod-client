@@ -1,3 +1,4 @@
+
 // src/components/voting/ElectionAccessGuard.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -67,7 +68,12 @@ export default function ElectionAccessGuard() {
   console.log('🗳️ ElectionAccessGuard - ballotData:', {
     electionId,
     hasVoted: ballotData?.hasVoted,
-    biometricRequired: ballotData?.election?.biometricRequired,
+    // Check all possible biometric field names
+    'election.biometricRequired': ballotData?.election?.biometricRequired,
+    'election.biometric_required': ballotData?.election?.biometric_required,
+    'election.is_biometric_required': ballotData?.election?.is_biometric_required,
+    'ballotData.biometricRequired': ballotData?.biometricRequired,
+    'ballotData.biometric_required': ballotData?.biometric_required,
     isLoading: ballotLoading,
     error: ballotError,
     deviceCheck,
@@ -153,8 +159,21 @@ export default function ElectionAccessGuard() {
     );
   }
 
-  // NEW: Check if biometric is required
-  const isBiometricRequired = ballotData?.election?.biometricRequired === true;
+  // NEW: Check if biometric is required - the field is biometric_required (snake_case) inside election
+  const isBiometricRequired = 
+    ballotData?.election?.biometric_required === true || 
+    ballotData?.election?.biometricRequired === true ||
+    ballotData?.biometric_required === true ||
+    ballotData?.biometricRequired === true;
+  
+  // DEBUG: Log biometric check result
+  console.log('🔐 Biometric Check:', {
+    'ballotData.election.biometric_required': ballotData?.election?.biometric_required,
+    'ballotData.election (full object)': ballotData?.election,
+    'isBiometricRequired result': isBiometricRequired,
+    'deviceCheck.canUseBiometrics': deviceCheck.canUseBiometrics,
+  });
+
   const isFree = !ballotData.paymentRequired;
   const hasPaid = paymentStatus?.paid;
   const videoCompleted = ballotData.videoProgress?.completed;
