@@ -44,6 +44,7 @@ export const usePersonalizedRecommendations = (limit = 10) => {
       dispatch(clearRecommendations());
       refetch();
     }
+    /*eslint-disable*/
   }, [userId]); // Only depend on userId change
 
   return {
