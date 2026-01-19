@@ -15,9 +15,10 @@ import {
   Vote,
   Info,
 } from 'lucide-react';
-import { usePersonalizedRecommendations } from '../../../hooks/useRecommendations';
+//import { usePersonalizedRecommendations } from '../../../hooks/useRecommendations';
 import RecommendationCard from './RecommendationCard';
 import AIBadge from './AIBadge';
+import { usePersonalizedRecommendations } from '../../hooks/useRecommendations';
 
 /**
  * 🤖 Recommended For You Section
