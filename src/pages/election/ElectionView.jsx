@@ -28,6 +28,8 @@ import {
 
 import { deleteElection, getElection, getElectionQuestions } from '../../redux/api/election/electionApi';
 import { setCurrentElection } from '../../redux/slices/electionSlice';
+import SimilarElections from '../../components/ai/SimilarElections';
+//import SimilarElections from './SimilarElections';
 
 export default function ElectionView() {
 
@@ -66,9 +68,7 @@ export default function ElectionView() {
   const isOwner = election && currentUserId && String(election.creator_id) === String(currentUserId);
   const hasActiveVotes = election && (election.vote_count > 0 || election.status === 'active');
   
-  // ✅ CHANGED: Show buttons only if owner AND from My Elections
   const showEditDeleteButtons = isFromMyElections && isOwner;
-  // Can actually perform edit/delete only if no active votes
   const canModify = showEditDeleteButtons && !hasActiveVotes;
   
   const backPath = isFromMyElections ? '/dashboard/my-elections' : '/dashboard/all-elections';
@@ -193,9 +193,58 @@ export default function ElectionView() {
   const statusConfig = getStatusBadge(election.status);
   const StatusIcon = statusConfig.icon;
 
+  // Helper function to render regional pricing tooltip content
+  const renderRegionalPricingTooltip = () => {
+    if (election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0) {
+      return (
+        <div className="space-y-1">
+          {election.regional_pricing.slice(0, 5).map((region, idx) => (
+            <div key={idx} className="flex justify-between gap-3">
+              <span>{region.region_name}</span>
+              <span className="text-green-300 font-semibold">${parseFloat(region.participation_fee).toFixed(2)}</span>
+            </div>
+          ))}
+          {election.regional_pricing.length > 5 && (
+            <div className="text-gray-400 text-center pt-1">+{election.regional_pricing.length - 5} more</div>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div className="text-green-300 font-semibold">${parseFloat(election.general_participation_fee || 0).toFixed(2)}</div>
+    );
+  };
+
+  // Helper function to get fee display value
+  const getFeeDisplayValue = () => {
+    if (election.is_free) return 'Free';
+    if (election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0) {
+      const fees = election.regional_pricing.map(r => parseFloat(r.participation_fee));
+      const min = Math.min(...fees);
+      const max = Math.max(...fees);
+      return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)}-$${max.toFixed(2)}`;
+    }
+    return `$${parseFloat(election.general_participation_fee || 0).toFixed(2)}`;
+  };
+
+  // Helper function to get pricing type label
+  const getPricingTypeLabel = () => {
+    if (election.pricing_type === 'regional_fee') return '🌍 Regional Pricing';
+    if (election.pricing_type === 'general_fee') return '💵 Fixed Fee';
+    return 'Paid Election';
+  };
+
+  // Helper function to get fee type suffix
+  const getFeeTypeSuffix = () => {
+    if (election.pricing_type === 'regional_fee') return '(Regional)';
+    if (election.pricing_type === 'general_fee') return '(Fixed)';
+    return '';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
         <div className="mb-6">
           <button
             onClick={() => navigate(backPath)}
@@ -204,7 +253,7 @@ export default function ElectionView() {
             <FaArrowLeft /> {backLabel}
           </button>
 
-          {/* ✅ View Only Mode Banner - Only show when NOT from My Elections */}
+          {/* View Only Mode Banner */}
           {!isFromMyElections && (
             <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
               <div className="flex items-center gap-2">
@@ -212,11 +261,18 @@ export default function ElectionView() {
                 <span className="text-blue-800 font-medium">View Only Mode</span>
               </div>
               <p className="text-sm text-blue-600 mt-1">
-                To edit or delete, go to <button onClick={() => navigate('/dashboard/my-elections')} className="underline font-semibold">My Elections</button>
+                To edit or delete, go to{' '}
+                <button 
+                  onClick={() => navigate('/dashboard/my-elections')} 
+                  className="underline font-semibold"
+                >
+                  My Elections
+                </button>
               </p>
             </div>
           )}
 
+          {/* Election Header Card */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="flex-1">
@@ -229,14 +285,14 @@ export default function ElectionView() {
                 </div>
                 <p className="text-gray-600">{election.description}</p>
                 
-                {/* Ownership indicator - only show when owner */}
+                {/* Ownership indicator */}
                 {isOwner && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
                     <FaCheckCircle /> You own this election
                   </div>
                 )}
                 
-                {/* Active votes warning - only show when owner viewing from My Elections */}
+                {/* Active votes warning */}
                 {showEditDeleteButtons && hasActiveVotes && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
                     <FaLock /> Cannot modify - has active votes
@@ -244,9 +300,8 @@ export default function ElectionView() {
                 )}
               </div>
               
-              {/* ✅ CHANGED: Action Buttons - Conditionally rendered */}
+              {/* Action Buttons */}
               <div className="flex gap-2">
-                {/* Edit button - only show if owner and from My Elections */}
                 {showEditDeleteButtons && (
                   <button
                     onClick={() => canModify && navigate(`/dashboard/create-election?edit=${election.id}`)}
@@ -262,7 +317,6 @@ export default function ElectionView() {
                   </button>
                 )}
                 
-                {/* Share button - always visible */}
                 <button
                   onClick={handleShare}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -270,7 +324,6 @@ export default function ElectionView() {
                   <FaShare /> Share
                 </button>
                 
-                {/* Delete button - only show if owner and from My Elections */}
                 {showEditDeleteButtons && (
                   <button
                     onClick={() => canModify && setDeleteModal(true)}
@@ -288,6 +341,7 @@ export default function ElectionView() {
               </div>
             </div>
 
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 text-2xl font-bold text-blue-600 mb-1">
@@ -313,39 +367,15 @@ export default function ElectionView() {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 text-2xl font-bold text-orange-600 mb-1 relative group">
                   <FaDollarSign />
-                  {election.is_free ? 'Free' : 
-                    election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0 ?
-                      (() => {
-                        const fees = election.regional_pricing.map(r => parseFloat(r.participation_fee));
-                        const min = Math.min(...fees);
-                        const max = Math.max(...fees);
-                        return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)}-$${max.toFixed(2)}`;
-                      })()
-                    : `$${parseFloat(election.general_participation_fee || 0).toFixed(2)}`
-                  }
+                  {getFeeDisplayValue()}
                   
                   {!election.is_free && (
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50">
                       <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
                         <div className="font-semibold mb-1 text-orange-300">
-                          {election.pricing_type === 'regional_fee' ? '🌍 Regional Pricing' : 
-                           election.pricing_type === 'general_fee' ? '💵 Fixed Fee' : 'Paid Election'}
+                          {getPricingTypeLabel()}
                         </div>
-                        {election.pricing_type === 'regional_fee' && election.regional_pricing?.length > 0 ? (
-                          <div className="space-y-1">
-                            {election.regional_pricing.slice(0, 5).map((region, idx) => (
-                              <div key={idx} className="flex justify-between gap-3">
-                                <span>{region.region_name}</span>
-                                <span className="text-green-300 font-semibold">${parseFloat(region.participation_fee).toFixed(2)}</span>
-                              </div>
-                            ))}
-                            {election.regional_pricing.length > 5 && (
-                              <div className="text-gray-400 text-center pt-1">+{election.regional_pricing.length - 5} more</div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-green-300 font-semibold">${parseFloat(election.general_participation_fee || 0).toFixed(2)}</div>
-                        )}
+                        {renderRegionalPricingTooltip()}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                           <div className="border-8 border-transparent border-t-gray-900"></div>
                         </div>
@@ -354,13 +384,14 @@ export default function ElectionView() {
                   )}
                 </div>
                 <p className="text-sm text-gray-600">
-                  Fee {election.pricing_type === 'regional_fee' ? '(Regional)' : election.pricing_type === 'general_fee' ? '(Fixed)' : ''}
+                  Fee {getFeeTypeSuffix()}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Tabs Navigation */}
         <div className="bg-white rounded-lg shadow-md mb-6">
           <div className="flex border-b border-gray-200 overflow-x-auto">
             {['overview', 'media', 'questions', 'settings', 'gamify'].map((tab) => (
@@ -379,9 +410,12 @@ export default function ElectionView() {
           </div>
         </div>
 
+        {/* Tab Content */}
         <div className="space-y-6">
+          {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Schedule Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaCalendar className="text-blue-600" />
@@ -391,12 +425,16 @@ export default function ElectionView() {
                   <div>
                     <p className="text-sm text-gray-600">Start Date</p>
                     <p className="font-medium">{formatDate(election.start_date)}</p>
-                    {election.start_time && <p className="text-sm text-gray-500">Time: {formatTime(election.start_time)}</p>}
+                    {election.start_time && (
+                      <p className="text-sm text-gray-500">Time: {formatTime(election.start_time)}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">End Date</p>
                     <p className="font-medium">{formatDate(election.end_date)}</p>
-                    {election.end_time && <p className="text-sm text-gray-500">Time: {formatTime(election.end_time)}</p>}
+                    {election.end_time && (
+                      <p className="text-sm text-gray-500">Time: {formatTime(election.end_time)}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Timezone</p>
@@ -405,6 +443,7 @@ export default function ElectionView() {
                 </div>
               </div>
 
+              {/* Voting Configuration Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaVoteYea className="text-purple-600" />
@@ -419,13 +458,9 @@ export default function ElectionView() {
                     <p className="text-sm text-gray-600">Live Results</p>
                     <p className="font-medium flex items-center gap-2">
                       {election.show_live_results ? (
-                        <>
-                          <FaCheckCircle className="text-green-600" /> Enabled
-                        </>
+                        <><FaCheckCircle className="text-green-600" /> Enabled</>
                       ) : (
-                        <>
-                          <FaTimesCircle className="text-red-600" /> Disabled
-                        </>
+                        <><FaTimesCircle className="text-red-600" /> Disabled</>
                       )}
                     </p>
                   </div>
@@ -433,13 +468,9 @@ export default function ElectionView() {
                     <p className="text-sm text-gray-600">Vote Editing</p>
                     <p className="font-medium flex items-center gap-2">
                       {election.vote_editing_allowed ? (
-                        <>
-                          <FaCheckCircle className="text-green-600" /> Allowed
-                        </>
+                        <><FaCheckCircle className="text-green-600" /> Allowed</>
                       ) : (
-                        <>
-                          <FaTimesCircle className="text-red-600" /> Not Allowed
-                        </>
+                        <><FaTimesCircle className="text-red-600" /> Not Allowed</>
                       )}
                     </p>
                   </div>
@@ -447,13 +478,9 @@ export default function ElectionView() {
                     <p className="text-sm text-gray-600">Biometric Required</p>
                     <p className="font-medium flex items-center gap-2">
                       {election.biometric_required ? (
-                        <>
-                          <FaLock className="text-orange-600" /> Yes
-                        </>
+                        <><FaLock className="text-orange-600" /> Yes</>
                       ) : (
-                        <>
-                          <FaUnlock className="text-green-600" /> No
-                        </>
+                        <><FaUnlock className="text-green-600" /> No</>
                       )}
                     </p>
                   </div>
@@ -461,19 +488,16 @@ export default function ElectionView() {
                     <p className="text-sm text-gray-600">Anonymous Voting</p>
                     <p className="font-medium flex items-center gap-2">
                       {election.anonymous_voting_enabled ? (
-                        <>
-                          <FaCheckCircle className="text-green-600" /> Enabled
-                        </>
+                        <><FaCheckCircle className="text-green-600" /> Enabled</>
                       ) : (
-                        <>
-                          <FaTimesCircle className="text-red-600" /> Disabled
-                        </>
+                        <><FaTimesCircle className="text-red-600" /> Disabled</>
                       )}
                     </p>
                   </div>
                 </div>
               </div>
 
+              {/* Access Control Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaGlobe className="text-green-600" />
@@ -516,6 +540,7 @@ export default function ElectionView() {
                 </div>
               </div>
 
+              {/* Pricing Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaDollarSign className="text-yellow-600" />
@@ -571,6 +596,7 @@ export default function ElectionView() {
                 </div>
               </div>
 
+              {/* Video Watch Requirements Card */}
               {(election.video_watch_required || 
                 election.required_watch_duration_minutes > 0 || 
                 (election.minimum_watch_percentage && parseFloat(election.minimum_watch_percentage) > 0) ||
@@ -585,13 +611,9 @@ export default function ElectionView() {
                       <p className="text-sm text-gray-600">Video Watch Required</p>
                       <p className="font-medium flex items-center gap-2">
                         {election.video_watch_required ? (
-                          <>
-                            <FaCheckCircle className="text-green-600" /> Yes
-                          </>
+                          <><FaCheckCircle className="text-green-600" /> Yes</>
                         ) : (
-                          <>
-                            <FaTimesCircle className="text-red-600" /> No
-                          </>
+                          <><FaTimesCircle className="text-red-600" /> No</>
                         )}
                       </p>
                     </div>
@@ -617,6 +639,7 @@ export default function ElectionView() {
                 </div>
               )}
 
+              {/* Creator Information Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaBuilding className="text-indigo-600" />
@@ -631,7 +654,9 @@ export default function ElectionView() {
                     <p className="text-sm text-gray-600">Creator ID</p>
                     <p className="font-medium">
                       {election.creator_id}
-                      {isOwner && <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">You</span>}
+                      {isOwner && (
+                        <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">You</span>
+                      )}
                     </p>
                   </div>
                   {election.organization_id && (
@@ -671,6 +696,7 @@ export default function ElectionView() {
                 </div>
               </div>
 
+              {/* URLs & Links Card */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaShare className="text-pink-600" />
@@ -708,7 +734,7 @@ export default function ElectionView() {
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm break-all block"
                     >
-                      https://prod-client-omega.vercel.app/vote/{election.slug}
+                      {`https://prod-client-omega.vercel.app/vote/${election.slug}`}
                     </a>
                   </div>
                 </div>
@@ -716,6 +742,7 @@ export default function ElectionView() {
             </div>
           )}
 
+          {/* Media Tab */}
           {activeTab === 'media' && (
             <div className="space-y-6">
               {election.topic_image_url && (
@@ -738,46 +765,7 @@ export default function ElectionView() {
                     <FaVideo className="text-red-600" />
                     Topic Video
                   </h3>
-                  {(() => {
-                    const videoUrl = election.topic_video_url || election.video_url;
-                    
-                    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-                      let videoId = '';
-                      
-                      if (videoUrl.includes('youtube.com/watch?v=')) {
-                        videoId = videoUrl.split('v=')[1]?.split('&')[0];
-                      } else if (videoUrl.includes('youtu.be/')) {
-                        videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
-                      } else if (videoUrl.includes('youtube.com/embed/')) {
-                        videoId = videoUrl.split('embed/')[1]?.split('?')[0];
-                      }
-                      
-                      if (videoId) {
-                        return (
-                          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                            <iframe
-                              className="absolute top-0 left-0 w-full h-full rounded-lg"
-                              src={`https://www.youtube.com/embed/${videoId}`}
-                              title="Election Video"
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
-                          </div>
-                        );
-                      }
-                    }
-                    
-                    return (
-                      <video
-                        controls
-                        className="w-full rounded-lg"
-                        src={videoUrl}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    );
-                  })()}
+                  {renderVideoPlayer(election.topic_video_url || election.video_url)}
                 </div>
               )}
 
@@ -800,7 +788,10 @@ export default function ElectionView() {
                   <h3 className="text-lg font-bold text-gray-800 mb-4">
                     Voting Body Content
                   </h3>
-                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: election.voting_body_content }} />
+                  <div 
+                    className="prose max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: election.voting_body_content }} 
+                  />
                 </div>
               )}
 
@@ -813,6 +804,7 @@ export default function ElectionView() {
             </div>
           )}
 
+          {/* Questions Tab */}
           {activeTab === 'questions' && (
             <div className="space-y-4">
               {questions.length > 0 ? (
@@ -855,7 +847,11 @@ export default function ElectionView() {
                               <div key={option.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                                 <span className="flex-1">{option.option_text}</span>
                                 {option.option_image_url && (
-                                  <img src={option.option_image_url} alt="Option" className="h-8 w-8 object-cover rounded" />
+                                  <img 
+                                    src={option.option_image_url} 
+                                    alt="Option" 
+                                    className="h-8 w-8 object-cover rounded" 
+                                  />
                                 )}
                               </div>
                             ))}
@@ -874,6 +870,7 @@ export default function ElectionView() {
             </div>
           )}
 
+          {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Election Settings</h3>
@@ -908,6 +905,7 @@ export default function ElectionView() {
             </div>
           )}
 
+          {/* Gamify Tab */}
           {activeTab === 'gamify' && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -990,6 +988,7 @@ export default function ElectionView() {
                     </div>
                   )}
                   
+                  {/* Prize Distribution */}
                   {(election.lottery_prize_distribution || election.lottery_config?.prize_distribution) && 
                    (election.lottery_prize_distribution?.length > 0 || election.lottery_config?.prize_distribution?.length > 0) && (
                     <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded border-2 border-yellow-300">
@@ -998,36 +997,44 @@ export default function ElectionView() {
                         Prize Distribution by Rank
                       </h4>
                       <div className="space-y-3">
-                        {(election.lottery_prize_distribution || election.lottery_config?.prize_distribution).map((prize, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-yellow-200">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                                prize.rank === 1 ? 'bg-yellow-500' : 
-                                prize.rank === 2 ? 'bg-gray-400' : 
-                                prize.rank === 3 ? 'bg-orange-600' : 
-                                'bg-blue-500'
-                              }`}>
-                                {prize.rank}
+                        {(election.lottery_prize_distribution || election.lottery_config?.prize_distribution).map((prize, idx) => {
+                          const getRankBgColor = (rank) => {
+                            if (rank === 1) return 'bg-yellow-500';
+                            if (rank === 2) return 'bg-gray-400';
+                            if (rank === 3) return 'bg-orange-600';
+                            return 'bg-blue-500';
+                          };
+                          
+                          const getRankLabel = (rank) => {
+                            if (rank === 1) return '🥇 First Place';
+                            if (rank === 2) return '🥈 Second Place';
+                            if (rank === 3) return '🥉 Third Place';
+                            return `Rank ${rank}`;
+                          };
+                          
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-yellow-200">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${getRankBgColor(prize.rank)}`}>
+                                  {prize.rank}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-800">
+                                    {getRankLabel(prize.rank)}
+                                  </p>
+                                  {prize.prize_description && (
+                                    <p className="text-sm text-gray-600">{prize.prize_description}</p>
+                                  )}
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-semibold text-gray-800">
-                                  {prize.rank === 1 ? '🥇 First Place' : 
-                                   prize.rank === 2 ? '🥈 Second Place' : 
-                                   prize.rank === 3 ? '🥉 Third Place' : 
-                                   `Rank ${prize.rank}`}
-                                </p>
-                                {prize.prize_description && (
-                                  <p className="text-sm text-gray-600">{prize.prize_description}</p>
-                                )}
+                              <div className="text-right">
+                                <span className="font-bold text-green-600 text-lg">
+                                  ${parseFloat(prize.prize_value || 0).toFixed(2)}
+                                </span>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <span className="font-bold text-green-600 text-lg">
-                                ${parseFloat(prize.prize_value || 0).toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1042,8 +1049,14 @@ export default function ElectionView() {
             </div>
           )}
         </div>
+
+        {/* Similar Elections Section - Shaped AI Recommendations */}
+        <div className="mt-8">
+          <SimilarElections electionId={id} />
+        </div>
       </div>
 
+      {/* Delete Modal */}
       {deleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
@@ -1076,7 +1089,49 @@ export default function ElectionView() {
     </div>
   );
 }
-//last workable code
+
+// Helper function to render video player
+function renderVideoPlayer(videoUrl) {
+  if (!videoUrl) return null;
+  
+  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+    let videoId = '';
+    
+    if (videoUrl.includes('youtube.com/watch?v=')) {
+      videoId = videoUrl.split('v=')[1]?.split('&')[0];
+    } else if (videoUrl.includes('youtu.be/')) {
+      videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+    } else if (videoUrl.includes('youtube.com/embed/')) {
+      videoId = videoUrl.split('embed/')[1]?.split('?')[0];
+    }
+    
+    if (videoId) {
+      return (
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            className="absolute top-0 left-0 w-full h-full rounded-lg"
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title="Election Video"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      );
+    }
+  }
+  
+  return (
+    <video
+      controls
+      className="w-full rounded-lg"
+      src={videoUrl}
+    >
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+//last workable code, only to add ai above code
 // import React, { useState, useEffect } from 'react';
 // import { useParams, useNavigate, useLocation } from 'react-router-dom';
 // import { useDispatch } from 'react-redux';
