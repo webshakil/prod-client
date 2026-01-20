@@ -1,6 +1,5 @@
-//All Elections - Shows ALL elections for any authenticated user
-//With AI Recommendation Sections: Trending, Popular, Top Lottery
-//Only View and Share buttons - Edit, Delete, Clone handled in My Elections
+// AllElections.jsx - Updated version
+// With proper AI Recommendation Sections showing prizes for lottery
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -221,7 +220,7 @@ export default function AllElections() {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
             title="Refresh AI Recommendations"
           >
-            <FaSyncAlt className={aiLoading.trending ? 'animate-spin' : ''} />
+            <FaSyncAlt className={aiLoading.trending || aiLoading.popular || aiLoading.lottery ? 'animate-spin' : ''} />
             <span className="hidden md:inline">Refresh AI</span>
           </button>
           <button
@@ -271,6 +270,7 @@ export default function AllElections() {
             onViewElection={handleView}
             onShareElection={handleShare}
             emptyMessage="No trending elections right now"
+            showPrizes={false}
           />
 
           {/* Popular Elections */}
@@ -285,9 +285,10 @@ export default function AllElections() {
             onViewElection={handleView}
             onShareElection={handleShare}
             emptyMessage="No popular elections yet"
+            showPrizes={false}
           />
 
-          {/* Top Lottery Prizes */}
+          {/* Top Lottery Prizes - IMPORTANT: showPrizes={true} */}
           <AIRecommendationSection
             title="🎰 Top Lottery Prizes"
             subtitle="Biggest prize pools"
@@ -299,6 +300,7 @@ export default function AllElections() {
             onViewElection={handleView}
             onShareElection={handleShare}
             emptyMessage="No lottery elections available"
+            showPrizes={true}
           />
         </div>
       )}
