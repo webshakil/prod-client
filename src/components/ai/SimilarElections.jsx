@@ -214,7 +214,8 @@ export default function SimilarElections({ electionId }) {
 
   const handleView = (election) => {
     const id = election.id || election.election_id;
-    navigate(`/dashboard/election/${id}`, { state: { source: 'all-elections' } });
+    // navigate(`/dashboard/election/${id}`, { state: { source: 'all-elections' } });
+    navigate(`/election/${id}`, { state: { source: 'all-elections' } });
   };
 
   const handleShare = (election) => {
