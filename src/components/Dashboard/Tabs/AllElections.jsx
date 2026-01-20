@@ -1,5 +1,7 @@
 //All Elections - Shows ALL elections for any authenticated user
+//With AI Recommendation Sections: Trending, Popular, Top Lottery
 //Only View and Share buttons - Edit, Delete, Clone handled in My Elections
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -14,12 +16,24 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaImage,
+  FaFire,
+  FaStar,
+  FaTrophy,
+  FaRobot,
+  FaSyncAlt,
 } from 'react-icons/fa';
 import { getAllElections } from '../../../redux/api/election/electionApi';
+import AIRecommendationSection from '../../../components/ai/AIRecommendationSection';
+import {
+  getTrendingElectionsApi,
+  getPopularElectionsApi,
+  getLotteryElectionsApi,
+} from '../../../redux/api/recommendations/recommendationApi';
 
 export default function AllElections() {
   const navigate = useNavigate();
   
+  // Regular elections state
   const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,8 +43,73 @@ export default function AllElections() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [apiError, setApiError] = useState(null);
   
+  // AI Recommendations state
+  const [trendingElections, setTrendingElections] = useState([]);
+  const [popularElections, setPopularElections] = useState([]);
+  const [lotteryElections, setLotteryElections] = useState([]);
+  const [aiLoading, setAiLoading] = useState({
+    trending: true,
+    popular: true,
+    lottery: true,
+  });
+  const [aiErrors, setAiErrors] = useState({
+    trending: null,
+    popular: null,
+    lottery: null,
+  });
+  const [showAiSections, setShowAiSections] = useState(true);
+  
   const ITEMS_PER_PAGE = 9;
 
+  // Fetch AI Recommendations
+  const fetchAIRecommendations = useCallback(async () => {
+    // Fetch Trending
+    setAiLoading(prev => ({ ...prev, trending: true }));
+    try {
+      const trendingResponse = await getTrendingElectionsApi(6);
+      if (trendingResponse.success) {
+        setTrendingElections(trendingResponse.data || []);
+      }
+      setAiErrors(prev => ({ ...prev, trending: null }));
+    } catch (error) {
+      console.error('Failed to fetch trending:', error);
+      setAiErrors(prev => ({ ...prev, trending: error.message }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, trending: false }));
+    }
+
+    // Fetch Popular
+    setAiLoading(prev => ({ ...prev, popular: true }));
+    try {
+      const popularResponse = await getPopularElectionsApi(6);
+      if (popularResponse.success) {
+        setPopularElections(popularResponse.data || []);
+      }
+      setAiErrors(prev => ({ ...prev, popular: null }));
+    } catch (error) {
+      console.error('Failed to fetch popular:', error);
+      setAiErrors(prev => ({ ...prev, popular: error.message }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, popular: false }));
+    }
+
+    // Fetch Lottery
+    setAiLoading(prev => ({ ...prev, lottery: true }));
+    try {
+      const lotteryResponse = await getLotteryElectionsApi(6);
+      if (lotteryResponse.success) {
+        setLotteryElections(lotteryResponse.data || []);
+      }
+      setAiErrors(prev => ({ ...prev, lottery: null }));
+    } catch (error) {
+      console.error('Failed to fetch lottery:', error);
+      setAiErrors(prev => ({ ...prev, lottery: error.message }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, lottery: false }));
+    }
+  }, []);
+
+  // Fetch regular elections
   const fetchElections = useCallback(async () => {
     try {
       setLoading(true);
@@ -74,20 +153,24 @@ export default function AllElections() {
     fetchElections();
   }, [fetchElections]);
 
+  useEffect(() => {
+    fetchAIRecommendations();
+  }, [fetchAIRecommendations]);
+
   const filteredElections = elections.filter(election =>
     election.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     election.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleShare = (election) => {
-    // Use election SLUG (not ID) for the public voting page
     const shareUrl = `${window.location.origin}/vote/${election.slug}`;
     navigator.clipboard.writeText(shareUrl);
     toast.success('Link copied to clipboard!');
   };
 
   const handleView = (election) => {
-    navigate(`/election/${election.id}`);
+    const electionId = election.id || election.election_id;
+    navigate(`/election/${electionId}`);
   };
 
   const formatDate = (dateString) => {
@@ -119,21 +202,115 @@ export default function AllElections() {
     return labels[status?.toLowerCase()] || status;
   };
 
+  const refreshAIRecommendations = () => {
+    toast.info('Refreshing AI recommendations...');
+    fetchAIRecommendations();
+  };
+
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-800">All Elections</h2>
           <p className="text-gray-600 mt-1">{totalElections} total elections</p>
         </div>
-        <button
-          onClick={() => navigate('/dashboard/create-election')}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
-        >
-          <FaPlus />
-          <span>Create Election</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refreshAIRecommendations}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+            title="Refresh AI Recommendations"
+          >
+            <FaSyncAlt className={aiLoading.trending ? 'animate-spin' : ''} />
+            <span className="hidden md:inline">Refresh AI</span>
+          </button>
+          <button
+            onClick={() => navigate('/dashboard/create-election')}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+          >
+            <FaPlus />
+            <span>Create Election</span>
+          </button>
+        </div>
       </div>
+
+      {/* AI Toggle */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+            <FaRobot />
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800">AI-Powered Recommendations</h4>
+            <p className="text-sm text-gray-600">Discover elections curated by Shaped AI</p>
+          </div>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showAiSections}
+            onChange={(e) => setShowAiSections(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+
+      {/* AI Recommendation Sections */}
+      {showAiSections && (
+        <div className="space-y-4">
+          {/* Trending Elections */}
+          <AIRecommendationSection
+            title="🔥 Trending Now"
+            subtitle="Hot elections this week"
+            elections={trendingElections}
+            loading={aiLoading.trending}
+            error={aiErrors.trending}
+            icon={<FaFire />}
+            accentColor="orange"
+            onViewElection={handleView}
+            onShareElection={handleShare}
+            emptyMessage="No trending elections right now"
+          />
+
+          {/* Popular Elections */}
+          <AIRecommendationSection
+            title="⭐ Most Popular"
+            subtitle="All-time favorites"
+            elections={popularElections}
+            loading={aiLoading.popular}
+            error={aiErrors.popular}
+            icon={<FaStar />}
+            accentColor="blue"
+            onViewElection={handleView}
+            onShareElection={handleShare}
+            emptyMessage="No popular elections yet"
+          />
+
+          {/* Top Lottery Prizes */}
+          <AIRecommendationSection
+            title="🎰 Top Lottery Prizes"
+            subtitle="Biggest prize pools"
+            elections={lotteryElections}
+            loading={aiLoading.lottery}
+            error={aiErrors.lottery}
+            icon={<FaTrophy />}
+            accentColor="gold"
+            onViewElection={handleView}
+            onShareElection={handleShare}
+            emptyMessage="No lottery elections available"
+          />
+        </div>
+      )}
+
+      {/* Divider */}
+      {showAiSections && (
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-gray-200"></div>
+          <span className="text-sm text-gray-500 font-medium">All Elections</span>
+          <div className="flex-1 h-px bg-gray-200"></div>
+        </div>
+      )}
 
       {apiError && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
@@ -147,6 +324,7 @@ export default function AllElections() {
         </div>
       )}
 
+      {/* Search and Filter */}
       <div className="bg-white rounded-lg shadow-md p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
@@ -179,6 +357,7 @@ export default function AllElections() {
         </div>
       </div>
 
+      {/* Elections Grid */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600 mb-4"></div>
@@ -220,7 +399,9 @@ export default function AllElections() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           e.target.style.display = 'none';
-                          e.target.nextElementSibling.style.display = 'flex';
+                          if (e.target.nextElementSibling) {
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }
                         }}
                       />
                     ) : null}
@@ -287,6 +468,7 @@ export default function AllElections() {
             })}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-6">
               <button
@@ -330,21 +512,16 @@ export default function AllElections() {
     </div>
   );
 }
-
-//last workable code 
+//last workable code.only to add AI part above code
 // //All Elections - Shows ALL elections for any authenticated user
-// //Edit and Delete only visible for elections owned by logged-in user
+// //Only View and Share buttons - Edit, Delete, Clone handled in My Elections
 // import React, { useState, useEffect, useCallback } from 'react';
 // import { useNavigate } from 'react-router-dom';
-// import { useSelector } from 'react-redux';
 // import { toast } from 'react-toastify';
 // import {
 //   FaPlus,
 //   FaSearch,
 //   FaEye,
-//   FaEdit,
-//   FaTrash,
-//   FaCopy,
 //   FaShare,
 //   FaCalendar,
 //   FaVoteYea,
@@ -353,13 +530,10 @@ export default function AllElections() {
 //   FaChevronRight,
 //   FaImage,
 // } from 'react-icons/fa';
-// import { cloneElection, deleteElection, getAllElections } from '../../../redux/api/election/electionApi';
+// import { getAllElections } from '../../../redux/api/election/electionApi';
 
 // export default function AllElections() {
 //   const navigate = useNavigate();
-  
-//   // ✅ Get current user ID from localStorage (most reliable)
-//   const currentUserId = localStorage.getItem('userId');
   
 //   const [elections, setElections] = useState([]);
 //   const [loading, setLoading] = useState(true);
@@ -368,16 +542,9 @@ export default function AllElections() {
 //   const [totalElections, setTotalElections] = useState(0);
 //   const [searchQuery, setSearchQuery] = useState('');
 //   const [statusFilter, setStatusFilter] = useState('all');
-//   const [deleteModal, setDeleteModal] = useState({ show: false, electionId: null, title: '' });
 //   const [apiError, setApiError] = useState(null);
   
 //   const ITEMS_PER_PAGE = 9;
-
-//   // ✅ FIXED: Check ownership using creator_id from election and userId from localStorage
-//   const isOwner = (election) => {
-//     if (!currentUserId) return false;
-//     return String(election.creator_id) === String(currentUserId);
-//   };
 
 //   const fetchElections = useCallback(async () => {
 //     try {
@@ -427,36 +594,6 @@ export default function AllElections() {
 //     election.description?.toLowerCase().includes(searchQuery.toLowerCase())
 //   );
 
-//   const handleDeleteClick = (election) => {
-//     setDeleteModal({ show: true, electionId: election.id, title: election.title });
-//   };
-
-//   const confirmDelete = async () => {
-//     try {
-//       await deleteElection(deleteModal.electionId);
-//       toast.success('Election deleted successfully');
-//       setDeleteModal({ show: false, electionId: null, title: '' });
-//       fetchElections();
-//     } catch (error) {
-//       console.error('Error deleting election:', error);
-//       const errorMessage = error.response?.data?.message || error.message || 'Failed to delete election';
-//       toast.error(errorMessage);
-//     }
-//   };
-
-//   const handleClone = async (election) => {
-//     try {
-//       const newTitle = `${election.title} (Copy)`;
-//       await cloneElection(election.id, newTitle);
-//       toast.success('Election cloned successfully');
-//       fetchElections();
-//     } catch (error) {
-//       console.error('Error cloning election:', error);
-//       const errorMessage = error.response?.data?.message || error.message || 'Failed to clone election';
-//       toast.error(errorMessage);
-//     }
-//   };
-
 //   const handleShare = (election) => {
 //     // Use election SLUG (not ID) for the public voting page
 //     const shareUrl = `${window.location.origin}/vote/${election.slug}`;
@@ -466,10 +603,6 @@ export default function AllElections() {
 
 //   const handleView = (election) => {
 //     navigate(`/election/${election.id}`);
-//   };
-
-//   const handleEdit = (election) => {
-//     navigate('/dashboard', { state: { editElectionId: election.id, activeTab: 'create-election' } });
 //   };
 
 //   const formatDate = (dateString) => {
@@ -589,8 +722,6 @@ export default function AllElections() {
 //         <>
 //           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 //             {filteredElections.map((election) => {
-//               const userOwnsElection = isOwner(election);
-              
 //               return (
 //                 <div
 //                   key={election.id}
@@ -650,52 +781,20 @@ export default function AllElections() {
 //                       </div>
 //                     </div>
 
-//                     {/* Action Buttons */}
-//                     <div className="space-y-2">
-//                       {/* Row 1: View & Share - Always visible for all */}
-//                       <div className="grid grid-cols-2 gap-2">
-//                         <button
-//                           onClick={() => handleView(election)}
-//                           className="flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium transition-colors"
-//                         >
-//                           <FaEye /> View
-//                         </button>
-//                         <button
-//                           onClick={() => handleShare(election)}
-//                           className="flex items-center justify-center gap-1 px-3 py-2 bg-green-50 text-green-600 rounded hover:bg-green-100 text-sm font-medium transition-colors"
-//                         >
-//                           <FaShare /> Share
-//                         </button>
-//                       </div>
-
-//                       {/* Only show Clone, Edit, Delete for owner */}
-//                       {userOwnsElection && (
-//                         <>
-//                           {/* Row 2: Clone & Edit */}
-//                           <div className="grid grid-cols-2 gap-2">
-//                             <button
-//                               onClick={() => handleClone(election)}
-//                               className="flex items-center justify-center gap-1 px-3 py-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 text-sm font-medium transition-colors"
-//                             >
-//                               <FaCopy /> Clone
-//                             </button>
-//                             <button
-//                               onClick={() => handleEdit(election)}
-//                               className="flex items-center justify-center gap-1 px-3 py-2 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 text-sm font-medium transition-colors"
-//                             >
-//                               <FaEdit /> Edit
-//                             </button>
-//                           </div>
-
-//                           {/* Row 3: Delete */}
-//                           <button
-//                             onClick={() => handleDeleteClick(election)}
-//                             className="w-full flex items-center justify-center gap-1 px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm font-medium transition-colors"
-//                           >
-//                             <FaTrash /> Delete
-//                           </button>
-//                         </>
-//                       )}
+//                     {/* Action Buttons - Only View & Share for All Elections */}
+//                     <div className="grid grid-cols-2 gap-2">
+//                       <button
+//                         onClick={() => handleView(election)}
+//                         className="flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium transition-colors"
+//                       >
+//                         <FaEye /> View
+//                       </button>
+//                       <button
+//                         onClick={() => handleShare(election)}
+//                         className="flex items-center justify-center gap-1 px-3 py-2 bg-green-50 text-green-600 rounded hover:bg-green-100 text-sm font-medium transition-colors"
+//                       >
+//                         <FaShare /> Share
+//                       </button>
 //                     </div>
 //                   </div>
 //                 </div>
@@ -743,36 +842,7 @@ export default function AllElections() {
 //           )}
 //         </>
 //       )}
-
-//       {deleteModal.show && (
-//         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-//           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
-//             <div className="text-center mb-6">
-//               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//                 <FaTrash className="text-red-600 text-2xl" />
-//               </div>
-//               <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Election?</h3>
-//               <p className="text-gray-600">
-//                 Delete "<strong>{deleteModal.title}</strong>"? This cannot be undone.
-//               </p>
-//             </div>
-//             <div className="flex gap-3">
-//               <button
-//                 onClick={() => setDeleteModal({ show: false, electionId: null, title: '' })}
-//                 className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={confirmDelete}
-//                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-//               >
-//                 Delete
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
 //     </div>
 //   );
 // }
+
