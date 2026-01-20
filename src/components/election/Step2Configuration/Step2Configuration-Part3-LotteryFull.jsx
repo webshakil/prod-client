@@ -1,3 +1,5 @@
+
+//last workable code only to add gamification or not above code
 // src/components/election/Step2Configuration/Step2Configuration-Part3-LotteryFull.jsx
 // Contains: Complete LotteryConfiguration with all 3 prize types
 // ✅ FIXED: Percentage calculation now shows correct remaining percentage
@@ -988,6 +990,19 @@ export function LotteryConfiguration({
 }
 
 export default LotteryConfiguration;
+
+
+
+
+
+
+
+
+
+
+
+
+
 // import React from 'react';
 // import {
 //   FaGift,
@@ -1964,6 +1979,23 @@ export default LotteryConfiguration;
 // }
 
 // export default LotteryConfiguration;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // src/components/election/Step2Configuration/Step2Configuration-Part3-LotteryFull.jsx
 // // Contains: Complete LotteryConfiguration with all 3 prize types
 // // ✅ FIXED: Percentage calculation now shows correct remaining percentage
