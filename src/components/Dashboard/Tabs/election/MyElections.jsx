@@ -31,11 +31,18 @@ export default function MyElections() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
 
+  // const { data: electionsData, isLoading, error, refetch } = useGetMyElectionsQuery({
+  //   page: 1,
+  //   limit: 100,
+  //   status: null
+  // });
   const { data: electionsData, isLoading, error, refetch } = useGetMyElectionsQuery({
-    page: 1,
-    limit: 100,
-    status: null
-  });
+  page: 1,
+  limit: 100,
+  status: null
+}, {
+  refetchOnMountOrArgChange: true  // ✅ Forces fresh data on every page visit
+});
 
   // Handle different response structures
   const myElections = electionsData?.elections || electionsData?.data?.elections || electionsData?.data || [];
