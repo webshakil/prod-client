@@ -1,166 +1,162 @@
 // ============================================================================
-// CompactLiveResults.jsx - SHOWS ALL QUESTIONS WITH 0 PLACEHOLDERS INITIALLY
-// ============================================================================
-// 
-// FEATURES:
-// ✅ Shows ALL questions with 0 votes as placeholders (not "No votes yet")
-// ✅ 1 question = 1 placeholder, 3 questions = 3 placeholders
-// ✅ Each option shows 0% (0) initially
-// ✅ Increments as votes come in
-// ✅ Works during voting (live) AND after election ends (final)
-// ✅ Real-time updates via polling (every 5 seconds)
-//
+// CompactLiveResults.jsx - PIE CHART WITH LEGEND (FIXED GAPS & COLORS)
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
-import { 
-  RefreshCw, 
-  Users, 
-  TrendingUp, 
-  ChevronDown, 
-  ChevronUp,
-  Trophy,
-  Clock,
-  CheckCircle,
-  BarChart3
-} from 'lucide-react';
+import React from 'react';
+import { RefreshCw, Users, Clock, PieChart as PieChartIcon } from 'lucide-react';
 import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
 
+// Colors for pie chart - EXACT SAME used in both pie and legend
+const COLORS = ['#5B9BD5', '#ED7D31', '#A5A5A5', '#FFC000', '#70AD47', '#9E480E', '#997300', '#43682B'];
+
 // ============================================================================
-// MINI PIE CHART COMPONENT
+// PIE CHART COMPONENT
 // ============================================================================
-const MiniPieChart = ({ options, size = 90 }) => {
+const PieChart = ({ options, size = 160 }) => {
   const total = options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0);
-  
-  // Colors for pie slices
-  const colors = [
-    '#3B82F6', // Blue
-    '#EF4444', // Red
-    '#22C55E', // Green
-    '#F59E0B', // Amber
-    '#8B5CF6', // Purple
-    '#EC4899', // Pink
-    '#06B6D4', // Cyan
-    '#84CC16', // Lime
-    '#F97316', // Orange
-    '#6366F1', // Indigo
-  ];
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = (size / 2) - 5;
 
-  // Empty state - show gray circle with segments outline
-  if (total === 0) {
-    // Show equal segments for all options (placeholder)
-    const segmentAngle = 360 / (options.length || 1);
-    
-    return (
-      <svg width={size} height={size} viewBox="0 0 100 100">
-        {/* Background circle */}
-        <circle cx="50" cy="50" r="40" fill="#F3F4F6" />
-        
-        {/* Segment dividers */}
-        {options.map((_, idx) => {
-          const angle = (idx * segmentAngle - 90) * (Math.PI / 180);
-          const x2 = 50 + 40 * Math.cos(angle);
-          const y2 = 50 + 40 * Math.sin(angle);
-          return (
-            <line 
-              key={idx}
-              x1="50" 
-              y1="50" 
-              x2={x2} 
-              y2={y2} 
-              stroke="#E5E7EB" 
-              strokeWidth="2"
-            />
-          );
-        })}
-        
-        {/* Center hole */}
-        <circle cx="50" cy="50" r="22" fill="white" />
-        
-        {/* 0 in center */}
-        <text 
-          x="50" 
-          y="55" 
-          textAnchor="middle" 
-          fontSize="16" 
-          fontWeight="bold" 
-          fill="#9CA3AF"
-        >
-          0
-        </text>
-      </svg>
-    );
-  }
-
-  // Calculate segments for actual votes
-  let currentAngle = -90;
-  const segments = options.map((opt, idx) => {
-    const votes = opt.vote_count || 0;
-    const percentage = (votes / total) * 100;
-    const angle = (percentage / 100) * 360;
-    const startAngle = currentAngle;
-    currentAngle += angle;
-    return { 
-      ...opt, 
-      startAngle, 
-      endAngle: currentAngle, 
-      color: colors[idx % colors.length],
-      percentage 
-    };
-  });
-
-  // Create SVG path for a pie slice
-  const createSlice = (startAngle, endAngle, color, radius = 40) => {
-    if (endAngle - startAngle >= 359.9) {
-      return null;
+  const createArcPath = (startAngle, endAngle, r) => {
+    if (endAngle - startAngle >= 359.99) {
+      return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy - r}`;
     }
-    
-    const cx = 50, cy = 50;
-    const startRad = (startAngle) * (Math.PI / 180);
-    const endRad = (endAngle) * (Math.PI / 180);
-    const x1 = cx + radius * Math.cos(startRad);
-    const y1 = cy + radius * Math.sin(startRad);
-    const x2 = cx + radius * Math.cos(endRad);
-    const y2 = cy + radius * Math.sin(endRad);
+    const startRad = startAngle * (Math.PI / 180);
+    const endRad = endAngle * (Math.PI / 180);
+    const x1 = cx + r * Math.cos(startRad);
+    const y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad);
+    const y2 = cy + r * Math.sin(endRad);
     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-    
-    return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
   };
 
+  const getLabelPosition = (startAngle, endAngle) => {
+    const midAngle = ((startAngle + endAngle) / 2) * (Math.PI / 180);
+    const labelRadius = radius * 0.6;
+    return {
+      x: cx + labelRadius * Math.cos(midAngle),
+      y: cy + labelRadius * Math.sin(midAngle)
+    };
+  };
+
+  // Calculate segments
+  let segments = [];
+  let currentAngle = -90;
+
+  if (total === 0) {
+    // No votes - show equal segments
+    const equalAngle = 360 / options.length;
+    segments = options.map((opt, idx) => {
+      const startAngle = currentAngle;
+      currentAngle += equalAngle;
+      return {
+        ...opt,
+        startAngle,
+        endAngle: currentAngle,
+        color: COLORS[idx % COLORS.length],
+        percentage: 0
+      };
+    });
+  } else {
+    // Has votes - calculate actual percentages
+    const percentages = options.map(opt => {
+      const votes = opt.vote_count || 0;
+      return (votes / total) * 100;
+    });
+
+    // Calculate angles - 0% gets just 2% visual (tiny sliver)
+    segments = options.map((opt, idx) => {
+      const actualPercentage = percentages[idx];
+      // 0% = 2% visual (tiny), otherwise actual percentage
+      const visualPercentage = actualPercentage === 0 ? 2 : actualPercentage;
+      return {
+        ...opt,
+        color: COLORS[idx % COLORS.length],
+        percentage: actualPercentage,
+        visualPercentage
+      };
+    });
+
+    // Normalize so total visual = 100%
+    const totalVisual = segments.reduce((sum, s) => sum + s.visualPercentage, 0);
+    const scale = 100 / totalVisual;
+
+    segments = segments.map(seg => {
+      const normalizedPercentage = seg.visualPercentage * scale;
+      const angle = (normalizedPercentage / 100) * 360;
+      const startAngle = currentAngle;
+      currentAngle += angle;
+      return {
+        ...seg,
+        startAngle,
+        endAngle: currentAngle
+      };
+    });
+  }
+
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {segments.map((seg, idx) => {
-        if (seg.endAngle - seg.startAngle < 0.5) return null;
+        const sliceAngle = seg.endAngle - seg.startAngle;
+        const labelPos = getLabelPosition(seg.startAngle, seg.endAngle);
         
-        if (seg.endAngle - seg.startAngle >= 359.9) {
-          return <circle key={idx} cx="50" cy="50" r="40" fill={seg.color} />;
-        }
-        
-        const path = createSlice(seg.startAngle, seg.endAngle, seg.color);
-        return path ? (
-          <path
-            key={idx}
-            d={path}
-            fill={seg.color}
-            stroke="white"
-            strokeWidth="2"
-          />
-        ) : null;
+        return (
+          <g key={idx}>
+            <path
+              d={createArcPath(seg.startAngle, seg.endAngle, radius)}
+              fill={seg.color}
+              stroke="white"
+              strokeWidth="2"
+            />
+            {/* Label inside pie slice - only if big enough */}
+            {sliceAngle >= 50 && (
+              <text
+                x={labelPos.x}
+                y={labelPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="11"
+                fontWeight="bold"
+                fill="white"
+                style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}
+              >
+                <tspan x={labelPos.x} dy="-0.4em">{seg.option_text}</tspan>
+                <tspan x={labelPos.x} dy="1.2em">{seg.percentage.toFixed(0)}%</tspan>
+              </text>
+            )}
+          </g>
+        );
       })}
-      {/* Center hole (donut style) */}
-      <circle cx="50" cy="50" r="22" fill="white" />
-      {/* Total votes in center */}
-      <text 
-        x="50" 
-        y="55" 
-        textAnchor="middle" 
-        fontSize="16" 
-        fontWeight="bold" 
-        fill="#374151"
-      >
-        {total}
-      </text>
     </svg>
+  );
+};
+
+// ============================================================================
+// LEGEND COMPONENT
+// ============================================================================
+const Legend = ({ options, total }) => {
+  return (
+    <div className="flex flex-col justify-center gap-2">
+      {options.map((opt, idx) => {
+        const votes = opt.vote_count || 0;
+        const percentage = total > 0 ? (votes / total) * 100 : 0;
+        
+        return (
+          <div key={opt.id} className="flex items-center gap-2">
+            {/* Color box - EXACT same color as pie */}
+            <div 
+              className="w-4 h-4 flex-shrink-0"
+              style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+            />
+            <span className="text-sm text-gray-700">
+              {opt.option_text} <span className="font-semibold">{percentage.toFixed(0)}%</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -168,16 +164,7 @@ const MiniPieChart = ({ options, size = 90 }) => {
 // MAIN COMPONENT
 // ============================================================================
 export default function CompactLiveResults({ electionId, questionId, electionStatus }) {
-  const [expandedQuestions, setExpandedQuestions] = useState({});
-  
-  // ✅ FIX: Pass parameters as object + enable polling for real-time updates
-  const { 
-    data: results, 
-    isLoading, 
-    refetch, 
-    isFetching,
-    error 
-  } = useGetLiveResultsQuery(
+  const { data: results, refetch, isFetching } = useGetLiveResultsQuery(
     { electionId, questionId },
     { 
       pollingInterval: 5000,
@@ -186,98 +173,18 @@ export default function CompactLiveResults({ electionId, questionId, electionSta
     }
   );
 
-  // ✅ FIX: Properly extract nested data from API response
-  const apiData = results?.data || results;
+  const apiData = results?.data?.questions ? results.data : (results?.data || results);
   const questions = apiData?.questions || [];
   const totalVotes = apiData?.totalVotes || 0;
-  const votingType = apiData?.votingType || 'plurality';
   const isCompleted = electionStatus === 'completed' || apiData?.status === 'completed';
-
-  // Debug logging
-  useEffect(() => {
-    console.log('📊 CompactLiveResults - Data received:', {
-      electionId,
-      rawResults: results,
-      extractedData: apiData,
-      questionsCount: questions.length,
-      totalVotes,
-      votingType,
-      isCompleted
-    });
-  }, [results, electionId]);
-
-  // Expand all questions by default
-  useEffect(() => {
-    if (questions.length > 0) {
-      const expanded = {};
-      questions.forEach(q => {
-        expanded[q.id] = true;
-      });
-      setExpandedQuestions(expanded);
-    }
-  }, [questions.length]);
-
-  // Colors for options (matching pie chart)
-  const colors = [
-    { bg: '#3B82F6', text: 'text-blue-600', bgLight: 'bg-blue-50', label: 'A' },
-    { bg: '#EF4444', text: 'text-red-600', bgLight: 'bg-red-50', label: 'B' },
-    { bg: '#22C55E', text: 'text-green-600', bgLight: 'bg-green-50', label: 'C' },
-    { bg: '#F59E0B', text: 'text-amber-600', bgLight: 'bg-amber-50', label: 'D' },
-    { bg: '#8B5CF6', text: 'text-purple-600', bgLight: 'bg-purple-50', label: 'E' },
-    { bg: '#EC4899', text: 'text-pink-600', bgLight: 'bg-pink-50', label: 'F' },
-    { bg: '#06B6D4', text: 'text-cyan-600', bgLight: 'bg-cyan-50', label: 'G' },
-    { bg: '#84CC16', text: 'text-lime-600', bgLight: 'bg-lime-50', label: 'H' },
-  ];
-
-  const toggleQuestion = (qId) => {
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [qId]: !prev[qId]
-    }));
-  };
-
-  // Error state
-  if (error) {
-    console.error('❌ Live Results Error:', error);
-    return (
-      <div className="bg-white rounded-xl shadow-lg border border-red-200 p-4">
-        <div className="text-red-600 text-center">
-          <p className="font-medium">Unable to load results</p>
-          <p className="text-sm text-red-400">{error.message || 'Please try again'}</p>
-          <button 
-            onClick={() => refetch()}
-            className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-        <div className="flex flex-col items-center justify-center py-4">
-          <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mb-3" />
-          <p className="text-gray-500">Loading results...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-      {/* ========== HEADER ========== */}
+      {/* HEADER */}
       <div className={`px-4 py-3 ${isCompleted ? 'bg-gradient-to-r from-green-600 to-green-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'} text-white`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {isCompleted ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <BarChart3 className="w-5 h-5" />
-            )}
+            <PieChartIcon className="w-5 h-5" />
             <h3 className="font-bold text-lg">
               {isCompleted ? 'Final Results' : 'Live Results'}
             </h3>
@@ -286,13 +193,10 @@ export default function CompactLiveResults({ electionId, questionId, electionSta
             onClick={() => refetch()}
             disabled={isFetching}
             className="p-2 hover:bg-white/20 rounded-full transition"
-            title="Refresh results"
           >
             <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
         </div>
-        
-        {/* Total votes summary */}
         <div className="flex items-center gap-4 text-blue-100 text-sm mt-2">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
@@ -307,167 +211,988 @@ export default function CompactLiveResults({ electionId, questionId, electionSta
         </div>
       </div>
 
-      {/* ========== CONTENT ========== */}
-      <div className="p-3 max-h-[600px] overflow-y-auto">
-        {questions.length === 0 ? (
-          // No questions found (shouldn't happen normally)
-          <div className="text-center py-8 text-gray-500">
-            <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-            <p>No questions found</p>
-          </div>
-        ) : (
-          // ========== QUESTIONS LIST (Always show all questions with 0 or actual votes) ==========
-          <div className="space-y-4">
-            {questions.map((question, qIndex) => {
-              const options = question.options || [];
-              const questionTotal = question.total_votes || 
-                options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
-              const isExpanded = expandedQuestions[question.id] !== false;
+      {/* PIE CHARTS WITH LEGENDS */}
+      <div className="p-4 space-y-6">
+        {questions.map((question, qIndex) => {
+          const options = question.options || [];
+          const questionTotal = options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
+          
+          return (
+            <div key={question.id}>
+              {/* Question Title */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                  Q{qIndex + 1}
+                </span>
+                <span className="text-sm font-medium text-gray-700">
+                  {question.question_text}
+                </span>
+              </div>
               
-              // Find leading option(s) - only if there are votes
-              const maxVotes = Math.max(...options.map(o => o.vote_count || 0), 0);
-              const hasVotes = maxVotes > 0;
-
-              return (
-                <div 
-                  key={question.id} 
-                  className="border border-gray-200 rounded-lg overflow-hidden shadow-sm"
-                >
-                  {/* Question Header (Collapsible) */}
-                  <button
-                    onClick={() => toggleQuestion(question.id)}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition text-left"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="flex-shrink-0 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                        Q{qIndex + 1}
-                      </span>
-                      <span className="text-sm font-medium text-gray-700 truncate">
-                        {question.question_text}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                        questionTotal > 0 
-                          ? 'text-gray-600 bg-white' 
-                          : 'text-gray-400 bg-gray-100'
-                      }`}>
-                        {questionTotal} vote{questionTotal !== 1 ? 's' : ''}
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp size={18} className="text-gray-400" />
-                      ) : (
-                        <ChevronDown size={18} className="text-gray-400" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Question Results (Expanded Content) - ALWAYS SHOW OPTIONS */}
-                  {isExpanded && (
-                    <div className="p-4 bg-white">
-                      <div className="flex gap-4">
-                        {/* Pie Chart - shows placeholder when 0 votes */}
-                        <div className="flex-shrink-0 flex flex-col items-center">
-                          <MiniPieChart options={options} size={100} />
-                          <span className="text-xs text-gray-500 mt-1">
-                            {votingType === 'approval' ? 'Approvals' : 'Votes'}
-                          </span>
-                        </div>
-
-                        {/* Options List - ALWAYS SHOW ALL OPTIONS */}
-                        <div className="flex-1 space-y-2">
-                          {options.map((option, oIndex) => {
-                            const votes = option.vote_count || 0;
-                            const percentage = questionTotal > 0 
-                              ? ((votes / questionTotal) * 100).toFixed(1) 
-                              : '0.0';
-                            const isLeading = hasVotes && votes === maxVotes && votes > 0;
-                            const colorConfig = colors[oIndex % colors.length];
-
-                            return (
-                              <div 
-                                key={option.id}
-                                className={`relative rounded-lg overflow-hidden ${
-                                  isLeading 
-                                    ? 'bg-yellow-50 border-2 border-yellow-300' 
-                                    : 'bg-gray-50 border border-gray-200'
-                                }`}
-                              >
-                                {/* Progress bar background - only show if has votes */}
-                                {votes > 0 && (
-                                  <div 
-                                    className="absolute inset-0 opacity-20 transition-all duration-500"
-                                    style={{ 
-                                      width: `${percentage}%`,
-                                      backgroundColor: colorConfig.bg 
-                                    }}
-                                  />
-                                )}
-                                
-                                {/* Content */}
-                                <div className="relative flex items-center justify-between p-2">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <div 
-                                      className={`w-4 h-4 rounded flex-shrink-0 ${
-                                        votes === 0 ? 'opacity-50' : ''
-                                      }`}
-                                      style={{ backgroundColor: colorConfig.bg }}
-                                    />
-                                    <span className={`text-sm truncate ${
-                                      votes === 0 ? 'text-gray-500' : 'text-gray-700'
-                                    }`}>
-                                      {option.option_text}
-                                    </span>
-                                    {isLeading && (
-                                      <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                    <span className={`text-sm font-bold ${
-                                      votes === 0 ? 'text-gray-400' : 'text-gray-800'
-                                    }`}>
-                                      {percentage}%
-                                    </span>
-                                    <span className={`text-xs ${
-                                      votes === 0 ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                      ({votes})
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ========== FOOTER ========== */}
-      <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
-          {isCompleted ? (
-            <>
-              <CheckCircle className="w-3 h-3 text-green-500" />
-              <span>Election completed • Final results</span>
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span>Live • Auto-updates every 5s</span>
-            </>
-          )}
-        </div>
+              {/* Pie Chart + Legend Side by Side */}
+              <div className="flex items-center justify-center gap-4">
+                <PieChart options={options} size={150} />
+                <Legend options={options} total={questionTotal} />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+//last working code only to add pie chart above code
+// // ============================================================================
+// // CompactLiveResults.jsx - SHOWS ALL QUESTIONS WITH 0 PLACEHOLDERS INITIALLY
+// // ============================================================================
+// // 
+// // FEATURES:
+// // ✅ Shows ALL questions with 0 votes as placeholders (not "No votes yet")
+// // ✅ 1 question = 1 placeholder, 3 questions = 3 placeholders
+// // ✅ Each option shows 0% (0) initially
+// // ✅ Increments as votes come in
+// // ✅ Works during voting (live) AND after election ends (final)
+// // ✅ Real-time updates via polling (every 5 seconds)
+// //
+// // ============================================================================
+
+// import React, { useState, useEffect } from 'react';
+// import { 
+//   RefreshCw, 
+//   Users, 
+//   TrendingUp, 
+//   ChevronDown, 
+//   ChevronUp,
+//   Trophy,
+//   Clock,
+//   CheckCircle,
+//   BarChart3
+// } from 'lucide-react';
+// import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
+
+// // ============================================================================
+// // MINI PIE CHART COMPONENT
+// // ============================================================================
+// const MiniPieChart = ({ options, size = 90 }) => {
+//   const total = options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0);
+  
+//   // Colors for pie slices
+//   const colors = [
+//     '#3B82F6', // Blue
+//     '#EF4444', // Red
+//     '#22C55E', // Green
+//     '#F59E0B', // Amber
+//     '#8B5CF6', // Purple
+//     '#EC4899', // Pink
+//     '#06B6D4', // Cyan
+//     '#84CC16', // Lime
+//     '#F97316', // Orange
+//     '#6366F1', // Indigo
+//   ];
+
+//   // Empty state - show gray circle with segments outline
+//   if (total === 0) {
+//     // Show equal segments for all options (placeholder)
+//     const segmentAngle = 360 / (options.length || 1);
+    
+//     return (
+//       <svg width={size} height={size} viewBox="0 0 100 100">
+//         {/* Background circle */}
+//         <circle cx="50" cy="50" r="40" fill="#F3F4F6" />
+        
+//         {/* Segment dividers */}
+//         {options.map((_, idx) => {
+//           const angle = (idx * segmentAngle - 90) * (Math.PI / 180);
+//           const x2 = 50 + 40 * Math.cos(angle);
+//           const y2 = 50 + 40 * Math.sin(angle);
+//           return (
+//             <line 
+//               key={idx}
+//               x1="50" 
+//               y1="50" 
+//               x2={x2} 
+//               y2={y2} 
+//               stroke="#E5E7EB" 
+//               strokeWidth="2"
+//             />
+//           );
+//         })}
+        
+//         {/* Center hole */}
+//         <circle cx="50" cy="50" r="22" fill="white" />
+        
+//         {/* 0 in center */}
+//         <text 
+//           x="50" 
+//           y="55" 
+//           textAnchor="middle" 
+//           fontSize="16" 
+//           fontWeight="bold" 
+//           fill="#9CA3AF"
+//         >
+//           0
+//         </text>
+//       </svg>
+//     );
+//   }
+
+//   // Calculate segments for actual votes
+//   let currentAngle = -90;
+//   const segments = options.map((opt, idx) => {
+//     const votes = opt.vote_count || 0;
+//     const percentage = (votes / total) * 100;
+//     const angle = (percentage / 100) * 360;
+//     const startAngle = currentAngle;
+//     currentAngle += angle;
+//     return { 
+//       ...opt, 
+//       startAngle, 
+//       endAngle: currentAngle, 
+//       color: colors[idx % colors.length],
+//       percentage 
+//     };
+//   });
+
+//   // Create SVG path for a pie slice
+//   const createSlice = (startAngle, endAngle, color, radius = 40) => {
+//     if (endAngle - startAngle >= 359.9) {
+//       return null;
+//     }
+    
+//     const cx = 50, cy = 50;
+//     const startRad = (startAngle) * (Math.PI / 180);
+//     const endRad = (endAngle) * (Math.PI / 180);
+//     const x1 = cx + radius * Math.cos(startRad);
+//     const y1 = cy + radius * Math.sin(startRad);
+//     const x2 = cx + radius * Math.cos(endRad);
+//     const y2 = cy + radius * Math.sin(endRad);
+//     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    
+//     return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+//   };
+
+//   return (
+//     <svg width={size} height={size} viewBox="0 0 100 100">
+//       {segments.map((seg, idx) => {
+//         if (seg.endAngle - seg.startAngle < 0.5) return null;
+        
+//         if (seg.endAngle - seg.startAngle >= 359.9) {
+//           return <circle key={idx} cx="50" cy="50" r="40" fill={seg.color} />;
+//         }
+        
+//         const path = createSlice(seg.startAngle, seg.endAngle, seg.color);
+//         return path ? (
+//           <path
+//             key={idx}
+//             d={path}
+//             fill={seg.color}
+//             stroke="white"
+//             strokeWidth="2"
+//           />
+//         ) : null;
+//       })}
+//       {/* Center hole (donut style) */}
+//       <circle cx="50" cy="50" r="22" fill="white" />
+//       {/* Total votes in center */}
+//       <text 
+//         x="50" 
+//         y="55" 
+//         textAnchor="middle" 
+//         fontSize="16" 
+//         fontWeight="bold" 
+//         fill="#374151"
+//       >
+//         {total}
+//       </text>
+//     </svg>
+//   );
+// };
+
+// // ============================================================================
+// // MAIN COMPONENT
+// // ============================================================================
+// export default function CompactLiveResults({ electionId, questionId, electionStatus }) {
+//   const [expandedQuestions, setExpandedQuestions] = useState({});
+  
+//   // ✅ FIX: Pass parameters as object + enable polling for real-time updates
+//   const { 
+//     data: results, 
+//     isLoading, 
+//     refetch, 
+//     isFetching,
+//     error 
+//   } = useGetLiveResultsQuery(
+//     { electionId, questionId },
+//     { 
+//       pollingInterval: 5000,
+//       refetchOnMountOrArgChange: true,
+//       skip: !electionId,
+//     }
+//   );
+
+//   // ✅ FIX: Properly extract nested data from API response
+//   // API returns: { success: true, data: { questions: [...] } }
+//   // So we need: results.data.questions (not results.questions)
+//   const apiData = results?.data?.questions ? results.data : (results?.data || results);
+//   const questions = apiData?.questions || [];
+//   const totalVotes = apiData?.totalVotes || 0;
+//   const votingType = apiData?.votingType || 'plurality';
+//   const isCompleted = electionStatus === 'completed' || apiData?.status === 'completed';
+
+//   // Debug: Log the full path
+//   console.log('🔍 Data extraction debug:', {
+//     'results': results,
+//     'results?.data': results?.data,
+//     'results?.data?.questions': results?.data?.questions,
+//     'final questions': questions,
+//     'questions length': questions?.length
+//   });
+
+//   // Debug logging
+//   useEffect(() => {
+//     console.log('📊 CompactLiveResults - Data received:', {
+//       electionId,
+//       rawResults: results,
+//       extractedData: apiData,
+//       questionsCount: questions.length,
+//       totalVotes,
+//       votingType,
+//       isCompleted
+//     });
+//   }, [results, electionId]);
+
+//   // Expand all questions by default
+//   useEffect(() => {
+//     if (questions.length > 0) {
+//       const expanded = {};
+//       questions.forEach(q => {
+//         expanded[q.id] = true;
+//       });
+//       setExpandedQuestions(expanded);
+//     }
+//   }, [questions.length]);
+
+//   // Colors for options (matching pie chart)
+//   const colors = [
+//     { bg: '#3B82F6', text: 'text-blue-600', bgLight: 'bg-blue-50', label: 'A' },
+//     { bg: '#EF4444', text: 'text-red-600', bgLight: 'bg-red-50', label: 'B' },
+//     { bg: '#22C55E', text: 'text-green-600', bgLight: 'bg-green-50', label: 'C' },
+//     { bg: '#F59E0B', text: 'text-amber-600', bgLight: 'bg-amber-50', label: 'D' },
+//     { bg: '#8B5CF6', text: 'text-purple-600', bgLight: 'bg-purple-50', label: 'E' },
+//     { bg: '#EC4899', text: 'text-pink-600', bgLight: 'bg-pink-50', label: 'F' },
+//     { bg: '#06B6D4', text: 'text-cyan-600', bgLight: 'bg-cyan-50', label: 'G' },
+//     { bg: '#84CC16', text: 'text-lime-600', bgLight: 'bg-lime-50', label: 'H' },
+//   ];
+
+//   const toggleQuestion = (qId) => {
+//     setExpandedQuestions(prev => ({
+//       ...prev,
+//       [qId]: !prev[qId]
+//     }));
+//   };
+
+//   // Error state
+//   if (error) {
+//     console.error('❌ Live Results Error:', error);
+//     return (
+//       <div className="bg-white rounded-xl shadow-lg border border-red-200 p-4">
+//         <div className="text-red-600 text-center">
+//           <p className="font-medium">Unable to load results</p>
+//           <p className="text-sm text-red-400">{error.message || 'Please try again'}</p>
+//           <button 
+//             onClick={() => refetch()}
+//             className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+//           >
+//             Retry
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Loading state
+//   if (isLoading) {
+//     return (
+//       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+//         <div className="flex flex-col items-center justify-center py-4">
+//           <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mb-3" />
+//           <p className="text-gray-500">Loading results...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+//       {/* ========== HEADER ========== */}
+//       <div className={`px-4 py-3 ${isCompleted ? 'bg-gradient-to-r from-green-600 to-green-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'} text-white`}>
+//         <div className="flex items-center justify-between">
+//           <div className="flex items-center gap-2">
+//             {isCompleted ? (
+//               <CheckCircle className="w-5 h-5" />
+//             ) : (
+//               <BarChart3 className="w-5 h-5" />
+//             )}
+//             <h3 className="font-bold text-lg">
+//               {isCompleted ? 'Final Results' : 'Live Results'}
+//             </h3>
+//           </div>
+//           <button 
+//             onClick={() => refetch()}
+//             disabled={isFetching}
+//             className="p-2 hover:bg-white/20 rounded-full transition"
+//             title="Refresh results"
+//           >
+//             <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
+//           </button>
+//         </div>
+        
+//         {/* Total votes summary */}
+//         <div className="flex items-center gap-4 text-blue-100 text-sm mt-2">
+//           <div className="flex items-center gap-1">
+//             <Users className="w-4 h-4" />
+//             <span>{totalVotes} total vote{totalVotes !== 1 ? 's' : ''}</span>
+//           </div>
+//           {!isCompleted && (
+//             <div className="flex items-center gap-1">
+//               <Clock className="w-4 h-4" />
+//               <span>Voting in progress</span>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* ========== CONTENT ========== */}
+//       <div className="p-3 max-h-[600px] overflow-y-auto">
+//         {questions.length === 0 ? (
+//           // No questions found (shouldn't happen normally)
+//           <div className="text-center py-8 text-gray-500">
+//             <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+//             <p>No questions found</p>
+//           </div>
+//         ) : (
+//           // ========== QUESTIONS LIST (Always show all questions with 0 or actual votes) ==========
+//           <div className="space-y-4">
+//             {questions.map((question, qIndex) => {
+//               const options = question.options || [];
+//               const questionTotal = question.total_votes || 
+//                 options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
+//               const isExpanded = expandedQuestions[question.id] !== false;
+              
+//               // Find leading option(s) - only if there are votes
+//               const maxVotes = Math.max(...options.map(o => o.vote_count || 0), 0);
+//               const hasVotes = maxVotes > 0;
+
+//               return (
+//                 <div 
+//                   key={question.id} 
+//                   className="border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+//                 >
+//                   {/* Question Header (Collapsible) */}
+//                   <button
+//                     onClick={() => toggleQuestion(question.id)}
+//                     className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition text-left"
+//                   >
+//                     <div className="flex items-center gap-3 flex-1 min-w-0">
+//                       <span className="flex-shrink-0 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+//                         Q{qIndex + 1}
+//                       </span>
+//                       <span className="text-sm font-medium text-gray-700 truncate">
+//                         {question.question_text}
+//                       </span>
+//                     </div>
+//                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+//                       <span className={`text-xs font-semibold px-2 py-1 rounded ${
+//                         questionTotal > 0 
+//                           ? 'text-gray-600 bg-white' 
+//                           : 'text-gray-400 bg-gray-100'
+//                       }`}>
+//                         {questionTotal} vote{questionTotal !== 1 ? 's' : ''}
+//                       </span>
+//                       {isExpanded ? (
+//                         <ChevronUp size={18} className="text-gray-400" />
+//                       ) : (
+//                         <ChevronDown size={18} className="text-gray-400" />
+//                       )}
+//                     </div>
+//                   </button>
+
+//                   {/* Question Results (Expanded Content) - ALWAYS SHOW OPTIONS */}
+//                   {isExpanded && (
+//                     <div className="p-4 bg-white">
+//                       <div className="flex gap-4">
+//                         {/* Pie Chart - shows placeholder when 0 votes */}
+//                         <div className="flex-shrink-0 flex flex-col items-center">
+//                           <MiniPieChart options={options} size={100} />
+//                           <span className="text-xs text-gray-500 mt-1">
+//                             {votingType === 'approval' ? 'Approvals' : 'Votes'}
+//                           </span>
+//                         </div>
+
+//                         {/* Options List - ALWAYS SHOW ALL OPTIONS */}
+//                         <div className="flex-1 space-y-2">
+//                           {options.map((option, oIndex) => {
+//                             const votes = option.vote_count || 0;
+//                             const percentage = questionTotal > 0 
+//                               ? ((votes / questionTotal) * 100).toFixed(1) 
+//                               : '0.0';
+//                             const isLeading = hasVotes && votes === maxVotes && votes > 0;
+//                             const colorConfig = colors[oIndex % colors.length];
+
+//                             return (
+//                               <div 
+//                                 key={option.id}
+//                                 className={`relative rounded-lg overflow-hidden ${
+//                                   isLeading 
+//                                     ? 'bg-yellow-50 border-2 border-yellow-300' 
+//                                     : 'bg-gray-50 border border-gray-200'
+//                                 }`}
+//                               >
+//                                 {/* Progress bar background - only show if has votes */}
+//                                 {votes > 0 && (
+//                                   <div 
+//                                     className="absolute inset-0 opacity-20 transition-all duration-500"
+//                                     style={{ 
+//                                       width: `${percentage}%`,
+//                                       backgroundColor: colorConfig.bg 
+//                                     }}
+//                                   />
+//                                 )}
+                                
+//                                 {/* Content */}
+//                                 <div className="relative flex items-center justify-between p-2">
+//                                   <div className="flex items-center gap-2 min-w-0">
+//                                     <div 
+//                                       className={`w-4 h-4 rounded flex-shrink-0 ${
+//                                         votes === 0 ? 'opacity-50' : ''
+//                                       }`}
+//                                       style={{ backgroundColor: colorConfig.bg }}
+//                                     />
+//                                     <span className={`text-sm truncate ${
+//                                       votes === 0 ? 'text-gray-500' : 'text-gray-700'
+//                                     }`}>
+//                                       {option.option_text}
+//                                     </span>
+//                                     {isLeading && (
+//                                       <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+//                                     )}
+//                                   </div>
+//                                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+//                                     <span className={`text-sm font-bold ${
+//                                       votes === 0 ? 'text-gray-400' : 'text-gray-800'
+//                                     }`}>
+//                                       {percentage}%
+//                                     </span>
+//                                     <span className={`text-xs ${
+//                                       votes === 0 ? 'text-gray-400' : 'text-gray-500'
+//                                     }`}>
+//                                       ({votes})
+//                                     </span>
+//                                   </div>
+//                                 </div>
+//                               </div>
+//                             );
+//                           })}
+//                         </div>
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         )}
+//       </div>
+
+//       {/* ========== FOOTER ========== */}
+//       <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
+//         <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+//           {isCompleted ? (
+//             <>
+//               <CheckCircle className="w-3 h-3 text-green-500" />
+//               <span>Election completed • Final results</span>
+//             </>
+//           ) : (
+//             <>
+//               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+//               <span>Live • Auto-updates every 5s</span>
+//             </>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+// // ============================================================================
+// // CompactLiveResults.jsx - SHOWS ALL QUESTIONS WITH 0 PLACEHOLDERS INITIALLY
+// // ============================================================================
+// // 
+// // FEATURES:
+// // ✅ Shows ALL questions with 0 votes as placeholders (not "No votes yet")
+// // ✅ 1 question = 1 placeholder, 3 questions = 3 placeholders
+// // ✅ Each option shows 0% (0) initially
+// // ✅ Increments as votes come in
+// // ✅ Works during voting (live) AND after election ends (final)
+// // ✅ Real-time updates via polling (every 5 seconds)
+// //
+// // ============================================================================
+
+// import React, { useState, useEffect } from 'react';
+// import { 
+//   RefreshCw, 
+//   Users, 
+//   TrendingUp, 
+//   ChevronDown, 
+//   ChevronUp,
+//   Trophy,
+//   Clock,
+//   CheckCircle,
+//   BarChart3
+// } from 'lucide-react';
+// import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
+
+// // ============================================================================
+// // MINI PIE CHART COMPONENT
+// // ============================================================================
+// const MiniPieChart = ({ options, size = 90 }) => {
+//   const total = options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0);
+  
+//   // Colors for pie slices
+//   const colors = [
+//     '#3B82F6', // Blue
+//     '#EF4444', // Red
+//     '#22C55E', // Green
+//     '#F59E0B', // Amber
+//     '#8B5CF6', // Purple
+//     '#EC4899', // Pink
+//     '#06B6D4', // Cyan
+//     '#84CC16', // Lime
+//     '#F97316', // Orange
+//     '#6366F1', // Indigo
+//   ];
+
+//   // Empty state - show gray circle with segments outline
+//   if (total === 0) {
+//     // Show equal segments for all options (placeholder)
+//     const segmentAngle = 360 / (options.length || 1);
+    
+//     return (
+//       <svg width={size} height={size} viewBox="0 0 100 100">
+//         {/* Background circle */}
+//         <circle cx="50" cy="50" r="40" fill="#F3F4F6" />
+        
+//         {/* Segment dividers */}
+//         {options.map((_, idx) => {
+//           const angle = (idx * segmentAngle - 90) * (Math.PI / 180);
+//           const x2 = 50 + 40 * Math.cos(angle);
+//           const y2 = 50 + 40 * Math.sin(angle);
+//           return (
+//             <line 
+//               key={idx}
+//               x1="50" 
+//               y1="50" 
+//               x2={x2} 
+//               y2={y2} 
+//               stroke="#E5E7EB" 
+//               strokeWidth="2"
+//             />
+//           );
+//         })}
+        
+//         {/* Center hole */}
+//         <circle cx="50" cy="50" r="22" fill="white" />
+        
+//         {/* 0 in center */}
+//         <text 
+//           x="50" 
+//           y="55" 
+//           textAnchor="middle" 
+//           fontSize="16" 
+//           fontWeight="bold" 
+//           fill="#9CA3AF"
+//         >
+//           0
+//         </text>
+//       </svg>
+//     );
+//   }
+
+//   // Calculate segments for actual votes
+//   let currentAngle = -90;
+//   const segments = options.map((opt, idx) => {
+//     const votes = opt.vote_count || 0;
+//     const percentage = (votes / total) * 100;
+//     const angle = (percentage / 100) * 360;
+//     const startAngle = currentAngle;
+//     currentAngle += angle;
+//     return { 
+//       ...opt, 
+//       startAngle, 
+//       endAngle: currentAngle, 
+//       color: colors[idx % colors.length],
+//       percentage 
+//     };
+//   });
+
+//   // Create SVG path for a pie slice
+//   const createSlice = (startAngle, endAngle, color, radius = 40) => {
+//     if (endAngle - startAngle >= 359.9) {
+//       return null;
+//     }
+    
+//     const cx = 50, cy = 50;
+//     const startRad = (startAngle) * (Math.PI / 180);
+//     const endRad = (endAngle) * (Math.PI / 180);
+//     const x1 = cx + radius * Math.cos(startRad);
+//     const y1 = cy + radius * Math.sin(startRad);
+//     const x2 = cx + radius * Math.cos(endRad);
+//     const y2 = cy + radius * Math.sin(endRad);
+//     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    
+//     return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+//   };
+
+//   return (
+//     <svg width={size} height={size} viewBox="0 0 100 100">
+//       {segments.map((seg, idx) => {
+//         if (seg.endAngle - seg.startAngle < 0.5) return null;
+        
+//         if (seg.endAngle - seg.startAngle >= 359.9) {
+//           return <circle key={idx} cx="50" cy="50" r="40" fill={seg.color} />;
+//         }
+        
+//         const path = createSlice(seg.startAngle, seg.endAngle, seg.color);
+//         return path ? (
+//           <path
+//             key={idx}
+//             d={path}
+//             fill={seg.color}
+//             stroke="white"
+//             strokeWidth="2"
+//           />
+//         ) : null;
+//       })}
+//       {/* Center hole (donut style) */}
+//       <circle cx="50" cy="50" r="22" fill="white" />
+//       {/* Total votes in center */}
+//       <text 
+//         x="50" 
+//         y="55" 
+//         textAnchor="middle" 
+//         fontSize="16" 
+//         fontWeight="bold" 
+//         fill="#374151"
+//       >
+//         {total}
+//       </text>
+//     </svg>
+//   );
+// };
+
+// // ============================================================================
+// // MAIN COMPONENT
+// // ============================================================================
+// export default function CompactLiveResults({ electionId, questionId, electionStatus }) {
+//   const [expandedQuestions, setExpandedQuestions] = useState({});
+  
+//   // ✅ FIX: Pass parameters as object + enable polling for real-time updates
+//   const { 
+//     data: results, 
+//     isLoading, 
+//     refetch, 
+//     isFetching,
+//     error 
+//   } = useGetLiveResultsQuery(
+//     { electionId, questionId },
+//     { 
+//       pollingInterval: 5000,
+//       refetchOnMountOrArgChange: true,
+//       skip: !electionId,
+//     }
+//   );
+
+//   // ✅ FIX: Properly extract nested data from API response
+//   const apiData = results?.data || results;
+//   const questions = apiData?.questions || [];
+//   const totalVotes = apiData?.totalVotes || 0;
+//   const votingType = apiData?.votingType || 'plurality';
+//   const isCompleted = electionStatus === 'completed' || apiData?.status === 'completed';
+
+//   // Debug logging
+//   useEffect(() => {
+//     console.log('📊 CompactLiveResults - Data received:', {
+//       electionId,
+//       rawResults: results,
+//       extractedData: apiData,
+//       questionsCount: questions.length,
+//       totalVotes,
+//       votingType,
+//       isCompleted
+//     });
+//   }, [results, electionId]);
+
+//   // Expand all questions by default
+//   useEffect(() => {
+//     if (questions.length > 0) {
+//       const expanded = {};
+//       questions.forEach(q => {
+//         expanded[q.id] = true;
+//       });
+//       setExpandedQuestions(expanded);
+//     }
+//   }, [questions.length]);
+
+//   // Colors for options (matching pie chart)
+//   const colors = [
+//     { bg: '#3B82F6', text: 'text-blue-600', bgLight: 'bg-blue-50', label: 'A' },
+//     { bg: '#EF4444', text: 'text-red-600', bgLight: 'bg-red-50', label: 'B' },
+//     { bg: '#22C55E', text: 'text-green-600', bgLight: 'bg-green-50', label: 'C' },
+//     { bg: '#F59E0B', text: 'text-amber-600', bgLight: 'bg-amber-50', label: 'D' },
+//     { bg: '#8B5CF6', text: 'text-purple-600', bgLight: 'bg-purple-50', label: 'E' },
+//     { bg: '#EC4899', text: 'text-pink-600', bgLight: 'bg-pink-50', label: 'F' },
+//     { bg: '#06B6D4', text: 'text-cyan-600', bgLight: 'bg-cyan-50', label: 'G' },
+//     { bg: '#84CC16', text: 'text-lime-600', bgLight: 'bg-lime-50', label: 'H' },
+//   ];
+
+//   const toggleQuestion = (qId) => {
+//     setExpandedQuestions(prev => ({
+//       ...prev,
+//       [qId]: !prev[qId]
+//     }));
+//   };
+
+//   // Error state
+//   if (error) {
+//     console.error('❌ Live Results Error:', error);
+//     return (
+//       <div className="bg-white rounded-xl shadow-lg border border-red-200 p-4">
+//         <div className="text-red-600 text-center">
+//           <p className="font-medium">Unable to load results</p>
+//           <p className="text-sm text-red-400">{error.message || 'Please try again'}</p>
+//           <button 
+//             onClick={() => refetch()}
+//             className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+//           >
+//             Retry
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Loading state
+//   if (isLoading) {
+//     return (
+//       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+//         <div className="flex flex-col items-center justify-center py-4">
+//           <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mb-3" />
+//           <p className="text-gray-500">Loading results...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+//       {/* ========== HEADER ========== */}
+//       <div className={`px-4 py-3 ${isCompleted ? 'bg-gradient-to-r from-green-600 to-green-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'} text-white`}>
+//         <div className="flex items-center justify-between">
+//           <div className="flex items-center gap-2">
+//             {isCompleted ? (
+//               <CheckCircle className="w-5 h-5" />
+//             ) : (
+//               <BarChart3 className="w-5 h-5" />
+//             )}
+//             <h3 className="font-bold text-lg">
+//               {isCompleted ? 'Final Results' : 'Live Results'}
+//             </h3>
+//           </div>
+//           <button 
+//             onClick={() => refetch()}
+//             disabled={isFetching}
+//             className="p-2 hover:bg-white/20 rounded-full transition"
+//             title="Refresh results"
+//           >
+//             <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
+//           </button>
+//         </div>
+        
+//         {/* Total votes summary */}
+//         <div className="flex items-center gap-4 text-blue-100 text-sm mt-2">
+//           <div className="flex items-center gap-1">
+//             <Users className="w-4 h-4" />
+//             <span>{totalVotes} total vote{totalVotes !== 1 ? 's' : ''}</span>
+//           </div>
+//           {!isCompleted && (
+//             <div className="flex items-center gap-1">
+//               <Clock className="w-4 h-4" />
+//               <span>Voting in progress</span>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* ========== CONTENT ========== */}
+//       <div className="p-3 max-h-[600px] overflow-y-auto">
+//         {questions.length === 0 ? (
+//           // No questions found (shouldn't happen normally)
+//           <div className="text-center py-8 text-gray-500">
+//             <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+//             <p>No questions found</p>
+//           </div>
+//         ) : (
+//           // ========== QUESTIONS LIST (Always show all questions with 0 or actual votes) ==========
+//           <div className="space-y-4">
+//             {questions.map((question, qIndex) => {
+//               const options = question.options || [];
+//               const questionTotal = question.total_votes || 
+//                 options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
+//               const isExpanded = expandedQuestions[question.id] !== false;
+              
+//               // Find leading option(s) - only if there are votes
+//               const maxVotes = Math.max(...options.map(o => o.vote_count || 0), 0);
+//               const hasVotes = maxVotes > 0;
+
+//               return (
+//                 <div 
+//                   key={question.id} 
+//                   className="border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+//                 >
+//                   {/* Question Header (Collapsible) */}
+//                   <button
+//                     onClick={() => toggleQuestion(question.id)}
+//                     className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition text-left"
+//                   >
+//                     <div className="flex items-center gap-3 flex-1 min-w-0">
+//                       <span className="flex-shrink-0 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+//                         Q{qIndex + 1}
+//                       </span>
+//                       <span className="text-sm font-medium text-gray-700 truncate">
+//                         {question.question_text}
+//                       </span>
+//                     </div>
+//                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+//                       <span className={`text-xs font-semibold px-2 py-1 rounded ${
+//                         questionTotal > 0 
+//                           ? 'text-gray-600 bg-white' 
+//                           : 'text-gray-400 bg-gray-100'
+//                       }`}>
+//                         {questionTotal} vote{questionTotal !== 1 ? 's' : ''}
+//                       </span>
+//                       {isExpanded ? (
+//                         <ChevronUp size={18} className="text-gray-400" />
+//                       ) : (
+//                         <ChevronDown size={18} className="text-gray-400" />
+//                       )}
+//                     </div>
+//                   </button>
+
+//                   {/* Question Results (Expanded Content) - ALWAYS SHOW OPTIONS */}
+//                   {isExpanded && (
+//                     <div className="p-4 bg-white">
+//                       <div className="flex gap-4">
+//                         {/* Pie Chart - shows placeholder when 0 votes */}
+//                         <div className="flex-shrink-0 flex flex-col items-center">
+//                           <MiniPieChart options={options} size={100} />
+//                           <span className="text-xs text-gray-500 mt-1">
+//                             {votingType === 'approval' ? 'Approvals' : 'Votes'}
+//                           </span>
+//                         </div>
+
+//                         {/* Options List - ALWAYS SHOW ALL OPTIONS */}
+//                         <div className="flex-1 space-y-2">
+//                           {options.map((option, oIndex) => {
+//                             const votes = option.vote_count || 0;
+//                             const percentage = questionTotal > 0 
+//                               ? ((votes / questionTotal) * 100).toFixed(1) 
+//                               : '0.0';
+//                             const isLeading = hasVotes && votes === maxVotes && votes > 0;
+//                             const colorConfig = colors[oIndex % colors.length];
+
+//                             return (
+//                               <div 
+//                                 key={option.id}
+//                                 className={`relative rounded-lg overflow-hidden ${
+//                                   isLeading 
+//                                     ? 'bg-yellow-50 border-2 border-yellow-300' 
+//                                     : 'bg-gray-50 border border-gray-200'
+//                                 }`}
+//                               >
+//                                 {/* Progress bar background - only show if has votes */}
+//                                 {votes > 0 && (
+//                                   <div 
+//                                     className="absolute inset-0 opacity-20 transition-all duration-500"
+//                                     style={{ 
+//                                       width: `${percentage}%`,
+//                                       backgroundColor: colorConfig.bg 
+//                                     }}
+//                                   />
+//                                 )}
+                                
+//                                 {/* Content */}
+//                                 <div className="relative flex items-center justify-between p-2">
+//                                   <div className="flex items-center gap-2 min-w-0">
+//                                     <div 
+//                                       className={`w-4 h-4 rounded flex-shrink-0 ${
+//                                         votes === 0 ? 'opacity-50' : ''
+//                                       }`}
+//                                       style={{ backgroundColor: colorConfig.bg }}
+//                                     />
+//                                     <span className={`text-sm truncate ${
+//                                       votes === 0 ? 'text-gray-500' : 'text-gray-700'
+//                                     }`}>
+//                                       {option.option_text}
+//                                     </span>
+//                                     {isLeading && (
+//                                       <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+//                                     )}
+//                                   </div>
+//                                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+//                                     <span className={`text-sm font-bold ${
+//                                       votes === 0 ? 'text-gray-400' : 'text-gray-800'
+//                                     }`}>
+//                                       {percentage}%
+//                                     </span>
+//                                     <span className={`text-xs ${
+//                                       votes === 0 ? 'text-gray-400' : 'text-gray-500'
+//                                     }`}>
+//                                       ({votes})
+//                                     </span>
+//                                   </div>
+//                                 </div>
+//                               </div>
+//                             );
+//                           })}
+//                         </div>
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         )}
+//       </div>
+
+//       {/* ========== FOOTER ========== */}
+//       <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
+//         <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+//           {isCompleted ? (
+//             <>
+//               <CheckCircle className="w-3 h-3 text-green-500" />
+//               <span>Election completed • Final results</span>
+//             </>
+//           ) : (
+//             <>
+//               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+//               <span>Live • Auto-updates every 5s</span>
+//             </>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 // // src/components/Dashboard/Tabs/voting/CompactLiveResults.jsx
 // // ✅ FIXED VERSION - Compact Live Results with Pie Chart
 // import React from 'react';
