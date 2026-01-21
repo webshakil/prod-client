@@ -1,3 +1,4 @@
+
 // src/pages/voting/payment/ElectionPaymentPage.jsx
 // ✅ Handles payment for election participation fees using WALLET SERVICE
 
@@ -9,7 +10,7 @@ import { useSelector } from 'react-redux';
 //   useConfirmElectionPaymentMutation 
 // } from '../../../redux/api/walllet/walletApi';
 //import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
-import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
 import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
@@ -277,11 +278,12 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
 }
 
 
-// ✅ NEW: Google Pay Form Component
+// ✅ Google Pay Form Component - Updated with proper detection
 function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
   const stripe = useStripe();
   const [paymentRequest, setPaymentRequest] = useState(null);
-  const [canMakePayment, setCanMakePayment] = useState(false);
+  const [googlePayAvailable, setGooglePayAvailable] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   // ✅ Use Redux mutations
@@ -291,6 +293,8 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
 
   useEffect(() => {
     if (!stripe || !amount) return;
+
+    setChecking(true);
 
     // Create PaymentRequest for Google Pay
     const pr = stripe.paymentRequest({
@@ -306,14 +310,22 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
 
     // Check if Google Pay is available
     pr.canMakePayment().then((result) => {
-      if (result) {
-        console.log('✅ Google Pay is available:', result);
-        setCanMakePayment(true);
+      console.log('🔍 Payment Request canMakePayment result:', result);
+      
+      // Check specifically for Google Pay (not just any wallet like Link)
+      if (result && result.googlePay) {
+        console.log('✅ Google Pay is specifically available');
+        setGooglePayAvailable(true);
         setPaymentRequest(pr);
       } else {
-        console.log('❌ Google Pay is not available on this device/browser');
-        setCanMakePayment(false);
+        console.log('❌ Google Pay is not available. Result:', result);
+        setGooglePayAvailable(false);
       }
+      setChecking(false);
+    }).catch((err) => {
+      console.error('❌ Error checking Google Pay availability:', err);
+      setGooglePayAvailable(false);
+      setChecking(false);
     });
 
     // Handle payment method event
@@ -417,22 +429,56 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
     }
   };
 
-  if (!canMakePayment) {
+  // Show loading while checking Google Pay availability
+  if (checking) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader className="animate-spin text-blue-600 mb-4" size={32} />
+        <p className="text-gray-600">Checking Google Pay availability...</p>
+      </div>
+    );
+  }
+
+  // Show helpful message if Google Pay is not available
+  if (!googlePayAvailable) {
     return (
       <div className="space-y-4">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
-          <div>
-            <p className="text-yellow-800 text-sm font-semibold">Google Pay Not Available</p>
-            <p className="text-yellow-700 text-sm mt-1">
-              Google Pay is not available on this device or browser. Please use Credit/Debit Card instead.
-            </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={24} />
+            <div>
+              <p className="text-blue-800 font-semibold mb-2">Google Pay Setup Required</p>
+              <p className="text-blue-700 text-sm mb-3">
+                Google Pay is not currently available on this device or browser. To use Google Pay, please ensure one of the following:
+              </p>
+              <ul className="text-blue-700 text-sm space-y-2 ml-1">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-1">•</span>
+                  <span><strong>On Android:</strong> Open this page in Chrome browser with Google Pay app installed and a card added to your Google account.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-1">•</span>
+                  <span><strong>On Desktop Chrome:</strong> Sign in to Chrome with your Google account and add a payment method to Google Pay at <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">pay.google.com</a></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-1">•</span>
+                  <span><strong>Note:</strong> Google Pay is not supported on Firefox, Safari, or incognito/private browsing mode.</span>
+                </li>
+              </ul>
+            </div>
           </div>
+        </div>
+        
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <p className="text-gray-700 text-sm text-center">
+            <strong>Alternative:</strong> You can use <strong>Credit/Debit Card</strong> or <strong>Vottery Wallet</strong> to complete your payment now.
+          </p>
         </div>
       </div>
     );
   }
 
+  // Show processing state
   if (processing) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
@@ -442,6 +488,7 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
     );
   }
 
+  // Show Google Pay button when available
   return (
     <div className="space-y-4">
       {paymentRequest && (
@@ -606,7 +653,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
             </Elements>
           )}
 
-          {/* ✅ NEW: Google Pay Payment */}
+          {/* ✅ Google Pay Payment */}
           {paymentMethod === 'google_pay' && (
             <Elements stripe={stripePromise}>
               <GooglePayForm
@@ -676,6 +723,19 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 //last workable code only to add googel pay above code
 // // src/pages/voting/payment/ElectionPaymentPage.jsx
 // // ✅ Handles payment for election participation fees using WALLET SERVICE
