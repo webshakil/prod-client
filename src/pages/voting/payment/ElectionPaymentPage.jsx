@@ -1,7 +1,7 @@
 // src/pages/voting/payment/ElectionPaymentPage.jsx
 // ✅ Handles payment for election participation fees using WALLET SERVICE
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 /*eslint-disable*/
 import { useSelector } from 'react-redux';
 // import { 
@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 //import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
 import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardElement, useStripe, useElements, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
 import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
 
 // ✅ FIXED: Use correct environment variable
@@ -40,6 +40,33 @@ function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }
           </div>
           {selectedMethod === 'stripe' && (
             <CheckCircle className="ml-auto text-blue-600" size={20} />
+          )}
+        </div>
+      </button>
+
+      {/* Google Pay - NEW ADDITION */}
+      <button
+        onClick={() => onMethodChange('google_pay')}
+        className={`w-full p-4 rounded-lg border-2 transition-all ${
+          selectedMethod === 'google_pay'
+            ? 'border-green-600 bg-green-50'
+            : 'border-gray-200 hover:border-green-300'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          {/* Google Pay Icon */}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <div className="text-left">
+            <p className="font-semibold">Google Pay</p>
+            <p className="text-sm text-gray-600">Fast & secure payment</p>
+          </div>
+          {selectedMethod === 'google_pay' && (
+            <CheckCircle className="ml-auto text-green-600" size={20} />
           )}
         </div>
       </button>
@@ -249,6 +276,196 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   );
 }
 
+
+// ✅ NEW: Google Pay Form Component
+function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
+  const stripe = useStripe();
+  const [paymentRequest, setPaymentRequest] = useState(null);
+  const [canMakePayment, setCanMakePayment] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  // ✅ Use Redux mutations
+  const [payForElection] = usePayForElectionMutation();
+  const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
+  const { refetch: refetchWallet } = useGetWalletQuery();
+
+  useEffect(() => {
+    if (!stripe || !amount) return;
+
+    // Create PaymentRequest for Google Pay
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: 'usd',
+      total: {
+        label: 'Election Participation Fee',
+        amount: Math.round(amount * 100), // Convert to cents
+      },
+      requestPayerName: true,
+      requestPayerEmail: true,
+    });
+
+    // Check if Google Pay is available
+    pr.canMakePayment().then((result) => {
+      if (result) {
+        console.log('✅ Google Pay is available:', result);
+        setCanMakePayment(true);
+        setPaymentRequest(pr);
+      } else {
+        console.log('❌ Google Pay is not available on this device/browser');
+        setCanMakePayment(false);
+      }
+    });
+
+    // Handle payment method event
+    pr.on('paymentmethod', async (event) => {
+      setProcessing(true);
+      console.log('🔵 Google Pay payment method received:', event.paymentMethod.id);
+
+      try {
+        // Step 1: Create payment intent
+        console.log('💳 Step 1: Creating payment intent for Google Pay...');
+        const result = await payForElection({
+          electionId,
+          regionCode: regionCode || 'region_1_us_canada',
+          paymentGateway: 'stripe',
+          paymentMethod: 'google_pay'
+        }).unwrap();
+
+        console.log('✅ Payment intent created:', result);
+
+        if (!result.clientSecret) {
+          event.complete('fail');
+          onError('Payment initialization failed. No client secret received.');
+          setProcessing(false);
+          return;
+        }
+
+        // Step 2: Confirm payment with the payment method from Google Pay
+        console.log('🔵 Step 2: Confirming payment with Stripe...');
+        const { error, paymentIntent } = await stripe.confirmCardPayment(
+          result.clientSecret,
+          { payment_method: event.paymentMethod.id },
+          { handleActions: false }
+        );
+
+        if (error) {
+          console.error('❌ Stripe confirmation error:', error);
+          event.complete('fail');
+          onError(error.message);
+          setProcessing(false);
+          return;
+        }
+
+        if (paymentIntent.status === 'requires_action') {
+          // Handle 3D Secure authentication
+          const { error: actionError, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(result.clientSecret);
+          
+          if (actionError) {
+            event.complete('fail');
+            onError(actionError.message);
+            setProcessing(false);
+            return;
+          }
+
+          if (confirmedIntent.status === 'succeeded') {
+            event.complete('success');
+            await handlePaymentSuccess(confirmedIntent.id);
+          } else {
+            event.complete('fail');
+            onError('Payment failed after 3D Secure verification.');
+            setProcessing(false);
+          }
+        } else if (paymentIntent.status === 'succeeded') {
+          event.complete('success');
+          await handlePaymentSuccess(paymentIntent.id);
+        } else {
+          event.complete('fail');
+          onError(`Payment failed with status: ${paymentIntent.status}`);
+          setProcessing(false);
+        }
+      } catch (err) {
+        console.error('❌ Google Pay error:', err);
+        event.complete('fail');
+        onError(err.data?.error || err.message || 'Google Pay payment failed.');
+        setProcessing(false);
+      }
+    });
+
+    return () => {
+      // Cleanup
+    };
+  }, [stripe, amount, electionId, regionCode]);
+
+  const handlePaymentSuccess = async (paymentIntentId) => {
+    try {
+      console.log('🔵 Step 3: Confirming payment in backend...');
+      const confirmResult = await confirmElectionPayment({
+        paymentIntentId: paymentIntentId,
+        electionId: electionId
+      }).unwrap();
+      
+      console.log('✅ Backend confirmation successful:', confirmResult);
+      await refetchWallet();
+      console.log('✅ Wallet data refreshed');
+      
+      setProcessing(false);
+      onSuccess(paymentIntentId);
+    } catch (confirmError) {
+      console.error('❌ Backend confirmation error:', confirmError);
+      onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
+      setProcessing(false);
+    }
+  };
+
+  if (!canMakePayment) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
+          <div>
+            <p className="text-yellow-800 text-sm font-semibold">Google Pay Not Available</p>
+            <p className="text-yellow-700 text-sm mt-1">
+              Google Pay is not available on this device or browser. Please use Credit/Debit Card instead.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (processing) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader className="animate-spin text-green-600 mb-4" size={40} />
+        <p className="text-gray-600">Processing Google Pay payment...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {paymentRequest && (
+        <PaymentRequestButtonElement
+          options={{
+            paymentRequest,
+            style: {
+              paymentRequestButton: {
+                type: 'default',
+                theme: 'dark',
+                height: '48px',
+              },
+            },
+          }}
+        />
+      )}
+      <p className="text-xs text-center text-gray-500">
+        Your payment is secured by Google Pay and Stripe.
+      </p>
+    </div>
+  );
+}
+
+
 export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [processing, setProcessing] = useState(false);
@@ -389,6 +606,19 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
             </Elements>
           )}
 
+          {/* ✅ NEW: Google Pay Payment */}
+          {paymentMethod === 'google_pay' && (
+            <Elements stripe={stripePromise}>
+              <GooglePayForm
+                amount={amount}
+                electionId={electionId}
+                regionCode="region_1_us_canada"
+                onSuccess={handlePaymentSuccess}
+                onError={setError}
+              />
+            </Elements>
+          )}
+
           {/* ❌ PADDLE - COMMENTED OUT
           {paymentMethod === 'paddle' && (
             <button
@@ -446,23 +676,22 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
     </div>
   );
 }
-
-
-
-
-
-//last workable code
+//last workable code only to add googel pay above code
 // // src/pages/voting/payment/ElectionPaymentPage.jsx
 // // ✅ Handles payment for election participation fees using WALLET SERVICE
 
 // import React, { useState } from 'react';
 // /*eslint-disable*/
 // import { useSelector } from 'react-redux';
-// import { usePayForElectionMutation } from '../../../redux/api/walllet/electionPaymentApi';
-// import { useGetWalletQuery } from '../../../redux/api/walllet/wallletApi';
+// // import { 
+// //   usePayForElectionMutation, 
+// //   useConfirmElectionPaymentMutation 
+// // } from '../../../redux/api/walllet/walletApi';
+// //import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
 // import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 // import { loadStripe } from '@stripe/stripe-js';
 // import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
 
 // // ✅ FIXED: Use correct environment variable
 // const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLIC_KEY);
@@ -494,7 +723,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //         </div>
 //       </button>
 
-//       {/* Paddle Payment */}
+//       {/* ❌ PADDLE - COMMENTED OUT FOR LATER
 //       <button
 //         onClick={() => onMethodChange('paddle')}
 //         className={`w-full p-4 rounded-lg border-2 transition-all ${
@@ -514,6 +743,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //           )}
 //         </div>
 //       </button>
+//       */}
 
 //       {/* Wallet Payment */}
 //       <button
@@ -544,24 +774,35 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //   const stripe = useStripe();
 //   const elements = useElements();
 //   const [processing, setProcessing] = useState(false);
+  
+//   // ✅ Use Redux mutations
 //   const [payForElection] = usePayForElectionMutation();
+//   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
 //   const { refetch: refetchWallet } = useGetWalletQuery();
 
 //   const handleSubmit = async (e) => {
 //     e.preventDefault();
     
-//     if (!stripe || !elements) return;
+//     if (!stripe || !elements) {
+//       onError('Stripe not loaded. Please refresh the page.');
+//       return;
+//     }
 
 //     setProcessing(true);
 
 //     try {
+//       console.log('💳 Step 1: Creating payment intent...');
+      
+//       // ✅ STEP 1: Create payment intent via Redux
 //       const result = await payForElection({
 //         electionId,
 //         regionCode: regionCode || 'region_1_us_canada',
+//         paymentGateway: 'stripe' // ✅ Explicitly set gateway
 //       }).unwrap();
 
-//       console.log('✅ Payment result:', result);
+//       console.log('✅ Payment intent created:', result);
 
+//       // ✅ Check if already paid
 //       if (result.alreadyPaid || result.payment?.status === 'succeeded') {
 //         console.log('✅ Payment already completed');
 //         setProcessing(false);
@@ -569,13 +810,15 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //         return;
 //       }
 
+//       // ✅ Validate clientSecret
 //       if (!result.clientSecret) {
 //         console.error('❌ No client secret received:', result);
-//         throw new Error('No client secret received.');
+//         throw new Error('Payment initialization failed. No client secret received.');
 //       }
 
-//       console.log('🔵 Confirming payment with Stripe...');
+//       console.log('🔵 Step 2: Confirming payment with Stripe...');
 
+//       // ✅ STEP 2: Confirm payment with Stripe
 //       const { error, paymentIntent } = await stripe.confirmCardPayment(result.clientSecret, {
 //         payment_method: {
 //           card: elements.getElement(CardElement),
@@ -583,73 +826,63 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //       });
 
 //       if (error) {
-//         console.error('❌ Stripe error:', error);
+//         console.error('❌ Stripe confirmation error:', error);
 //         onError(error.message);
 //         setProcessing(false);
 //         return;
 //       }
 
+//       console.log('✅ Stripe payment intent status:', paymentIntent.status);
+
 //       if (paymentIntent.status === 'succeeded') {
-//         console.log('✅ Stripe payment succeeded:', paymentIntent.id);
+//         console.log('✅ Payment succeeded! Payment Intent ID:', paymentIntent.id);
         
-//         // ✅ CRITICAL: Confirm in backend
+//         // ✅ STEP 3: Confirm in backend via Redux mutation
 //         try {
-//           const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-//           const token = localStorage.getItem('accessToken');
+//           console.log('🔵 Step 3: Confirming payment in backend via Redux...');
           
-//           console.log('🔵 CONFIRMING IN BACKEND...');
+//           const confirmResult = await confirmElectionPayment({
+//             paymentIntentId: paymentIntent.id,
+//             electionId: electionId
+//           }).unwrap();
           
-//           const confirmResponse = await fetch(
-//             `${import.meta.env.VITE_VOTING_SERVICE_URL}/wallet/election-payment/confirm`,
-//             {
-//               method: 'POST',
-//               headers: {
-//                 'Content-Type': 'application/json',
-//                 'Authorization': `Bearer ${token}`,
-//                 'x-user-data': JSON.stringify({
-//                   userId: userData.userId,
-//                   email: userData.email,
-//                   roles: userData.roles || ['Voter']
-//                 })
-//               },
-//               body: JSON.stringify({
-//                 paymentIntentId: paymentIntent.id,
-//                 electionId: electionId
-//               })
-//             }
-//           );
+//           console.log('✅ Backend confirmation successful:', confirmResult);
           
-//           if (confirmResponse.ok) {
-//             console.log('✅ Backend confirmed - wallet updated!');
-//             await refetchWallet();
-//           } else {
-//             const errorData = await confirmResponse.json();
-//             console.error('❌ Backend confirmation failed:', errorData);
-//           }
+//           // ✅ Refetch wallet to show updated balances
+//           await refetchWallet();
+//           console.log('✅ Wallet data refreshed');
+          
+//           setProcessing(false);
+//           onSuccess(paymentIntent.id);
+          
 //         } catch (confirmError) {
-//           console.error('❌ Confirmation error:', confirmError);
+//           console.error('❌ Backend confirmation error:', confirmError);
+          
+//           // Even if backend confirmation fails, payment succeeded
+//           // Show success but with warning
+//           onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
+//           setProcessing(false);
 //         }
         
-//         onSuccess(paymentIntent.id);
 //       } else if (paymentIntent.status === 'requires_action') {
-//         console.log('⚠️ Payment requires additional action');
-//         onError('Payment requires additional verification.');
+//         console.log('⚠️ Payment requires additional action (3D Secure)');
+//         onError('Payment requires additional verification. Please try again.');
 //         setProcessing(false);
 //       } else {
 //         console.error('❌ Unexpected payment status:', paymentIntent.status);
-//         onError('Payment failed. Please try again.');
+//         onError(`Payment failed with status: ${paymentIntent.status}`);
 //         setProcessing(false);
 //       }
 //     } catch (err) {
 //       console.error('❌ Payment error:', err);
-//       onError(err.data?.error || err.message || 'Payment failed');
+//       onError(err.data?.error || err.message || 'Payment failed. Please try again.');
 //       setProcessing(false);
 //     }
 //   };
 
 //   return (
 //     <form onSubmit={handleSubmit} className="space-y-4">
-//       <div className="bg-gray-50 p-4 rounded-lg">
+//       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
 //         <CardElement
 //           options={{
 //             style: {
@@ -659,6 +892,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //                 '::placeholder': {
 //                   color: '#aab7c4',
 //                 },
+//                 fontFamily: 'system-ui, sans-serif',
 //               },
 //               invalid: {
 //                 color: '#9e2146',
@@ -674,18 +908,22 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //         className={`w-full py-3 rounded-lg font-semibold text-white transition ${
 //           processing || !stripe
 //             ? 'bg-gray-400 cursor-not-allowed'
-//             : 'bg-blue-600 hover:bg-blue-700'
+//             : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
 //         }`}
 //       >
 //         {processing ? (
 //           <span className="flex items-center justify-center gap-2">
 //             <Loader className="animate-spin" size={20} />
-//             Processing...
+//             Processing Payment...
 //           </span>
 //         ) : (
 //           `Pay $${amount.toFixed(2)}`
 //         )}
 //       </button>
+
+//       <p className="text-xs text-center text-gray-500">
+//         Your payment is secured by Stripe. We never store your card details.
+//       </p>
 //     </form>
 //   );
 // }
@@ -701,34 +939,36 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 
 //   const [payForElection] = usePayForElectionMutation();
 
-// const handlePaddlePayment = async () => {
-//   setProcessing(true);
-//   setError(null);
+//   /* ❌ PADDLE - COMMENTED OUT FOR LATER
+//   const handlePaddlePayment = async () => {
+//     setProcessing(true);
+//     setError(null);
 
-//   try {
-//     const result = await payForElection({
-//       electionId,
-//       regionCode: 'region_1_us_canada',
-//       paymentGateway: 'paddle',
-//     }).unwrap();
+//     try {
+//       const result = await payForElection({
+//         electionId,
+//         regionCode: 'region_1_us_canada',
+//         paymentGateway: 'paddle',
+//       }).unwrap();
 
-//     console.log('🟣 Paddle payment result:', result);
+//       console.log('🟣 Paddle payment result:', result);
 
-//     if (result.checkoutUrl) {
-//       window.location.href = result.checkoutUrl;
-//     } else {
-//       setError('Paddle payment URL not received');
+//       if (result.checkoutUrl) {
+//         window.location.href = result.checkoutUrl;
+//       } else {
+//         setError('Paddle payment URL not received');
+//       }
+//     } catch (err) {
+//       console.error('Paddle payment error:', err);
+//       setError(err.data?.error || 'Paddle payment failed');
+//       setProcessing(false);
 //     }
-//   } catch (err) {
-//     console.error('Paddle payment error:', err);
-//     setError(err.data?.error || 'Paddle payment failed');
-//     setProcessing(false);
-//   }
-// };
+//   };
+//   */
 
 //   const handleWalletPayment = async () => {
 //     if (walletBalance < amount) {
-//       setError('Insufficient wallet balance. Please deposit funds first.');
+//       setError('Insufficient wallet balance. Please deposit funds first or use card payment.');
 //       return;
 //     }
 
@@ -736,7 +976,8 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //     setError(null);
 
 //     try {
-//       setError('Wallet payment coming soon! Please use card payment.');
+//       // TODO: Implement wallet payment
+//       setError('Wallet payment coming soon! Please use card payment for now.');
 //       setProcessing(false);
 //     } catch (err) {
 //       setError(err.data?.error || 'Wallet payment failed');
@@ -745,7 +986,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 //   };
 
 //   const handlePaymentSuccess = (paymentIntentId) => {
-//     console.log('✅ Payment successful:', paymentIntentId);
+//     console.log('✅ Payment successful! Payment Intent ID:', paymentIntentId);
 //     setSuccess(true);
 //     setTimeout(() => {
 //       onPaymentComplete(paymentIntentId);
@@ -754,117 +995,138 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 
 //   if (success) {
 //     return (
-//       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-//         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-//           <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
+//       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+//         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+//           <div className="mb-4">
+//             <CheckCircle className="w-20 h-20 text-green-600 mx-auto animate-bounce" />
+//           </div>
 //           <h2 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h2>
 //           <p className="text-gray-600 mb-4">
-//             Your payment has been processed successfully.
+//             Your payment of <span className="font-bold">${amount.toFixed(2)}</span> has been processed successfully.
 //           </p>
 //           <p className="text-sm text-gray-500">
-//             Redirecting to next step...
+//             Redirecting to voting page...
 //           </p>
+//           <div className="mt-6">
+//             <div className="animate-pulse flex justify-center gap-2">
+//               <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+//               <div className="w-2 h-2 bg-green-600 rounded-full animation-delay-200"></div>
+//               <div className="w-2 h-2 bg-green-600 rounded-full animation-delay-400"></div>
+//             </div>
+//           </div>
 //         </div>
 //       </div>
 //     );
 //   }
 
 //   return (
-//     <div className="max-w-2xl mx-auto px-4 py-8">
-//       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-//         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-//           {electionTitle || 'Election Payment'}
-//         </h1>
-//         <p className="text-gray-600 mb-4">
-//           A participation fee is required to vote in this election
-//         </p>
-
-//         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-blue-200">
-//           <p className="text-sm text-gray-600 mb-1">Participation Fee</p>
-//           <p className="text-3xl font-bold text-blue-900">
-//             ${amount?.toFixed(2) || '0.00'}
-//             <span className="text-lg font-normal text-gray-600 ml-2">{currency || 'USD'}</span>
+//     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+//       <div className="max-w-2xl mx-auto px-4">
+//         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+//           <h1 className="text-2xl font-bold text-gray-900 mb-2">
+//             {electionTitle || 'Election Payment'}
+//           </h1>
+//           <p className="text-gray-600 mb-4">
+//             A participation fee is required to vote in this election
 //           </p>
-//         </div>
-//       </div>
 
-//       <div className="bg-white rounded-2xl shadow-lg p-6">
-//         <PaymentMethodSelector
-//           selectedMethod={paymentMethod}
-//           onMethodChange={setPaymentMethod}
-//           walletBalance={walletBalance}
-//         />
-
-//         {error && (
-//           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
-//             <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-//             <p className="text-red-800 text-sm">{error}</p>
+//           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border-2 border-blue-200">
+//             <p className="text-sm text-gray-600 mb-1">Participation Fee</p>
+//             <p className="text-4xl font-bold text-blue-900">
+//               ${amount?.toFixed(2) || '0.00'}
+//               <span className="text-lg font-normal text-gray-600 ml-2">{currency || 'USD'}</span>
+//             </p>
 //           </div>
-//         )}
+//         </div>
 
-//         {paymentMethod === 'stripe' && (
-//           <Elements stripe={stripePromise}>
-//             <StripeCardForm
-//               amount={amount}
-//               electionId={electionId}
-//               regionCode="region_1_us_canada"
-//               onSuccess={handlePaymentSuccess}
-//               onError={setError}
-//             />
-//           </Elements>
-//         )}
+//         <div className="bg-white rounded-2xl shadow-lg p-6">
+//           <PaymentMethodSelector
+//             selectedMethod={paymentMethod}
+//             onMethodChange={setPaymentMethod}
+//             walletBalance={walletBalance}
+//           />
 
-//         {paymentMethod === 'paddle' && (
-//           <button
-//             onClick={handlePaddlePayment}
-//             disabled={processing}
-//             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-//               processing
-//                 ? 'bg-gray-400 cursor-not-allowed'
-//                 : 'bg-purple-600 hover:bg-purple-700'
-//             }`}
-//           >
-//             {processing ? (
-//               <span className="flex items-center justify-center gap-2">
-//                 <Loader className="animate-spin" size={20} />
-//                 Redirecting to Paddle...
-//               </span>
-//             ) : (
-//               `Pay $${amount.toFixed(2)} with Paddle`
-//             )}
-//           </button>
-//         )}
+//           {error && (
+//             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+//               <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+//               <div>
+//                 <p className="text-red-800 text-sm font-semibold">Payment Error</p>
+//                 <p className="text-red-700 text-sm mt-1">{error}</p>
+//               </div>
+//             </div>
+//           )}
 
-//         {paymentMethod === 'wallet' && (
-//           <button
-//             onClick={handleWalletPayment}
-//             disabled={processing || walletBalance < amount}
-//             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-//               processing || walletBalance < amount
-//                 ? 'bg-gray-400 cursor-not-allowed'
-//                 : 'bg-green-600 hover:bg-green-700'
-//             }`}
-//           >
-//             {processing ? (
-//               <span className="flex items-center justify-center gap-2">
-//                 <Loader className="animate-spin" size={20} />
-//                 Processing...
-//               </span>
-//             ) : walletBalance < amount ? (
-//               'Insufficient Balance'
-//             ) : (
-//               `Pay $${amount.toFixed(2)} from Wallet`
-//             )}
-//           </button>
-//         )}
+//           {paymentMethod === 'stripe' && (
+//             <Elements stripe={stripePromise}>
+//               <StripeCardForm
+//                 amount={amount}
+//                 electionId={electionId}
+//                 regionCode="region_1_us_canada"
+//                 onSuccess={handlePaymentSuccess}
+//                 onError={setError}
+//               />
+//             </Elements>
+//           )}
 
-//         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
-//           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-//             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-//           </svg>
-//           <span>Secure payment powered by Stripe & Paddle</span>
+//           {/* ❌ PADDLE - COMMENTED OUT
+//           {paymentMethod === 'paddle' && (
+//             <button
+//               onClick={handlePaddlePayment}
+//               disabled={processing}
+//               className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+//                 processing
+//                   ? 'bg-gray-400 cursor-not-allowed'
+//                   : 'bg-purple-600 hover:bg-purple-700'
+//               }`}
+//             >
+//               {processing ? (
+//                 <span className="flex items-center justify-center gap-2">
+//                   <Loader className="animate-spin" size={20} />
+//                   Redirecting to Paddle...
+//                 </span>
+//               ) : (
+//                 `Pay $${amount.toFixed(2)} with Paddle`
+//               )}
+//             </button>
+//           )}
+//           */}
+
+//           {paymentMethod === 'wallet' && (
+//             <button
+//               onClick={handleWalletPayment}
+//               disabled={processing || walletBalance < amount}
+//               className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+//                 processing || walletBalance < amount
+//                   ? 'bg-gray-400 cursor-not-allowed'
+//                   : 'bg-green-600 hover:bg-green-700 active:bg-green-800'
+//               }`}
+//             >
+//               {processing ? (
+//                 <span className="flex items-center justify-center gap-2">
+//                   <Loader className="animate-spin" size={20} />
+//                   Processing...
+//                 </span>
+//               ) : walletBalance < amount ? (
+//                 'Insufficient Balance'
+//               ) : (
+//                 `Pay $${amount.toFixed(2)} from Wallet`
+//               )}
+//             </button>
+//           )}
+
+//           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
+//             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+//               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+//             </svg>
+//             <span>Secure payment powered by Stripe</span>
+//           </div>
 //         </div>
 //       </div>
 //     </div>
 //   );
 // }
+
+
+
+
+
