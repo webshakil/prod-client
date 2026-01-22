@@ -6,6 +6,7 @@ import Step1BasicInfo from './Step1BasicInfo';
 import Step2Configuration from './Step2Configuration';
 import Step3Questions from './Step3Questions';
 import Step4Preview from './Step4Preview';
+import Swal from 'sweetalert2';
 
 export default function ElectionWizard({ 
   creatorType, 
@@ -221,11 +222,27 @@ export default function ElectionWizard({
     }
   };
 
+  // const handleClose = () => {
+  //   if (window.confirm('Are you sure you want to close? All unsaved changes will be lost.')) {
+  //     onClose();
+  //   }
+  // };
   const handleClose = () => {
-    if (window.confirm('Are you sure you want to close? All unsaved changes will be lost.')) {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'All unsaved changes will be lost.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, close it!',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
       onClose();
     }
-  };
+  });
+};
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 overflow-y-auto">
@@ -297,6 +314,7 @@ export default function ElectionWizard({
                 setElectionId={setElectionId}
                 editMode={editMode}
                 electionId={electionId}
+                
               />
             )}
             
