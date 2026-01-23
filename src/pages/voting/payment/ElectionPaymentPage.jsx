@@ -244,58 +244,10 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
 // Replace your GooglePayForm function with this EXACT code
 
 // ✅ FIXED Google Pay Form - Correct Stripe confirmation method
+// ✅ FINAL Google Pay Form - NO STRIPE CALLS, NO ERRORS
 function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
-  const stripe = useStripe();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const [payForElection] = usePayForElectionMutation();
-  const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
-  const { refetch: refetchWallet } = useGetWalletQuery();
-
-  const handlePayment = async () => {
-    if (!stripe) {
-      onError('Stripe not loaded. Please refresh.');
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      console.log('💳 Creating payment intent...');
-      
-      const result = await payForElection({
-        electionId,
-        regionCode: regionCode || 'region_1_us_canada',
-        paymentGateway: 'stripe',
-      }).unwrap();
-
-      console.log('✅ Payment intent created:', result);
-
-      if (result.alreadyPaid || result.payment?.status === 'succeeded') {
-        console.log('✅ Already paid');
-        setIsProcessing(false);
-        onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
-        return;
-      }
-
-      if (!result.clientSecret) {
-        throw new Error('No client secret received');
-      }
-
-      console.log('🔵 Payment requires manual confirmation - redirecting to card payment');
-      
-      // Since Google Pay native button isn't available and we have no payment method,
-      // we need to inform user to use card payment instead
-      onError('Please use Credit/Debit Card payment method to complete this transaction.');
-      setIsProcessing(false);
-
-    } catch (err) {
-      console.error('❌ Payment error:', err);
-      onError(err.data?.error || err.message || 'Payment failed');
-      setIsProcessing(false);
-    }
-  };
-
+  // NO Stripe calls at all - just show message
+  
   return (
     <div className="space-y-4">
       <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5">
@@ -350,6 +302,112 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
     </div>
   );
 }
+// function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
+//   const stripe = useStripe();
+//   const [isProcessing, setIsProcessing] = useState(false);
+
+//   const [payForElection] = usePayForElectionMutation();
+//   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
+//   const { refetch: refetchWallet } = useGetWalletQuery();
+
+//   const handlePayment = async () => {
+//     if (!stripe) {
+//       onError('Stripe not loaded. Please refresh.');
+//       return;
+//     }
+
+//     setIsProcessing(true);
+
+//     try {
+//       console.log('💳 Creating payment intent...');
+      
+//       const result = await payForElection({
+//         electionId,
+//         regionCode: regionCode || 'region_1_us_canada',
+//         paymentGateway: 'stripe',
+//       }).unwrap();
+
+//       console.log('✅ Payment intent created:', result);
+
+//       if (result.alreadyPaid || result.payment?.status === 'succeeded') {
+//         console.log('✅ Already paid');
+//         setIsProcessing(false);
+//         onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+//         return;
+//       }
+
+//       if (!result.clientSecret) {
+//         throw new Error('No client secret received');
+//       }
+
+//       console.log('🔵 Payment requires manual confirmation - redirecting to card payment');
+      
+//       // Since Google Pay native button isn't available and we have no payment method,
+//       // we need to inform user to use card payment instead
+//       onError('Please use Credit/Debit Card payment method to complete this transaction.');
+//       setIsProcessing(false);
+
+//     } catch (err) {
+//       console.error('❌ Payment error:', err);
+//       onError(err.data?.error || err.message || 'Payment failed');
+//       setIsProcessing(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-4">
+//       <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5">
+//         <div className="flex items-start gap-3">
+//           <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
+//           <div>
+//             <p className="text-yellow-900 font-semibold mb-2">Google Pay Not Available</p>
+//             <p className="text-yellow-800 text-sm mb-3">
+//               Google Pay is not currently available on this browser/device. This happens when:
+//             </p>
+//             <ul className="text-yellow-800 text-sm space-y-2 ml-1 mb-3">
+//               <li className="flex items-start gap-2">
+//                 <span className="text-yellow-600 mt-1">•</span>
+//                 <span>You're not using Chrome browser on Android or desktop</span>
+//               </li>
+//               <li className="flex items-start gap-2">
+//                 <span className="text-yellow-600 mt-1">•</span>
+//                 <span>Google Pay is not set up in your Google account</span>
+//               </li>
+//               <li className="flex items-start gap-2">
+//                 <span className="text-yellow-600 mt-1">•</span>
+//                 <span>You're in incognito/private mode</span>
+//               </li>
+//             </ul>
+//             <p className="text-yellow-900 font-semibold text-sm">
+//               To use Google Pay: Visit <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline">pay.google.com</a> and add a payment method to your Google account.
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+      
+//       <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+//         <div className="flex items-center gap-2 mb-2">
+//           <CheckCircle className="text-green-600" size={20} />
+//           <p className="text-green-900 font-semibold text-sm">Recommended Alternative</p>
+//         </div>
+//         <p className="text-green-800 text-sm mb-3">
+//           Use <strong>Credit/Debit Card</strong> payment to complete your transaction instantly. It's secure, fast, and works on all devices.
+//         </p>
+//         <button
+//           onClick={() => window.location.reload()}
+//           className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+//         >
+//           <CreditCard size={18} />
+//           Switch to Credit/Debit Card
+//         </button>
+//       </div>
+
+//       <p className="text-xs text-center text-gray-500">
+//         All payment methods are secured by Stripe with bank-level encryption.
+//       </p>
+//     </div>
+//   );
+// }
 
 
 export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
