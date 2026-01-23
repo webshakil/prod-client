@@ -2,7 +2,7 @@
 // src/pages/voting/payment/ElectionPaymentPage.jsx
 // ✅ Handles payment for election participation fees using WALLET SERVICE
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 /*eslint-disable*/
 import { useSelector } from 'react-redux';
 // import { 
@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 //import { useGetWalletQuery } from '../../../redux/api/walllet/walletApi';
 import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
+import { Elements, CardElement, useStripe, useElements, PaymentRequestButtonElement, ExpressCheckoutElement } from '@stripe/react-stripe-js';
 import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
 
 // ✅ FIXED: Use correct environment variable
@@ -282,259 +282,209 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
 // ✅ FIXED Google Pay Form Component
 function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
   const stripe = useStripe();
-  const [paymentRequest, setPaymentRequest] = useState(null);
-  const [googlePayAvailable, setGooglePayAvailable] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const elements = useElements();
   const [processing, setProcessing] = useState(false);
+  const [expressReady, setExpressReady] = useState(false);
+  const [availableMethods, setAvailableMethods] = useState(null);
 
   const [payForElection] = usePayForElectionMutation();
   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
   const { refetch: refetchWallet } = useGetWalletQuery();
 
-  useEffect(() => {
-    if (!stripe || !amount) {
-      console.log('⏳ Waiting for Stripe or amount...', { stripe: !!stripe, amount });
-      return;
+  const handleReady = ({ availablePaymentMethods }) => {
+    console.log('✅ Express Checkout Ready');
+    console.log('Available payment methods:', availablePaymentMethods);
+    
+    if (availablePaymentMethods) {
+      setAvailableMethods(availablePaymentMethods);
+      setExpressReady(true);
+      
+      console.log('Google Pay:', availablePaymentMethods.googlePay ? '✅' : '❌');
+      console.log('Apple Pay:', availablePaymentMethods.applePay ? '✅' : '❌');
+      console.log('Link:', availablePaymentMethods.link ? '✅' : '❌');
+    } else {
+      console.log('❌ No express payment methods');
+      setExpressReady(false);
     }
+  };
 
-    console.log('🔵 Initializing Google Pay...');
-    setChecking(true);
+  const handleClick = async (event) => {
+    console.log('🔵 Express payment clicked');
+    setProcessing(true);
 
     try {
-      // Create PaymentRequest
-      const pr = stripe.paymentRequest({
-        country: 'US',
-        currency: 'usd',
-        total: {
-          label: 'Election Participation Fee',
-          amount: Math.round(amount * 100),
+      console.log('💳 Creating payment intent...');
+      
+      const result = await payForElection({
+        electionId,
+        regionCode: regionCode || 'region_1_us_canada',
+        paymentGateway: 'stripe',
+      }).unwrap();
+
+      console.log('✅ Payment intent created:', result);
+
+      if (result.alreadyPaid || result.payment?.status === 'succeeded') {
+        console.log('✅ Already paid');
+        event.resolve({ status: 'success' });
+        setProcessing(false);
+        onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+        return;
+      }
+
+      if (!result.clientSecret) {
+        console.error('❌ No clientSecret');
+        event.resolve({ status: 'fail' });
+        onError('Payment initialization failed');
+        setProcessing(false);
+        return;
+      }
+
+      console.log('🔵 Confirming payment...');
+      
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: result.clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment/success?electionId=${electionId}`,
         },
-        requestPayerName: true,
-        requestPayerEmail: true,
+        redirect: 'if_required',
       });
 
-      console.log('✅ PaymentRequest created');
+      if (confirmError) {
+        console.error('❌ Confirmation error:', confirmError);
+        event.resolve({ status: 'fail' });
+        onError(confirmError.message);
+        setProcessing(false);
+        return;
+      }
 
-      // Check availability
-      pr.canMakePayment()
-        .then((result) => {
-          console.log('🔍 canMakePayment result:', result);
-          
-          // ✅ FIX: Accept any wallet payment (Google Pay, Apple Pay, etc.)
-          // The result can be: { applePay: true }, { googlePay: true }, or { link: true }
-          if (result) {
-            console.log('✅ Payment method available');
-            setGooglePayAvailable(true);
-            setPaymentRequest(pr);
-          } else {
-            console.log('❌ No payment method available');
-            setGooglePayAvailable(false);
-          }
-          setChecking(false);
-        })
-        .catch((err) => {
-          console.error('❌ Error checking payment availability:', err);
-          setGooglePayAvailable(false);
-          setChecking(false);
-        });
+      console.log('✅ Payment status:', paymentIntent.status);
 
-      // Handle payment method event
-      pr.on('paymentmethod', async (event) => {
-        console.log('🔵 Payment method received:', event.paymentMethod.id);
-        setProcessing(true);
-
+      if (paymentIntent.status === 'succeeded') {
+        console.log('✅ Payment succeeded!');
+        event.resolve({ status: 'success' });
+        
         try {
-          // Step 1: Create payment intent
-          console.log('💳 Creating payment intent...');
-          const result = await payForElection({
-            electionId,
-            regionCode: regionCode || 'region_1_us_canada',
-            paymentGateway: 'stripe',
+          await confirmElectionPayment({
+            paymentIntentId: paymentIntent.id,
+            electionId: electionId,
           }).unwrap();
-
-          console.log('✅ Payment intent created:', result);
-
-          // Check if already paid
-          if (result.alreadyPaid || result.payment?.status === 'succeeded') {
-            console.log('✅ Payment already completed');
-            event.complete('success');
-            setProcessing(false);
-            onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
-            return;
-          }
-
-          if (!result.clientSecret) {
-            console.error('❌ No client secret');
-            event.complete('fail');
-            onError('Payment initialization failed');
-            setProcessing(false);
-            return;
-          }
-
-          // Step 2: Confirm payment
-          console.log('🔵 Confirming payment with Stripe...');
-          const { error, paymentIntent } = await stripe.confirmCardPayment(
-            result.clientSecret,
-            { payment_method: event.paymentMethod.id },
-            { handleActions: false }
-          );
-
-          if (error) {
-            console.error('❌ Payment confirmation error:', error);
-            event.complete('fail');
-            onError(error.message);
-            setProcessing(false);
-            return;
-          }
-
-          console.log('✅ Payment intent status:', paymentIntent.status);
-
-          if (paymentIntent.status === 'requires_action') {
-            // Handle 3D Secure
-            console.log('🔐 Handling 3D Secure...');
-            const { error: actionError, paymentIntent: confirmedIntent } = 
-              await stripe.confirmCardPayment(result.clientSecret);
-            
-            if (actionError) {
-              event.complete('fail');
-              onError(actionError.message);
-              setProcessing(false);
-              return;
-            }
-
-            if (confirmedIntent.status === 'succeeded') {
-              event.complete('success');
-              await handlePaymentSuccess(confirmedIntent.id);
-            } else {
-              event.complete('fail');
-              onError('Payment failed after verification');
-              setProcessing(false);
-            }
-          } else if (paymentIntent.status === 'succeeded') {
-            event.complete('success');
-            await handlePaymentSuccess(paymentIntent.id);
-          } else {
-            event.complete('fail');
-            onError(`Payment failed: ${paymentIntent.status}`);
-            setProcessing(false);
-          }
-        } catch (err) {
-          console.error('❌ Payment error:', err);
-          event.complete('fail');
-          onError(err.data?.error || err.message || 'Payment failed');
+          
+          console.log('✅ Backend confirmed');
+          await refetchWallet();
+          
+          setProcessing(false);
+          onSuccess(paymentIntent.id);
+          
+        } catch (confirmErr) {
+          console.error('❌ Backend error:', confirmErr);
+          onError('Payment succeeded but update delayed');
           setProcessing(false);
         }
-      });
+      } else {
+        event.resolve({ status: 'fail' });
+        onError(`Payment failed: ${paymentIntent.status}`);
+        setProcessing(false);
+      }
 
     } catch (err) {
-      console.error('❌ Error creating payment request:', err);
-      setGooglePayAvailable(false);
-      setChecking(false);
-    }
-  }, [stripe, amount, electionId, regionCode]);
-
-  const handlePaymentSuccess = async (paymentIntentId) => {
-    try {
-      console.log('🔵 Confirming in backend...');
-      await confirmElectionPayment({
-        paymentIntentId,
-        electionId,
-      }).unwrap();
-      
-      console.log('✅ Backend confirmed');
-      await refetchWallet();
-      
-      setProcessing(false);
-      onSuccess(paymentIntentId);
-    } catch (err) {
-      console.error('❌ Backend confirmation error:', err);
-      // Payment succeeded but backend confirmation failed
-      onError('Payment succeeded but update delayed. Please refresh.');
+      console.error('❌ Error:', err);
+      event.resolve({ status: 'fail' });
+      onError(err.data?.error || err.message || 'Payment failed');
       setProcessing(false);
     }
   };
 
-  // Loading state
-  if (checking) {
+  if (!stripe || !amount) {
     return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <Loader className="animate-spin text-blue-600 mb-4" size={32} />
-        <p className="text-gray-600">Checking Google Pay availability...</p>
+      <div className="flex items-center justify-center py-8">
+        <Loader className="animate-spin text-blue-600 mr-3" size={32} />
+        <p className="text-gray-600">Loading payment options...</p>
       </div>
     );
   }
 
-  // Not available
-  if (!googlePayAvailable) {
-    return (
-      <div className="space-y-4">
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <ExpressCheckoutElement
+          onReady={handleReady}
+          onClick={handleClick}
+          options={{
+            buttonType: {
+              googlePay: 'pay',
+              applePay: 'plain',
+            },
+            buttonTheme: {
+              googlePay: 'black',
+              applePay: 'black',
+            },
+            buttonHeight: 48,
+            paymentMethods: {
+              googlePay: 'always',
+              applePay: 'always',
+              link: 'auto',
+            },
+          }}
+        />
+        
+        {processing && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <Loader className="animate-spin text-green-600 mr-2" size={24} />
+            <p className="text-gray-700 font-medium">Processing...</p>
+          </div>
+        )}
+      </div>
+
+      {expressReady && availableMethods && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-green-600" size={20} />
+            <p className="text-green-800 text-sm font-medium">
+              Available:
+              {availableMethods.googlePay && ' Google Pay'}
+              {availableMethods.applePay && ' Apple Pay'}
+              {availableMethods.link && ' Link'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!expressReady && !processing && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
           <div className="flex items-start gap-3">
             <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={24} />
             <div>
-              <p className="text-blue-800 font-semibold mb-2">Google Pay Not Available</p>
+              <p className="text-blue-800 font-semibold mb-2">Google Pay Setup Required</p>
               <p className="text-blue-700 text-sm mb-3">
-                Google Pay is not currently available. To enable it:
+                To use Google Pay:
               </p>
               <ul className="text-blue-700 text-sm space-y-2 ml-1">
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>Desktop Chrome:</strong> Add a card at <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">pay.google.com</a></span>
+                  <span>
+                    Add card at{' '}
+                    <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline">
+                      pay.google.com
+                    </a>
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>Android:</strong> Use Chrome with Google Pay app installed</span>
+                  <span>Use Chrome browser</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>For testing:</strong> Use card 4242 4242 4242 4242</span>
+                  <span>Test card: 5555 5555 5555 4444</span>
                 </li>
               </ul>
             </div>
           </div>
         </div>
-        
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p className="text-gray-700 text-sm text-center">
-            <strong>Alternative:</strong> Use <strong>Credit/Debit Card</strong> or <strong>Vottery Wallet</strong> instead.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Processing
-  if (processing) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <Loader className="animate-spin text-green-600 mb-4" size={40} />
-        <p className="text-gray-600 font-medium">Processing Google Pay payment...</p>
-        <p className="text-gray-500 text-sm mt-2">Please don't close this window</p>
-      </div>
-    );
-  }
-
-  // Show Google Pay button
-  return (
-    <div className="space-y-4">
-      {paymentRequest && (
-        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-          <PaymentRequestButtonElement
-            options={{
-              paymentRequest,
-              style: {
-                paymentRequestButton: {
-                  type: 'default',
-                  theme: 'dark',
-                  height: '48px',
-                },
-              },
-            }}
-          />
-        </div>
       )}
+
       <p className="text-xs text-center text-gray-500">
-        Secured by Google Pay and Stripe. We never store your card details.
+        Secured by Google Pay and Stripe
       </p>
     </div>
   );
