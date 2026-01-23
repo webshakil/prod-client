@@ -279,6 +279,7 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
 
 
 // ✅ Google Pay Form Component - Updated with proper detection
+// ✅ FIXED Google Pay Form Component
 function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
   const stripe = useStripe();
   const [paymentRequest, setPaymentRequest] = useState(null);
@@ -286,150 +287,174 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
   const [checking, setChecking] = useState(true);
   const [processing, setProcessing] = useState(false);
 
-  // ✅ Use Redux mutations
   const [payForElection] = usePayForElectionMutation();
   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
   const { refetch: refetchWallet } = useGetWalletQuery();
 
   useEffect(() => {
-    if (!stripe || !amount) return;
+    if (!stripe || !amount) {
+      console.log('⏳ Waiting for Stripe or amount...', { stripe: !!stripe, amount });
+      return;
+    }
 
+    console.log('🔵 Initializing Google Pay...');
     setChecking(true);
 
-    // Create PaymentRequest for Google Pay
-    const pr = stripe.paymentRequest({
-      country: 'US',
-      currency: 'usd',
-      total: {
-        label: 'Election Participation Fee',
-        amount: Math.round(amount * 100), // Convert to cents
-      },
-      requestPayerName: true,
-      requestPayerEmail: true,
-    });
+    try {
+      // Create PaymentRequest
+      const pr = stripe.paymentRequest({
+        country: 'US',
+        currency: 'usd',
+        total: {
+          label: 'Election Participation Fee',
+          amount: Math.round(amount * 100),
+        },
+        requestPayerName: true,
+        requestPayerEmail: true,
+      });
 
-    // Check if Google Pay is available
-    pr.canMakePayment().then((result) => {
-      console.log('🔍 Payment Request canMakePayment result:', result);
-      
-      // Check specifically for Google Pay (not just any wallet like Link)
-      if (result && result.googlePay) {
-        console.log('✅ Google Pay is specifically available');
-        setGooglePayAvailable(true);
-        setPaymentRequest(pr);
-      } else {
-        console.log('❌ Google Pay is not available. Result:', result);
-        setGooglePayAvailable(false);
-      }
-      setChecking(false);
-    }).catch((err) => {
-      console.error('❌ Error checking Google Pay availability:', err);
-      setGooglePayAvailable(false);
-      setChecking(false);
-    });
+      console.log('✅ PaymentRequest created');
 
-    // Handle payment method event
-    pr.on('paymentmethod', async (event) => {
-      setProcessing(true);
-      console.log('🔵 Google Pay payment method received:', event.paymentMethod.id);
-
-      try {
-        // Step 1: Create payment intent
-        console.log('💳 Step 1: Creating payment intent for Google Pay...');
-        const result = await payForElection({
-          electionId,
-          regionCode: regionCode || 'region_1_us_canada',
-          paymentGateway: 'stripe',
-          paymentMethod: 'google_pay'
-        }).unwrap();
-
-        console.log('✅ Payment intent created:', result);
-
-        if (!result.clientSecret) {
-          event.complete('fail');
-          onError('Payment initialization failed. No client secret received.');
-          setProcessing(false);
-          return;
-        }
-
-        // Step 2: Confirm payment with the payment method from Google Pay
-        console.log('🔵 Step 2: Confirming payment with Stripe...');
-        const { error, paymentIntent } = await stripe.confirmCardPayment(
-          result.clientSecret,
-          { payment_method: event.paymentMethod.id },
-          { handleActions: false }
-        );
-
-        if (error) {
-          console.error('❌ Stripe confirmation error:', error);
-          event.complete('fail');
-          onError(error.message);
-          setProcessing(false);
-          return;
-        }
-
-        if (paymentIntent.status === 'requires_action') {
-          // Handle 3D Secure authentication
-          const { error: actionError, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(result.clientSecret);
+      // Check availability
+      pr.canMakePayment()
+        .then((result) => {
+          console.log('🔍 canMakePayment result:', result);
           
-          if (actionError) {
+          // ✅ FIX: Accept any wallet payment (Google Pay, Apple Pay, etc.)
+          // The result can be: { applePay: true }, { googlePay: true }, or { link: true }
+          if (result) {
+            console.log('✅ Payment method available');
+            setGooglePayAvailable(true);
+            setPaymentRequest(pr);
+          } else {
+            console.log('❌ No payment method available');
+            setGooglePayAvailable(false);
+          }
+          setChecking(false);
+        })
+        .catch((err) => {
+          console.error('❌ Error checking payment availability:', err);
+          setGooglePayAvailable(false);
+          setChecking(false);
+        });
+
+      // Handle payment method event
+      pr.on('paymentmethod', async (event) => {
+        console.log('🔵 Payment method received:', event.paymentMethod.id);
+        setProcessing(true);
+
+        try {
+          // Step 1: Create payment intent
+          console.log('💳 Creating payment intent...');
+          const result = await payForElection({
+            electionId,
+            regionCode: regionCode || 'region_1_us_canada',
+            paymentGateway: 'stripe',
+          }).unwrap();
+
+          console.log('✅ Payment intent created:', result);
+
+          // Check if already paid
+          if (result.alreadyPaid || result.payment?.status === 'succeeded') {
+            console.log('✅ Payment already completed');
+            event.complete('success');
+            setProcessing(false);
+            onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+            return;
+          }
+
+          if (!result.clientSecret) {
+            console.error('❌ No client secret');
             event.complete('fail');
-            onError(actionError.message);
+            onError('Payment initialization failed');
             setProcessing(false);
             return;
           }
 
-          if (confirmedIntent.status === 'succeeded') {
+          // Step 2: Confirm payment
+          console.log('🔵 Confirming payment with Stripe...');
+          const { error, paymentIntent } = await stripe.confirmCardPayment(
+            result.clientSecret,
+            { payment_method: event.paymentMethod.id },
+            { handleActions: false }
+          );
+
+          if (error) {
+            console.error('❌ Payment confirmation error:', error);
+            event.complete('fail');
+            onError(error.message);
+            setProcessing(false);
+            return;
+          }
+
+          console.log('✅ Payment intent status:', paymentIntent.status);
+
+          if (paymentIntent.status === 'requires_action') {
+            // Handle 3D Secure
+            console.log('🔐 Handling 3D Secure...');
+            const { error: actionError, paymentIntent: confirmedIntent } = 
+              await stripe.confirmCardPayment(result.clientSecret);
+            
+            if (actionError) {
+              event.complete('fail');
+              onError(actionError.message);
+              setProcessing(false);
+              return;
+            }
+
+            if (confirmedIntent.status === 'succeeded') {
+              event.complete('success');
+              await handlePaymentSuccess(confirmedIntent.id);
+            } else {
+              event.complete('fail');
+              onError('Payment failed after verification');
+              setProcessing(false);
+            }
+          } else if (paymentIntent.status === 'succeeded') {
             event.complete('success');
-            await handlePaymentSuccess(confirmedIntent.id);
+            await handlePaymentSuccess(paymentIntent.id);
           } else {
             event.complete('fail');
-            onError('Payment failed after 3D Secure verification.');
+            onError(`Payment failed: ${paymentIntent.status}`);
             setProcessing(false);
           }
-        } else if (paymentIntent.status === 'succeeded') {
-          event.complete('success');
-          await handlePaymentSuccess(paymentIntent.id);
-        } else {
+        } catch (err) {
+          console.error('❌ Payment error:', err);
           event.complete('fail');
-          onError(`Payment failed with status: ${paymentIntent.status}`);
+          onError(err.data?.error || err.message || 'Payment failed');
           setProcessing(false);
         }
-      } catch (err) {
-        console.error('❌ Google Pay error:', err);
-        event.complete('fail');
-        onError(err.data?.error || err.message || 'Google Pay payment failed.');
-        setProcessing(false);
-      }
-    });
+      });
 
-    return () => {
-      // Cleanup
-    };
+    } catch (err) {
+      console.error('❌ Error creating payment request:', err);
+      setGooglePayAvailable(false);
+      setChecking(false);
+    }
   }, [stripe, amount, electionId, regionCode]);
 
   const handlePaymentSuccess = async (paymentIntentId) => {
     try {
-      console.log('🔵 Step 3: Confirming payment in backend...');
-      const confirmResult = await confirmElectionPayment({
-        paymentIntentId: paymentIntentId,
-        electionId: electionId
+      console.log('🔵 Confirming in backend...');
+      await confirmElectionPayment({
+        paymentIntentId,
+        electionId,
       }).unwrap();
       
-      console.log('✅ Backend confirmation successful:', confirmResult);
+      console.log('✅ Backend confirmed');
       await refetchWallet();
-      console.log('✅ Wallet data refreshed');
       
       setProcessing(false);
       onSuccess(paymentIntentId);
-    } catch (confirmError) {
-      console.error('❌ Backend confirmation error:', confirmError);
-      onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
+    } catch (err) {
+      console.error('❌ Backend confirmation error:', err);
+      // Payment succeeded but backend confirmation failed
+      onError('Payment succeeded but update delayed. Please refresh.');
       setProcessing(false);
     }
   };
 
-  // Show loading while checking Google Pay availability
+  // Loading state
   if (checking) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
@@ -439,7 +464,7 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
     );
   }
 
-  // Show helpful message if Google Pay is not available
+  // Not available
   if (!googlePayAvailable) {
     return (
       <div className="space-y-4">
@@ -447,22 +472,22 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
           <div className="flex items-start gap-3">
             <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={24} />
             <div>
-              <p className="text-blue-800 font-semibold mb-2">Google Pay Setup Required</p>
+              <p className="text-blue-800 font-semibold mb-2">Google Pay Not Available</p>
               <p className="text-blue-700 text-sm mb-3">
-                Google Pay is not currently available on this device or browser. To use Google Pay, please ensure one of the following:
+                Google Pay is not currently available. To enable it:
               </p>
               <ul className="text-blue-700 text-sm space-y-2 ml-1">
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>On Android:</strong> Open this page in Chrome browser with Google Pay app installed and a card added to your Google account.</span>
+                  <span><strong>Desktop Chrome:</strong> Add a card at <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">pay.google.com</a></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>On Desktop Chrome:</strong> Sign in to Chrome with your Google account and add a payment method to Google Pay at <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">pay.google.com</a></span>
+                  <span><strong>Android:</strong> Use Chrome with Google Pay app installed</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  <span><strong>Note:</strong> Google Pay is not supported on Firefox, Safari, or incognito/private browsing mode.</span>
+                  <span><strong>For testing:</strong> Use card 4242 4242 4242 4242</span>
                 </li>
               </ul>
             </div>
@@ -471,46 +496,281 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
         
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-gray-700 text-sm text-center">
-            <strong>Alternative:</strong> You can use <strong>Credit/Debit Card</strong> or <strong>Vottery Wallet</strong> to complete your payment now.
+            <strong>Alternative:</strong> Use <strong>Credit/Debit Card</strong> or <strong>Vottery Wallet</strong> instead.
           </p>
         </div>
       </div>
     );
   }
 
-  // Show processing state
+  // Processing
   if (processing) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <Loader className="animate-spin text-green-600 mb-4" size={40} />
-        <p className="text-gray-600">Processing Google Pay payment...</p>
+        <p className="text-gray-600 font-medium">Processing Google Pay payment...</p>
+        <p className="text-gray-500 text-sm mt-2">Please don't close this window</p>
       </div>
     );
   }
 
-  // Show Google Pay button when available
+  // Show Google Pay button
   return (
     <div className="space-y-4">
       {paymentRequest && (
-        <PaymentRequestButtonElement
-          options={{
-            paymentRequest,
-            style: {
-              paymentRequestButton: {
-                type: 'default',
-                theme: 'dark',
-                height: '48px',
+        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+          <PaymentRequestButtonElement
+            options={{
+              paymentRequest,
+              style: {
+                paymentRequestButton: {
+                  type: 'default',
+                  theme: 'dark',
+                  height: '48px',
+                },
               },
-            },
-          }}
-        />
+            }}
+          />
+        </div>
       )}
       <p className="text-xs text-center text-gray-500">
-        Your payment is secured by Google Pay and Stripe.
+        Secured by Google Pay and Stripe. We never store your card details.
       </p>
     </div>
   );
 }
+// function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
+//   const stripe = useStripe();
+//   const [paymentRequest, setPaymentRequest] = useState(null);
+//   const [googlePayAvailable, setGooglePayAvailable] = useState(false);
+//   const [checking, setChecking] = useState(true);
+//   const [processing, setProcessing] = useState(false);
+
+//   // ✅ Use Redux mutations
+//   const [payForElection] = usePayForElectionMutation();
+//   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
+//   const { refetch: refetchWallet } = useGetWalletQuery();
+
+//   useEffect(() => {
+//     if (!stripe || !amount) return;
+
+//     setChecking(true);
+
+//     // Create PaymentRequest for Google Pay
+//     const pr = stripe.paymentRequest({
+//       country: 'US',
+//       currency: 'usd',
+//       total: {
+//         label: 'Election Participation Fee',
+//         amount: Math.round(amount * 100), // Convert to cents
+//       },
+//       requestPayerName: true,
+//       requestPayerEmail: true,
+//     });
+
+//     // Check if Google Pay is available
+//     pr.canMakePayment().then((result) => {
+//       console.log('🔍 Payment Request canMakePayment result:', result);
+      
+//       // Check specifically for Google Pay (not just any wallet like Link)
+//       if (result && result.googlePay) {
+//         console.log('✅ Google Pay is specifically available');
+//         setGooglePayAvailable(true);
+//         setPaymentRequest(pr);
+//       } else {
+//         console.log('❌ Google Pay is not available. Result:', result);
+//         setGooglePayAvailable(false);
+//       }
+//       setChecking(false);
+//     }).catch((err) => {
+//       console.error('❌ Error checking Google Pay availability:', err);
+//       setGooglePayAvailable(false);
+//       setChecking(false);
+//     });
+
+//     // Handle payment method event
+//     pr.on('paymentmethod', async (event) => {
+//       setProcessing(true);
+//       console.log('🔵 Google Pay payment method received:', event.paymentMethod.id);
+
+//       try {
+//         // Step 1: Create payment intent
+//         console.log('💳 Step 1: Creating payment intent for Google Pay...');
+//         const result = await payForElection({
+//           electionId,
+//           regionCode: regionCode || 'region_1_us_canada',
+//           paymentGateway: 'stripe',
+//           paymentMethod: 'google_pay'
+//         }).unwrap();
+
+//         console.log('✅ Payment intent created:', result);
+
+//         if (!result.clientSecret) {
+//           event.complete('fail');
+//           onError('Payment initialization failed. No client secret received.');
+//           setProcessing(false);
+//           return;
+//         }
+
+//         // Step 2: Confirm payment with the payment method from Google Pay
+//         console.log('🔵 Step 2: Confirming payment with Stripe...');
+//         const { error, paymentIntent } = await stripe.confirmCardPayment(
+//           result.clientSecret,
+//           { payment_method: event.paymentMethod.id },
+//           { handleActions: false }
+//         );
+
+//         if (error) {
+//           console.error('❌ Stripe confirmation error:', error);
+//           event.complete('fail');
+//           onError(error.message);
+//           setProcessing(false);
+//           return;
+//         }
+
+//         if (paymentIntent.status === 'requires_action') {
+//           // Handle 3D Secure authentication
+//           const { error: actionError, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(result.clientSecret);
+          
+//           if (actionError) {
+//             event.complete('fail');
+//             onError(actionError.message);
+//             setProcessing(false);
+//             return;
+//           }
+
+//           if (confirmedIntent.status === 'succeeded') {
+//             event.complete('success');
+//             await handlePaymentSuccess(confirmedIntent.id);
+//           } else {
+//             event.complete('fail');
+//             onError('Payment failed after 3D Secure verification.');
+//             setProcessing(false);
+//           }
+//         } else if (paymentIntent.status === 'succeeded') {
+//           event.complete('success');
+//           await handlePaymentSuccess(paymentIntent.id);
+//         } else {
+//           event.complete('fail');
+//           onError(`Payment failed with status: ${paymentIntent.status}`);
+//           setProcessing(false);
+//         }
+//       } catch (err) {
+//         console.error('❌ Google Pay error:', err);
+//         event.complete('fail');
+//         onError(err.data?.error || err.message || 'Google Pay payment failed.');
+//         setProcessing(false);
+//       }
+//     });
+
+//     return () => {
+//       // Cleanup
+//     };
+//   }, [stripe, amount, electionId, regionCode]);
+
+//   const handlePaymentSuccess = async (paymentIntentId) => {
+//     try {
+//       console.log('🔵 Step 3: Confirming payment in backend...');
+//       const confirmResult = await confirmElectionPayment({
+//         paymentIntentId: paymentIntentId,
+//         electionId: electionId
+//       }).unwrap();
+      
+//       console.log('✅ Backend confirmation successful:', confirmResult);
+//       await refetchWallet();
+//       console.log('✅ Wallet data refreshed');
+      
+//       setProcessing(false);
+//       onSuccess(paymentIntentId);
+//     } catch (confirmError) {
+//       console.error('❌ Backend confirmation error:', confirmError);
+//       onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
+//       setProcessing(false);
+//     }
+//   };
+
+//   // Show loading while checking Google Pay availability
+//   if (checking) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-8">
+//         <Loader className="animate-spin text-blue-600 mb-4" size={32} />
+//         <p className="text-gray-600">Checking Google Pay availability...</p>
+//       </div>
+//     );
+//   }
+
+//   // Show helpful message if Google Pay is not available
+//   if (!googlePayAvailable) {
+//     return (
+//       <div className="space-y-4">
+//         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+//           <div className="flex items-start gap-3">
+//             <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={24} />
+//             <div>
+//               <p className="text-blue-800 font-semibold mb-2">Google Pay Setup Required</p>
+//               <p className="text-blue-700 text-sm mb-3">
+//                 Google Pay is not currently available on this device or browser. To use Google Pay, please ensure one of the following:
+//               </p>
+//               <ul className="text-blue-700 text-sm space-y-2 ml-1">
+//                 <li className="flex items-start gap-2">
+//                   <span className="text-blue-500 mt-1">•</span>
+//                   <span><strong>On Android:</strong> Open this page in Chrome browser with Google Pay app installed and a card added to your Google account.</span>
+//                 </li>
+//                 <li className="flex items-start gap-2">
+//                   <span className="text-blue-500 mt-1">•</span>
+//                   <span><strong>On Desktop Chrome:</strong> Sign in to Chrome with your Google account and add a payment method to Google Pay at <a href="https://pay.google.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">pay.google.com</a></span>
+//                 </li>
+//                 <li className="flex items-start gap-2">
+//                   <span className="text-blue-500 mt-1">•</span>
+//                   <span><strong>Note:</strong> Google Pay is not supported on Firefox, Safari, or incognito/private browsing mode.</span>
+//                 </li>
+//               </ul>
+//             </div>
+//           </div>
+//         </div>
+        
+//         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+//           <p className="text-gray-700 text-sm text-center">
+//             <strong>Alternative:</strong> You can use <strong>Credit/Debit Card</strong> or <strong>Vottery Wallet</strong> to complete your payment now.
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Show processing state
+//   if (processing) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-8">
+//         <Loader className="animate-spin text-green-600 mb-4" size={40} />
+//         <p className="text-gray-600">Processing Google Pay payment...</p>
+//       </div>
+//     );
+//   }
+
+//   // Show Google Pay button when available
+//   return (
+//     <div className="space-y-4">
+//       {paymentRequest && (
+//         <PaymentRequestButtonElement
+//           options={{
+//             paymentRequest,
+//             style: {
+//               paymentRequestButton: {
+//                 type: 'default',
+//                 theme: 'dark',
+//                 height: '48px',
+//               },
+//             },
+//           }}
+//         />
+//       )}
+//       <p className="text-xs text-center text-gray-500">
+//         Your payment is secured by Google Pay and Stripe.
+//       </p>
+//     </div>
+//   );
+// }
 
 
 export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
