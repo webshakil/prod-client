@@ -1,0 +1,49 @@
+
+
+{
+  "name": "Vottery - Online Voting Platform",
+  "short_name": "Vottery",
+  "description": "Secure online voting platform with offline capabilities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["voting", "elections", "democracy"],
+  "shortcuts": [
+    {
+      "name": "Vote Now",
+      "short_name": "Vote",
+      "description": "View available elections",
+      "url": "/dashboard/vote-now",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Votes",
+      "short_name": "My Votes",
+      "description": "View your voting history",
+      "url": "/dashboard/vote-history",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
