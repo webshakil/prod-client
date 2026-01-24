@@ -1,13 +1,18 @@
-// src/redux/store.js - UPDATED WITH SHAPED AI RECOMMENDATIONS
+// ============================================
+// 🚀 ENHANCED REDUX STORE WITH OFFLINE SUPPORT
+// ============================================
+// This is your UPDATED store.js with offline capabilities
+// Drop-in replacement for src/redux/store.js
+
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storage from 'redux-persist/lib/storage'; // LocalStorage for web
 import { combineReducers } from '@reduxjs/toolkit';
 
 // Base API
 import indexApi from './api/indexApi';
 
-// All other APIs (add all that exist)
+// All other APIs
 import { userApi } from './api/user/userApi';
 import { electionStatsApi } from './api/admin/electionStatsApi';
 import { analyticsApi } from './api/analytics/analyticsApi';
@@ -34,8 +39,6 @@ import { electionPaymentApi } from './api/walllet/electionPaymentApi';
 import { paymentConfigApi } from './api/walllet/paymentConfigApi';
 import { wallletApi } from './api/walllet/wallletApi';
 import { withdrawalApi } from './api/walllet/withdrawalApi';
-
-// ✅ NEW: Import Shaped AI Recommendation API
 import { recommendationApi } from './api/recommendations/recommendationApi';
 
 // Slices
@@ -47,17 +50,71 @@ import notificationReducer from './slices/notificationSlice';
 import walletReducer from './slices/wallletSlice';
 import votingNewReducer from './slices/votingNewSlice';
 import lotteryyReducer from './slices/lotteryySlice';
-
-// ✅ NEW: Import Shaped AI Recommendation Slice
 import recommendationReducer from './slices/recommendationSlice';
 
+// ============================================
+// 🆕 OFFLINE SLICE - NEW ADDITION
+// ============================================
+import offlineReducer from './slices/offlineSlice'; // You'll create this
+
+// ============================================
+// 📦 PERSIST CONFIG - ENHANCED FOR OFFLINE
+// ============================================
 const persistConfig = {
   key: 'root',
-  storage,
-  whitelist: ['auth', 'user'],
+  storage, // LocalStorage for web
+  version: 1,
+  
+  // ✅ Persist these reducers for offline access
+  whitelist: [
+    'auth',           // User auth data
+    'user',           // User profile
+    'election',       // Elections data
+    'subscription',   // Subscription info
+    'wallet',         // Wallet data
+    'votingNew',      // Voting data
+    'lotteryyy',      // Lottery data
+    'recommendations', // Recommendations
+    'offline',        // Offline state (NEW)
+    
+    // ✅ PERSIST ALL API CACHES FOR OFFLINE READ ACCESS
+    indexApi.reducerPath,
+    userApi.reducerPath,
+    electionStatsApi.reducerPath,
+    analyticsApi.reducerPath,
+    analyticsApiKeyApi.reducerPath,
+    platformAnalyticsApi.reducerPath,
+    apiKeyApi.reducerPath,
+    electionApiRTK.reducerPath,
+    lotteryyApi.reducerPath,
+    lotteryDrawApi.reducerPath,
+    lotteryTicketApi.reducerPath,
+    paymentApi.reducerPath,
+    assignmentApi.reducerPath,
+    permissionApi.reducerPath,
+    roleApi.reducerPath,
+    subscriptionApi.reducerPath,
+    auditTrailApi.reducerPath,
+    encryptionApi.reducerPath,
+    verificationApi.reducerPath,
+    ballotApi.reducerPath,
+    videoWatchApi.reducerPath,
+    votingApi.reducerPath,
+    depositApi.reducerPath,
+    electionPaymentApi.reducerPath,
+    paymentConfigApi.reducerPath,
+    wallletApi.reducerPath,
+    withdrawalApi.reducerPath,
+    recommendationApi.reducerPath,
+  ],
+  
+  // Blacklist (don't persist these - they're temporary)
+  blacklist: ['notifications'], // Don't persist notifications
 };
 
-// Collect all APIs
+
+// 📋 COLLECT ALL APIS
+
 const allApis = [
   indexApi,
   userApi,
@@ -86,11 +143,12 @@ const allApis = [
   paymentConfigApi,
   wallletApi,
   withdrawalApi,
-  // ✅ NEW: Add Recommendation API
   recommendationApi,
 ];
 
-// Build reducers object dynamically
+
+// 🔧 BUILD REDUCERS DYNAMICALLY
+
 const apiReducers = {};
 allApis.forEach(api => {
   apiReducers[api.reducerPath] = api.reducer;
@@ -106,18 +164,29 @@ const rootReducer = combineReducers({
   wallet: walletReducer,
   votingNew: votingNewReducer,
   lotteryyy: lotteryyReducer,
-  // ✅ NEW: Add Shaped AI Recommendation Reducer
   recommendations: recommendationReducer,
+  offline: offlineReducer, // 🆕 NEW
 });
 
+
+// 💾 CREATE PERSISTED REDUCER
+
 const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+
+// 🏪 CONFIGURE STORE WITH OFFLINE SUPPORT
 
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) => {
     let middleware = getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'auth/setCredentials'],
+        ignoredActions: [
+          'persist/PERSIST',
+          'persist/REHYDRATE',
+          'auth/setCredentials',
+          // Add offline actions if needed
+        ],
       },
     });
     
@@ -130,10 +199,23 @@ export const store = configureStore({
   },
 });
 
+
+// 🔄 CREATE PERSISTOR
+
 export const persistor = persistStore(store);
+
 export default store;
-//last workbale code only to add recommendation service above code
-// // src/redux/store.js
+
+
+
+
+
+
+
+
+
+//last workable code only to add offline capabilities above code
+// // src/redux/store.js - UPDATED WITH SHAPED AI RECOMMENDATIONS
 // import { configureStore } from '@reduxjs/toolkit';
 // import { persistStore, persistReducer } from 'redux-persist';
 // import storage from 'redux-persist/lib/storage';
@@ -170,6 +252,9 @@ export default store;
 // import { wallletApi } from './api/walllet/wallletApi';
 // import { withdrawalApi } from './api/walllet/withdrawalApi';
 
+// // ✅ NEW: Import Shaped AI Recommendation API
+// import { recommendationApi } from './api/recommendations/recommendationApi';
+
 // // Slices
 // import authReducer from './slices/authSlice';
 // import userReducer from './slices/userSlice';
@@ -177,8 +262,11 @@ export default store;
 // import subscriptionReducer from './slices/subscriptionSlice';
 // import notificationReducer from './slices/notificationSlice';
 // import walletReducer from './slices/wallletSlice';
-// import votingNewReducer from './slices/votingNewSlice'; // ⭐ ADD THIS IMPORT
-// import lotteryyReducer from './slices/lotteryySlice'; 
+// import votingNewReducer from './slices/votingNewSlice';
+// import lotteryyReducer from './slices/lotteryySlice';
+
+// // ✅ NEW: Import Shaped AI Recommendation Slice
+// import recommendationReducer from './slices/recommendationSlice';
 
 // const persistConfig = {
 //   key: 'root',
@@ -215,6 +303,8 @@ export default store;
 //   paymentConfigApi,
 //   wallletApi,
 //   withdrawalApi,
+//   // ✅ NEW: Add Recommendation API
+//   recommendationApi,
 // ];
 
 // // Build reducers object dynamically
@@ -231,8 +321,10 @@ export default store;
 //   subscription: subscriptionReducer,
 //   notifications: notificationReducer,
 //   wallet: walletReducer,
-//   votingNew: votingNewReducer, // ⭐ ADD THIS LINE
-//   lotteryyy: lotteryyReducer,  // ⭐ ADD THIS LINE (if not already)
+//   votingNew: votingNewReducer,
+//   lotteryyy: lotteryyReducer,
+//   // ✅ NEW: Add Shaped AI Recommendation Reducer
+//   recommendations: recommendationReducer,
 // });
 
 // const persistedReducer = persistReducer(persistConfig, rootReducer);
