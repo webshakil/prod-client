@@ -1,14 +1,8 @@
-
-//one election result is working but another not
-// ============================================================================
-// RealWinnerReveal.jsx - FIXED: Shows Election Results + Lottery Winners
-// ============================================================================
+// ✅ FINAL FIX - Uses EXACT same API call as CompactLiveResults
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Trophy, RotateCcw, CheckCircle, Loader, AlertCircle } from 'lucide-react';
 import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
-
-// Colors for results display (same as CompactLiveResults)
-const COLORS = ['#5B9BD5', '#ED7D31', '#A5A5A5', '#FFC000', '#70AD47', '#9E480E', '#997300', '#43682B'];
+//import { useGetLiveResultsQuery } from '../../../redux/api/voting/votingApi';
 
 const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
   const [currentDigit, setCurrentDigit] = useState(digit || '0');
@@ -78,7 +72,7 @@ const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
         } else { setOffsetY(0); }
       };
       animationRef.current = requestAnimationFrame(animateFall);
-      return () => { if (animationRef.current) cancelAnimationFrame(animateFall); };
+      return () => { if (animationRef.current) cancelAnimationFrame(animateFall);  };
     }
   }, [isFalling, finalDigit]);
 
@@ -114,84 +108,68 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
   const [hasStarted, setHasStarted] = useState(false);
   const [lotteryWinners, setLotteryWinners] = useState([]);
 
-  // Get first question ID from election object
-  const firstQuestionId = election?.questions?.[0]?.id;
-
-  // API call - same as CompactLiveResults
+  // ✅ Try WITHOUT questionId to get ALL questions
   const { data: results, isFetching } = useGetLiveResultsQuery(
-    { electionId: election?.id, questionId: firstQuestionId },
+    { electionId: election?.id, questionId: null },  // null = all questions
     { 
-      skip: !election?.id || !firstQuestionId || !isOpen,
+      skip: !election?.id || !isOpen,
       refetchOnMountOrArgChange: true,
     }
   );
 
-  // ✅ FIXED: Parse API data exactly like CompactLiveResults
+  // ✅ EXACT same parsing as CompactLiveResults
   const apiData = results?.data?.questions ? results.data : (results?.data || results);
   const questions = apiData?.questions || [];
   
-  // ✅ FIXED: Calculate totalVotes from questions if not directly available
+  // ✅ Calculate totalVotes from actual question vote counts (more reliable!)
   const calculateTotalVotes = () => {
-    // First try to get from API response directly
-    if (apiData?.totalVotes && apiData.totalVotes > 0) {
-      return apiData.totalVotes;
+    if (questions.length === 0) {
+      // No API data, use election object
+      return election?.total_vote_count || election?.vote_count || 0;
     }
-    // Otherwise calculate from questions
+    
+    // Sum up votes from all questions
     let total = 0;
-    questions.forEach(question => {
-      const options = question.options || [];
-      options.forEach(opt => {
-        total += (opt.vote_count || 0);
-      });
+    questions.forEach(q => {
+      const questionVotes = q.options?.reduce((sum, opt) => sum + (opt.vote_count || 0), 0) || 0;
+      total = Math.max(total, questionVotes); // Use max in case of multiple questions
     });
+    
     return total;
   };
-
+  
   const totalVotes = calculateTotalVotes();
 
-  console.log('🎰 RealWinnerReveal - Debug:', { 
+  console.log('🎰 RealWinnerReveal - API Response:', { 
     results, 
     apiData, 
-    questions, 
-    totalVotes,
-    calculatedFromQuestions: questions.reduce((sum, q) => 
-      sum + (q.options || []).reduce((s, o) => s + (o.vote_count || 0), 0), 0
-    )
+    questions: questions.length,
+    apiTotalVotes: apiData?.totalVotes,
+    calculatedTotalVotes: totalVotes,
+    electionVoteCount: election?.vote_count
   });
 
-  // ✅ FIXED: Calculate winners with proper vote counting
+  // Calculate winners
   const getElectionWinners = () => {
     const winners = [];
-    
     questions.forEach((question) => {
       const options = question.options || [];
       const questionTotal = options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
       
       if (questionTotal > 0) {
-        // Sort options by vote count
         const sorted = [...options].sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-        
-        // Get all results (not just winner) for display
-        const resultsForQuestion = sorted.map((opt, idx) => ({
-          option: opt.option_text,
-          votes: opt.vote_count || 0,
-          percentage: ((opt.vote_count || 0) / questionTotal * 100).toFixed(1),
-          isWinner: idx === 0,
-          color: COLORS[options.findIndex(o => o.id === opt.id) % COLORS.length]
-        }));
+        const top = sorted[0];
+        const percentage = ((top.vote_count || 0) / questionTotal * 100).toFixed(1);
         
         winners.push({
-          questionId: question.id,
           question: question.question_text,
-          winner: sorted[0].option_text,
-          winnerVotes: sorted[0].vote_count || 0,
-          winnerPercentage: ((sorted[0].vote_count || 0) / questionTotal * 100).toFixed(1),
-          totalVotes: questionTotal,
-          allResults: resultsForQuestion
+          winner: top.option_text,
+          votes: top.vote_count || 0,
+          percentage: percentage,
+          totalVotes: questionTotal
         });
       }
     });
-    
     return winners;
   };
 
@@ -199,7 +177,6 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
   const hasVotes = totalVotes > 0;
   const hasElectionResults = electionWinners.length > 0;
 
-  // Lottery winners setup
   useEffect(() => {
     if (!isOpen || !election) return;
     
@@ -319,7 +296,6 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: 'linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%)', border: '4px solid #d4a418' }}>
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 sticky top-0 z-10" style={{ background: 'linear-gradient(180deg, #d4a418 0%, #b8860b 100%)' }}>
           <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Trophy className="w-7 h-7" />
@@ -331,73 +307,35 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Election Title & Stats */}
           <div className="text-center mb-4">
             <h4 className="text-2xl font-bold text-white mb-2">{election.title}</h4>
             <p className="text-yellow-400 font-semibold text-xl">Total Votes: {totalVotes}</p>
             <p className="text-gray-500 text-sm mt-1">Ended: {new Date(election.end_date).toLocaleString()}</p>
           </div>
 
-          {/* ✅ VOTING RESULTS SECTION - Shows all candidates with percentages */}
           {hasElectionResults ? (
             <div className="space-y-4 mb-6">
               <h5 className="text-xl font-bold text-green-400 text-center flex items-center justify-center gap-2">
                 <CheckCircle className="w-6 h-6" />
                 Voting Results
               </h5>
-              
-              {electionWinners.map((questionResult, qIdx) => (
-                <div key={qIdx} className="bg-gradient-to-r from-gray-800/60 to-gray-700/40 border-2 border-gray-600 rounded-xl p-6">
-                  {/* Question Title */}
-                  <p className="text-gray-400 text-sm mb-4 uppercase tracking-wide">
-                    {questionResult.question}
-                  </p>
-                  
-                  {/* All Options with Results */}
-                  <div className="space-y-3">
-                    {questionResult.allResults.map((result, idx) => (
-                      <div 
-                        key={idx} 
-                        className={`flex items-center justify-between p-4 rounded-lg ${
-                          result.isWinner 
-                            ? 'bg-gradient-to-r from-green-900/60 to-green-800/40 border-2 border-green-500' 
-                            : 'bg-gray-700/40 border border-gray-600'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Color indicator */}
-                          <div 
-                            className="w-4 h-4 rounded-sm flex-shrink-0"
-                            style={{ backgroundColor: result.color }}
-                          />
-                          {/* Winner icon */}
-                          {result.isWinner && (
-                            <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
-                          )}
-                          {/* Option name */}
-                          <span className={`font-bold ${result.isWinner ? 'text-white text-xl' : 'text-gray-300 text-lg'}`}>
-                            {result.option}
-                          </span>
-                        </div>
-                        
-                        {/* Percentage and votes */}
-                        <div className="text-right">
-                          <p className={`font-black text-2xl ${result.isWinner ? 'text-green-400' : 'text-gray-400'}`}>
-                            {result.percentage}%
-                          </p>
-                          <p className="text-gray-500 text-sm">{result.votes} votes</p>
-                        </div>
-                      </div>
-                    ))}
+              {electionWinners.map((w, i) => (
+                <div key={i} className="bg-gradient-to-r from-green-900/60 to-green-800/40 border-2 border-green-500 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-sm mb-2 uppercase tracking-wide">{w.question}</p>
+                      <h6 className="text-3xl font-black text-white flex items-center gap-3">
+                        <CheckCircle className="text-green-400 flex-shrink-0" size={36} />
+                        {w.winner}
+                      </h6>
+                    </div>
+                    <div className="text-right ml-4">
+                      <p className="text-5xl font-black text-green-400">{w.percentage}%</p>
+                      <p className="text-gray-400 text-sm mt-1">{w.votes} of {w.totalVotes} votes</p>
+                    </div>
                   </div>
-                  
-                  {/* Total votes for this question */}
-                  <p className="text-gray-500 text-sm text-right mt-3">
-                    Total: {questionResult.totalVotes} votes
-                  </p>
                 </div>
               ))}
-              
               <div className="border-t-2 border-dashed border-yellow-600 my-6"></div>
             </div>
           ) : !hasVotes ? (
@@ -412,7 +350,6 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
             </div>
           ) : null}
 
-          {/* LOTTERY SECTION */}
           {lotteryWinners.length > 0 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -425,17 +362,10 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
                 </p>
               </div>
 
-              {/* Slot Machine Display */}
               <div className="rounded-xl p-6" style={{ background: '#0a0a0a', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8)', border: '3px solid #333' }}>
                 <div className="flex justify-center items-center gap-3 mb-4">
                   {displayDigits.map((digit, index) => (
-                    <SpinningDigit 
-                      key={`digit-${index}`} 
-                      digit={digit} 
-                      isSpinning={digitSpinning[index]} 
-                      isFalling={digitFalling[index]} 
-                      finalDigit={finalDigits[index]} 
-                    />
+                    <SpinningDigit key={`digit-${index}`} digit={digit} isSpinning={digitSpinning[index]} isFalling={digitFalling[index]} finalDigit={finalDigits[index]} />
                   ))}
                 </div>
                 <div className="text-center">
@@ -445,7 +375,6 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
                 </div>
               </div>
 
-              {/* Revealed Winners List */}
               {revealedLotteryWinners.length > 0 && (
                 <div>
                   <h6 className="text-yellow-400 font-bold text-xl mb-4 text-center flex items-center justify-center gap-2">
@@ -472,27 +401,13 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
                 </div>
               )}
 
-              {/* Action Buttons */}
               {lotteryComplete && (
                 <div className="flex justify-center gap-4 mt-6">
-                  <button 
-                    onClick={() => { 
-                      setHasStarted(false); 
-                      setRevealedLotteryWinners([]); 
-                      setLotteryComplete(false); 
-                      setStatusText(''); 
-                      setDisplayDigits(['0','0','0','0','0','0']); 
-                      setTimeout(() => runLotteryReveal(), 500); 
-                    }} 
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition"
-                  >
+                  <button onClick={() => { setHasStarted(false); setRevealedLotteryWinners([]); setLotteryComplete(false); setStatusText(''); setDisplayDigits(['0','0','0','0','0','0']); setTimeout(() => runLotteryReveal(), 500); }} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition">
                     <RotateCcw className="w-5 h-5" />
                     Replay
                   </button>
-                  <button 
-                    onClick={onClose} 
-                    className="bg-gray-700 hover:bg-gray-600 text-white font-bold px-8 py-3 rounded-xl transition"
-                  >
+                  <button onClick={onClose} className="bg-gray-700 hover:bg-gray-600 text-white font-bold px-8 py-3 rounded-xl transition">
                     Close
                   </button>
                 </div>
@@ -501,7 +416,6 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 bg-gray-900 text-center border-t border-gray-800">
           <p className="text-gray-500 text-sm">Results at {new Date(election.end_date).toLocaleString()}</p>
         </div>
@@ -509,6 +423,516 @@ export default function RealWinnerReveal({ isOpen, onClose, election }) {
     </div>
   );
 }
+// //one election result is working but another not
+// // ============================================================================
+// // RealWinnerReveal.jsx - FIXED: Shows Election Results + Lottery Winners
+// // ============================================================================
+// import React, { useState, useEffect, useRef } from 'react';
+// import { X, Trophy, RotateCcw, CheckCircle, Loader, AlertCircle } from 'lucide-react';
+// import { useGetLiveResultsQuery } from '../../../../redux/api/voting/votingApi';
+
+// // Colors for results display (same as CompactLiveResults)
+// const COLORS = ['#5B9BD5', '#ED7D31', '#A5A5A5', '#FFC000', '#70AD47', '#9E480E', '#997300', '#43682B'];
+
+// const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
+//   const [currentDigit, setCurrentDigit] = useState(digit || '0');
+//   const [nextDigit, setNextDigit] = useState('0');
+//   const [offsetY, setOffsetY] = useState(0);
+//   const animationRef = useRef(null);
+//   const isSpinningRef = useRef(isSpinning);
+//   const digitHeight = 100;
+//   const spinSpeed = 35;
+  
+//   useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
+
+//   useEffect(() => {
+//     if (isSpinning && !isFalling) {
+//       let offset = -Math.floor(Math.random() * digitHeight * 0.7);
+//       let currDigit = Math.floor(Math.random() * 10);
+//       let nxtDigit = Math.floor(Math.random() * 10);
+//       setCurrentDigit(String(currDigit));
+//       setNextDigit(String(nxtDigit));
+//       setOffsetY(offset);
+//       const animate = () => {
+//         if (!isSpinningRef.current) return;
+//         offset -= spinSpeed;
+//         if (offset <= -digitHeight) {
+//           offset += digitHeight;
+//           currDigit = nxtDigit;
+//           nxtDigit = Math.floor(Math.random() * 10);
+//           setCurrentDigit(String(currDigit));
+//           setNextDigit(String(nxtDigit));
+//         }
+//         setOffsetY(offset);
+//         animationRef.current = requestAnimationFrame(animate);
+//       };
+//       animationRef.current = requestAnimationFrame(animate);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+//     }
+//   }, [isSpinning, isFalling]);
+
+//   useEffect(() => {
+//     if (isFalling && finalDigit !== undefined) {
+//       if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
+//       setCurrentDigit(String(finalDigit));
+//       setNextDigit(String((parseInt(finalDigit) + 1) % 10));
+//       const startOffset = offsetY;
+//       const fallDuration = 400;
+//       const bounceDuration = 200;
+//       const bounceHeight = 15;
+//       const startTime = Date.now();
+//       const animateFall = () => {
+//         const elapsed = Date.now() - startTime;
+//         if (elapsed < fallDuration) {
+//           const progress = elapsed / fallDuration;
+//           const easeIn = progress * progress;
+//           const newOffset = startOffset + (0 - startOffset) * easeIn;
+//           setOffsetY(newOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration / 2) {
+//           const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration) {
+//           const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else { setOffsetY(0); }
+//       };
+//       animationRef.current = requestAnimationFrame(animateFall);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animateFall); };
+//     }
+//   }, [isFalling, finalDigit]);
+
+//   useEffect(() => {
+//     if (!isSpinning && !isFalling) { setOffsetY(0); setCurrentDigit(digit || '0'); }
+//   }, [isSpinning, isFalling, digit]);
+
+//   return (
+//     <div className="relative overflow-hidden rounded-xl" style={{ width: '75px', height: '100px', background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 6px 15px rgba(0,0,0,0.5)', border: '3px solid #1f2937' }}>
+//       <div className="absolute w-full" style={{ transform: `translateY(${offsetY}px)` }}>
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
+//         </div>
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{nextDigit}</span>
+//         </div>
+//       </div>
+//       <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//     </div>
+//   );
+// };
+
+// export default function RealWinnerReveal({ isOpen, onClose, election }) {
+//   const [isRunning, setIsRunning] = useState(false);
+//   const [displayDigits, setDisplayDigits] = useState(['0','0','0','0','0','0']);
+//   const [digitSpinning, setDigitSpinning] = useState([false,false,false,false,false,false]);
+//   const [digitFalling, setDigitFalling] = useState([false,false,false,false,false,false]);
+//   const [finalDigits, setFinalDigits] = useState(['0','0','0','0','0','0']);
+//   const [revealedLotteryWinners, setRevealedLotteryWinners] = useState([]);
+//   const [lotteryComplete, setLotteryComplete] = useState(false);
+//   const [statusText, setStatusText] = useState('');
+//   const [hasStarted, setHasStarted] = useState(false);
+//   const [lotteryWinners, setLotteryWinners] = useState([]);
+
+//   // Get first question ID from election object
+//   const firstQuestionId = election?.questions?.[0]?.id;
+
+//   // API call - same as CompactLiveResults
+//   const { data: results, isFetching } = useGetLiveResultsQuery(
+//     { electionId: election?.id, questionId: firstQuestionId },
+//     { 
+//       skip: !election?.id || !firstQuestionId || !isOpen,
+//       refetchOnMountOrArgChange: true,
+//     }
+//   );
+
+//   // ✅ FIXED: Parse API data exactly like CompactLiveResults
+//   const apiData = results?.data?.questions ? results.data : (results?.data || results);
+//   const questions = apiData?.questions || [];
+  
+//   // ✅ FIXED: Calculate totalVotes from questions if not directly available
+//   const calculateTotalVotes = () => {
+//     // First try to get from API response directly
+//     if (apiData?.totalVotes && apiData.totalVotes > 0) {
+//       return apiData.totalVotes;
+//     }
+//     // Otherwise calculate from questions
+//     let total = 0;
+//     questions.forEach(question => {
+//       const options = question.options || [];
+//       options.forEach(opt => {
+//         total += (opt.vote_count || 0);
+//       });
+//     });
+//     return total;
+//   };
+
+//   const totalVotes = calculateTotalVotes();
+
+//   console.log('🎰 RealWinnerReveal - Debug:', { 
+//     results, 
+//     apiData, 
+//     questions, 
+//     totalVotes,
+//     calculatedFromQuestions: questions.reduce((sum, q) => 
+//       sum + (q.options || []).reduce((s, o) => s + (o.vote_count || 0), 0), 0
+//     )
+//   });
+
+//   // ✅ FIXED: Calculate winners with proper vote counting
+//   const getElectionWinners = () => {
+//     const winners = [];
+    
+//     questions.forEach((question) => {
+//       const options = question.options || [];
+//       const questionTotal = options.reduce((sum, o) => sum + (o.vote_count || 0), 0);
+      
+//       if (questionTotal > 0) {
+//         // Sort options by vote count
+//         const sorted = [...options].sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+        
+//         // Get all results (not just winner) for display
+//         const resultsForQuestion = sorted.map((opt, idx) => ({
+//           option: opt.option_text,
+//           votes: opt.vote_count || 0,
+//           percentage: ((opt.vote_count || 0) / questionTotal * 100).toFixed(1),
+//           isWinner: idx === 0,
+//           color: COLORS[options.findIndex(o => o.id === opt.id) % COLORS.length]
+//         }));
+        
+//         winners.push({
+//           questionId: question.id,
+//           question: question.question_text,
+//           winner: sorted[0].option_text,
+//           winnerVotes: sorted[0].vote_count || 0,
+//           winnerPercentage: ((sorted[0].vote_count || 0) / questionTotal * 100).toFixed(1),
+//           totalVotes: questionTotal,
+//           allResults: resultsForQuestion
+//         });
+//       }
+//     });
+    
+//     return winners;
+//   };
+
+//   const electionWinners = getElectionWinners();
+//   const hasVotes = totalVotes > 0;
+//   const hasElectionResults = electionWinners.length > 0;
+
+//   // Lottery winners setup
+//   useEffect(() => {
+//     if (!isOpen || !election) return;
+    
+//     let winnersArray = election.lottery_winners || 
+//                       election.lottery_results?.winners || 
+//                       election.winners;
+
+//     if (winnersArray && Array.isArray(winnersArray) && winnersArray.length > 0) {
+//       setLotteryWinners(winnersArray.map((w, i) => ({
+//         rank: w.rank || (i + 1),
+//         ballNumber: String(w.ballNumber || w.ball_number || '000000').padStart(6, '0'),
+//         name: w.userName || w.user_name || w.name || `Lucky Voter ${i + 1}`,
+//         userId: w.userId || w.user_id,
+//         prizeAmount: w.prizeAmount || w.prize_amount || '0.00'
+//       })));
+//     } else {
+//       const count = election.lottery_config?.winner_count || 3;
+//       const prizeDistribution = election.lottery_config?.prize_distribution || [];
+//       const totalPrize = parseFloat(election.lottery_config?.total_prize_pool || 2000);
+
+//       setLotteryWinners(Array.from({ length: count }, (_, i) => {
+//         const distribution = prizeDistribution.find(d => d.rank === i + 1);
+//         const prizeAmount = distribution 
+//           ? (totalPrize * distribution.percentage / 100).toFixed(2)
+//           : (totalPrize / count).toFixed(2);
+
+//         return {
+//           rank: i + 1,
+//           ballNumber: String(Math.floor(100000 + Math.random() * 900000)).padStart(6, '0'),
+//           userId: `demo_${i + 1}`,
+//           name: `Lucky Voter ${i + 1}`,
+//           prizeAmount: prizeAmount
+//         };
+//       }));
+//     }
+//   }, [isOpen, election]);
+
+//   const getOrdinal = (n) => {
+//     const s = ['th','st','nd','rd'];
+//     const v = n % 100;
+//     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+//   };
+
+//   const revealSingleWinner = async (winner, winnerIndex) => {
+//     setStatusText(`🎰 Revealing ${getOrdinal(winnerIndex + 1)} Lucky Voter...`);
+//     setDigitFalling([false,false,false,false,false,false]);
+//     setFinalDigits(['0','0','0','0','0','0']);
+//     setDigitSpinning([true,true,true,true,true,true]);
+//     await new Promise(r => setTimeout(r, 1500));
+//     const winnerDigits = winner.ballNumber.split('');
+//     setFinalDigits(winnerDigits);
+//     for (let i = 0; i < 6; i++) {
+//       setDigitSpinning(p => { const u = [...p]; u[i] = false; return u; });
+//       setDigitFalling(p => { const u = [...p]; u[i] = true; return u; });
+//       await new Promise(r => setTimeout(r, 500));
+//       setDisplayDigits(p => { const u = [...p]; u[i] = winnerDigits[i]; return u; });
+//     }
+//     await new Promise(r => setTimeout(r, 300));
+//     setDigitFalling([false,false,false,false,false,false]);
+//     setStatusText(`🏆 ${getOrdinal(winnerIndex + 1)} Lucky Voter: ${winner.ballNumber}`);
+//     return winner;
+//   };
+
+//   const runLotteryReveal = async () => {
+//     if (lotteryWinners.length === 0) return;
+//     setIsRunning(true);
+//     setLotteryComplete(false);
+//     setRevealedLotteryWinners([]);
+//     setDisplayDigits(['0','0','0','0','0','0']);
+//     setDigitSpinning([false,false,false,false,false,false]);
+//     setDigitFalling([false,false,false,false,false,false]);
+//     setStatusText(`🎲 Starting lottery with ${lotteryWinners.length} lucky voter(s)...`);
+//     await new Promise(r => setTimeout(r, 1500));
+//     for (let i = 0; i < lotteryWinners.length; i++) {
+//       const winner = await revealSingleWinner(lotteryWinners[i], i);
+//       setRevealedLotteryWinners(p => [...p, winner]);
+//       if (i < lotteryWinners.length - 1) {
+//         setStatusText(`✅ ${getOrdinal(i + 1)} winner revealed! Next in 2 seconds...`);
+//         await new Promise(r => setTimeout(r, 2000));
+//       }
+//     }
+//     setStatusText(`🎉 All ${lotteryWinners.length} lucky voter(s) revealed!`);
+//     setLotteryComplete(true);
+//     setIsRunning(false);
+//   };
+
+//   useEffect(() => {
+//     if (isOpen && !hasStarted && !isFetching && lotteryWinners.length > 0) {
+//       setHasStarted(true);
+//       setTimeout(() => runLotteryReveal(), 2000);
+//     }
+//   }, [isOpen, hasStarted, isFetching, lotteryWinners]);
+
+//   useEffect(() => {
+//     if (!isOpen) {
+//       setHasStarted(false);
+//       setRevealedLotteryWinners([]);
+//       setLotteryComplete(false);
+//       setIsRunning(false);
+//       setStatusText('');
+//     }
+//   }, [isOpen]);
+
+//   if (!isOpen) return null;
+
+//   if (isFetching) {
+//     return (
+//       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+//         <div className="bg-white rounded-xl p-8">
+//           <Loader className="animate-spin text-purple-600 mx-auto mb-4" size={48} />
+//           <p className="text-gray-700 font-semibold">Loading results...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+//       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: 'linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%)', border: '4px solid #d4a418' }}>
+//         {/* Header */}
+//         <div className="flex justify-between items-center px-6 py-4 sticky top-0 z-10" style={{ background: 'linear-gradient(180deg, #d4a418 0%, #b8860b 100%)' }}>
+//           <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+//             <Trophy className="w-7 h-7" />
+//             🗳️ Election Results
+//           </h3>
+//           <button onClick={onClose} className="p-2 rounded-full hover:bg-black/20 transition">
+//             <X className="w-6 h-6 text-gray-900" />
+//           </button>
+//         </div>
+
+//         <div className="p-6 space-y-6">
+//           {/* Election Title & Stats */}
+//           <div className="text-center mb-4">
+//             <h4 className="text-2xl font-bold text-white mb-2">{election.title}</h4>
+//             <p className="text-yellow-400 font-semibold text-xl">Total Votes: {totalVotes}</p>
+//             <p className="text-gray-500 text-sm mt-1">Ended: {new Date(election.end_date).toLocaleString()}</p>
+//           </div>
+
+//           {/* ✅ VOTING RESULTS SECTION - Shows all candidates with percentages */}
+//           {hasElectionResults ? (
+//             <div className="space-y-4 mb-6">
+//               <h5 className="text-xl font-bold text-green-400 text-center flex items-center justify-center gap-2">
+//                 <CheckCircle className="w-6 h-6" />
+//                 Voting Results
+//               </h5>
+              
+//               {electionWinners.map((questionResult, qIdx) => (
+//                 <div key={qIdx} className="bg-gradient-to-r from-gray-800/60 to-gray-700/40 border-2 border-gray-600 rounded-xl p-6">
+//                   {/* Question Title */}
+//                   <p className="text-gray-400 text-sm mb-4 uppercase tracking-wide">
+//                     {questionResult.question}
+//                   </p>
+                  
+//                   {/* All Options with Results */}
+//                   <div className="space-y-3">
+//                     {questionResult.allResults.map((result, idx) => (
+//                       <div 
+//                         key={idx} 
+//                         className={`flex items-center justify-between p-4 rounded-lg ${
+//                           result.isWinner 
+//                             ? 'bg-gradient-to-r from-green-900/60 to-green-800/40 border-2 border-green-500' 
+//                             : 'bg-gray-700/40 border border-gray-600'
+//                         }`}
+//                       >
+//                         <div className="flex items-center gap-3">
+//                           {/* Color indicator */}
+//                           <div 
+//                             className="w-4 h-4 rounded-sm flex-shrink-0"
+//                             style={{ backgroundColor: result.color }}
+//                           />
+//                           {/* Winner icon */}
+//                           {result.isWinner && (
+//                             <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
+//                           )}
+//                           {/* Option name */}
+//                           <span className={`font-bold ${result.isWinner ? 'text-white text-xl' : 'text-gray-300 text-lg'}`}>
+//                             {result.option}
+//                           </span>
+//                         </div>
+                        
+//                         {/* Percentage and votes */}
+//                         <div className="text-right">
+//                           <p className={`font-black text-2xl ${result.isWinner ? 'text-green-400' : 'text-gray-400'}`}>
+//                             {result.percentage}%
+//                           </p>
+//                           <p className="text-gray-500 text-sm">{result.votes} votes</p>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+                  
+//                   {/* Total votes for this question */}
+//                   <p className="text-gray-500 text-sm text-right mt-3">
+//                     Total: {questionResult.totalVotes} votes
+//                   </p>
+//                 </div>
+//               ))}
+              
+//               <div className="border-t-2 border-dashed border-yellow-600 my-6"></div>
+//             </div>
+//           ) : !hasVotes ? (
+//             <div className="bg-yellow-900/30 border-2 border-yellow-600 rounded-xl p-6 mb-6">
+//               <div className="flex items-center gap-3">
+//                 <AlertCircle className="text-yellow-400" size={32} />
+//                 <div>
+//                   <p className="text-yellow-300 font-bold text-lg">No Votes Recorded</p>
+//                   <p className="text-yellow-400 text-sm">This election ended with 0 votes.</p>
+//                 </div>
+//               </div>
+//             </div>
+//           ) : null}
+
+//           {/* LOTTERY SECTION */}
+//           {lotteryWinners.length > 0 && (
+//             <div className="space-y-6">
+//               <div className="text-center">
+//                 <h5 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center justify-center gap-2">
+//                   🎰 Lucky Voter Draw
+//                 </h5>
+//                 <p className="text-gray-400">
+//                   Drawing {lotteryWinners.length} lucky voter{lotteryWinners.length !== 1 ? 's' : ''} 
+//                   {hasVotes && ` from ${totalVotes} participants`}
+//                 </p>
+//               </div>
+
+//               {/* Slot Machine Display */}
+//               <div className="rounded-xl p-6" style={{ background: '#0a0a0a', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8)', border: '3px solid #333' }}>
+//                 <div className="flex justify-center items-center gap-3 mb-4">
+//                   {displayDigits.map((digit, index) => (
+//                     <SpinningDigit 
+//                       key={`digit-${index}`} 
+//                       digit={digit} 
+//                       isSpinning={digitSpinning[index]} 
+//                       isFalling={digitFalling[index]} 
+//                       finalDigit={finalDigits[index]} 
+//                     />
+//                   ))}
+//                 </div>
+//                 <div className="text-center">
+//                   <p className={`text-xl font-bold ${lotteryComplete ? 'text-green-400' : isRunning ? 'text-purple-400 animate-pulse' : 'text-gray-400'}`}>
+//                     {statusText || 'Starting lottery draw...'}
+//                   </p>
+//                 </div>
+//               </div>
+
+//               {/* Revealed Winners List */}
+//               {revealedLotteryWinners.length > 0 && (
+//                 <div>
+//                   <h6 className="text-yellow-400 font-bold text-xl mb-4 text-center flex items-center justify-center gap-2">
+//                     <Trophy className="w-6 h-6" />
+//                     Lucky Voters Revealed
+//                   </h6>
+//                   <div className="space-y-3 max-h-80 overflow-y-auto">
+//                     {revealedLotteryWinners.map((w, i) => (
+//                       <div key={i} className="flex items-center justify-between bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl px-6 py-4 border-l-4 border-yellow-400">
+//                         <div className="flex items-center gap-4">
+//                           <span className="text-yellow-400 font-black text-3xl min-w-[70px]">{getOrdinal(i + 1)}</span>
+//                           <div>
+//                             <p className="text-white font-mono text-2xl font-black tracking-wider">{w.ballNumber}</p>
+//                             <p className="text-gray-400 text-sm mt-1">{w.name}</p>
+//                           </div>
+//                         </div>
+//                         <div className="text-right">
+//                           <p className="text-green-400 font-black text-2xl">${w.prizeAmount}</p>
+//                           <p className="text-gray-500 text-xs uppercase tracking-wide">Prize</p>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 </div>
+//               )}
+
+//               {/* Action Buttons */}
+//               {lotteryComplete && (
+//                 <div className="flex justify-center gap-4 mt-6">
+//                   <button 
+//                     onClick={() => { 
+//                       setHasStarted(false); 
+//                       setRevealedLotteryWinners([]); 
+//                       setLotteryComplete(false); 
+//                       setStatusText(''); 
+//                       setDisplayDigits(['0','0','0','0','0','0']); 
+//                       setTimeout(() => runLotteryReveal(), 500); 
+//                     }} 
+//                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition"
+//                   >
+//                     <RotateCcw className="w-5 h-5" />
+//                     Replay
+//                   </button>
+//                   <button 
+//                     onClick={onClose} 
+//                     className="bg-gray-700 hover:bg-gray-600 text-white font-bold px-8 py-3 rounded-xl transition"
+//                   >
+//                     Close
+//                   </button>
+//                 </div>
+//               )}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Footer */}
+//         <div className="px-6 py-4 bg-gray-900 text-center border-t border-gray-800">
+//           <p className="text-gray-500 text-sm">Results at {new Date(election.end_date).toLocaleString()}</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 
 
