@@ -1,15 +1,16 @@
 // src/components/Dashboard/Tabs/VoteNow.jsx
-// ✅ UPDATED: With Offline Support
+// ✅ UPDATED: Added View button for each election
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Loader, Vote, Calendar, DollarSign, Users, ArrowRight, AlertCircle, Lock, Clock, Sparkles, WifiOff } from 'lucide-react';
+import { Loader, Vote, AlertCircle, Lock, Clock, WifiOff, Trophy, ArrowRight, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { getAllElections } from '../../../redux/api/election/electionApi';
 
 // Import AI Recommendation Components
 import RecommendedForYou from '../../recommendations/RecommendedForYou';
 import { NonAIBadge } from '../../recommendations/AIBadge';
+import RealWinnerReveal from './lotteryyy/RealWinnerReveal';
 
 export default function VoteNow() {
   const navigate = useNavigate();
@@ -18,7 +19,11 @@ export default function VoteNow() {
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
   
-  // 🆕 Get offline status from Redux
+  // Lottery slot machine state
+  const [selectedLotteryElection, setSelectedLotteryElection] = useState(null);
+  const [showSlotMachine, setShowSlotMachine] = useState(false);
+  
+  // Get offline status from Redux
   const { isOnline } = useSelector((state) => state.offline || { isOnline: true });
 
   const currentUserId = localStorage.getItem('userId');
@@ -28,11 +33,16 @@ export default function VoteNow() {
     return String(election.creator_id) === String(currentUserId);
   };
 
+  // ✅ NEW: Handle View button click
+  const handleView = (election) => {
+    const electionId = election.id || election.election_id;
+    navigate(`/election/${electionId}`);
+  };
+
   useEffect(() => {
     let isMounted = true;
 
     const fetchElections = async () => {
-      // 🆕 Skip fetching if offline and we have cached data
       if (!isOnline && elections.length > 0) {
         console.log('📡 Offline: Using cached elections');
         setLoading(false);
@@ -57,9 +67,7 @@ export default function VoteNow() {
         
         console.error('Error fetching elections:', error);
         
-        // 🆕 Better error handling for offline
         if (!isOnline) {
-          // If offline and we have cached elections, don't show error
           if (elections.length > 0) {
             console.log('📡 Using cached elections while offline');
             setError(null);
@@ -81,7 +89,7 @@ export default function VoteNow() {
     return () => {
       isMounted = false;
     };
-  }, [isOnline]); // 🆕 Re-fetch when coming back online
+  }, [isOnline]);
 
   const filteredElections = useMemo(() => {
     const now = new Date();
@@ -128,7 +136,6 @@ export default function VoteNow() {
   };
 
   const handleRefresh = async () => {
-    // 🆕 Don't try to refresh if offline
     if (!isOnline) {
       toast.info('You\'re offline. Cannot refresh elections.');
       return;
@@ -154,85 +161,92 @@ export default function VoteNow() {
     }
   };
 
-  const getElectionVotingStatus = (election) => {
-    const now = new Date();
-    const startDate = new Date(election.start_date);
-    const endDate = new Date(election.end_date);
-    
-    const isPublished = election.status === 'active' || election.status === 'published';
-    
-    const nowTime = now.getTime();
-    const startTime = startDate.getTime();
-    const endTime = endDate.getTime();
-    
-    const hasStarted = nowTime >= (startTime - 60000);
-    const hasEnded = nowTime > endTime;
-    const isActive = hasStarted && !hasEnded;
+const getElectionVotingStatus = (election) => {
+  const now = new Date();
+  const startDate = new Date(election.start_date);
+  const endDate = new Date(election.end_date);
+  
+  const isPublished = election.status === 'active' || election.status === 'published';
+  
+  const nowTime = now.getTime();
+  const startTime = startDate.getTime();
+  const endTime = endDate.getTime();
+  
+  const hasStarted = nowTime >= (startTime - 60000);
+  const hasEnded = nowTime > endTime;
+  const isActive = hasStarted && !hasEnded;
+  
+  console.log('═══════════════════════════════════════════════');
+  console.log('🔍 LOTTERY DEBUG for:', election.title);
+  console.log('───────────────────────────────────────────────');
+  console.log('📋 Election ID:', election.id);
+  console.log('📋 Has Ended:', hasEnded);
+  console.log('───────────────────────────────────────────────');
+  console.log('🎰 lottery_config:', election.lottery_config);
+  console.log('   - is_lotterized:', election.lottery_config?.is_lotterized);
+  console.log('   - winner_count:', election.lottery_config?.winner_count);
+  console.log('───────────────────────────────────────────────');
+  console.log('🎮 gamification_features:', election.gamification_features);
+  console.log('   - lottery:', election.gamification_features?.lottery);
+  console.log('───────────────────────────────────────────────');
+  
+  const hasLotteryConfig = election.lottery_config?.is_lotterized === true;
+  const hasGamificationLottery = election.gamification_features?.lottery === true;
+  const hasWinnerCount = election.lottery_config?.winner_count > 0;
+  
+  const hasLottery = hasLotteryConfig || hasGamificationLottery || hasWinnerCount;
+  
+  console.log('✅ LOTTERY CHECK RESULT:');
+  console.log('   - hasLotteryConfig (is_lotterized):', hasLotteryConfig);
+  console.log('   - hasGamificationLottery:', hasGamificationLottery);
+  console.log('   - hasWinnerCount (winner_count > 0):', hasWinnerCount);
+  console.log('   - hasLottery (FINAL):', hasLottery);
+  console.log('═══════════════════════════════════════════════');
 
-    if (isOwner(election)) {
-      return {
-        canVote: false,
-        reason: 'You cannot vote on your own election',
-        buttonText: 'Your Election',
-        icon: <Lock size={20} />,
-        isOwnElection: true
-      };
-    }
+  if (isOwner(election)) {
+    return {
+      canVote: false,
+      reason: 'You cannot vote on your own election',
+      buttonText: 'Your Election',
+      icon: <Lock size={20} />,
+      isOwnElection: true
+    };
+  }
+  
+  if (election.status === 'draft') {
+    return {
+      canVote: false,
+      reason: 'This election is still in draft mode',
+      buttonText: 'Draft - Cannot Vote',
+      icon: <Lock size={20} />
+    };
+  }
+  
+  if (hasEnded && hasLottery) {
+    console.log('🎰 ✅ SHOWING LOTTERY BUTTON for:', election.title);
+    return {
+      canVote: false,
+      canViewLottery: true,
+      reason: `Election ended on ${formatDateTime(election.end_date)}`,
+      buttonText: 'View Lottery Results',
+      icon: <Trophy size={20} />,
+      isLotteryAvailable: true
+    };
+  }
+  
+  if (hasEnded) {
+    return {
+      canVote: false,
+      reason: `Election ended on ${formatDateTime(election.end_date)}`,
+      buttonText: 'Election Ended',
+      icon: <Lock size={20} />
+    };
+  }
+  
+  if (!hasStarted && isPublished) {
+    const msUntilStart = startTime - nowTime;
     
-    if (election.status === 'draft') {
-      return {
-        canVote: false,
-        reason: 'This election is still in draft mode',
-        buttonText: 'Draft - Cannot Vote',
-        icon: <Lock size={20} />
-      };
-    }
-    
-    if (hasEnded) {
-      return {
-        canVote: false,
-        reason: `Election ended on ${formatDateTime(election.end_date)}`,
-        buttonText: 'Election Ended',
-        icon: <Lock size={20} />
-      };
-    }
-    
-    if (!hasStarted && isPublished) {
-      const msUntilStart = startTime - nowTime;
-      
-      if (msUntilStart < 60000) {
-        return {
-          canVote: true,
-          reason: null,
-          buttonText: 'Vote Now ',
-          icon: <Vote size={20} />
-        };
-      }
-      
-      const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
-      const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
-      const daysUntilStart = Math.floor(hoursUntilStart / 24);
-      
-      let timeText;
-      if (minutesUntilStart < 60) {
-        timeText = `in ${minutesUntilStart} minutes`;
-      } else if (hoursUntilStart < 24) {
-        timeText = `in ${hoursUntilStart} hours`;
-      } else if (daysUntilStart === 1) {
-        timeText = 'tomorrow';
-      } else {
-        timeText = `in ${daysUntilStart} days`;
-      }
-      
-      return {
-        canVote: false,
-        reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
-        buttonText: `Starts ${timeText}`,
-        icon: <Clock size={20} />
-      };
-    }
-    
-    if (isActive && isPublished) {
+    if (msUntilStart < 60000) {
       return {
         canVote: true,
         reason: null,
@@ -241,16 +255,55 @@ export default function VoteNow() {
       };
     }
     
+    const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
+    const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
+    const daysUntilStart = Math.floor(hoursUntilStart / 24);
+    
+    let timeText;
+    if (minutesUntilStart < 60) {
+      timeText = `in ${minutesUntilStart} minutes`;
+    } else if (hoursUntilStart < 24) {
+      timeText = `in ${hoursUntilStart} hours`;
+    } else if (daysUntilStart === 1) {
+      timeText = 'tomorrow';
+    } else {
+      timeText = `in ${daysUntilStart} days`;
+    }
+    
     return {
       canVote: false,
-      reason: 'Election is not available for voting',
-      buttonText: 'Cannot Vote',
-      icon: <Lock size={20} />
+      reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
+      buttonText: `Starts ${timeText}`,
+      icon: <Clock size={20} />
     };
+  }
+  
+  if (isActive && isPublished) {
+    return {
+      canVote: true,
+      reason: null,
+      buttonText: 'Vote Now',
+      icon: <Vote size={20} />
+    };
+  }
+  
+  return {
+    canVote: false,
+    reason: 'Election is not available for voting',
+    buttonText: 'Cannot Vote',
+    icon: <Lock size={20} />
   };
+};
 
-  const handleVoteClick = (election) => {
-    // 🆕 Check if offline
+  const handleActionClick = (election) => {
+    const votingStatus = getElectionVotingStatus(election);
+    
+    if (votingStatus.isLotteryAvailable) {
+      setSelectedLotteryElection(election);
+      setShowSlotMachine(true);
+      return;
+    }
+
     if (!isOnline) {
       toast.error('You\'re offline. Voting requires an internet connection.');
       return;
@@ -260,8 +313,6 @@ export default function VoteNow() {
       toast.error('This is your election. You cannot vote on your own election!');
       return;
     }
-
-    const votingStatus = getElectionVotingStatus(election);
     
     if (!votingStatus.canVote) {
       console.log('❌ Cannot vote:', votingStatus.reason);
@@ -288,159 +339,6 @@ export default function VoteNow() {
     }
   };
 
-  // 🆕 Offline mode - show cached data
-  if (!isOnline && elections.length > 0 && !loading) {
-    return (
-      <div className="space-y-6">
-        {/* 🆕 Offline Banner */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-          <div className="flex items-start gap-3">
-            <WifiOff className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
-            <div className="flex-1">
-              <p className="font-semibold text-yellow-800 mb-1">
-                📡 Offline Mode
-              </p>
-              <p className="text-sm text-yellow-700">
-                Showing cached elections. Connect to internet to vote or see latest updates.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Rest of component (same as below) */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Vote Now</h1>
-            <p className="text-gray-600">Participate in elections (Cached Data)</p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled
-            className="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg cursor-not-allowed flex items-center gap-2"
-            title="Cannot refresh while offline"
-          >
-            <WifiOff className="w-5 h-5" />
-            Offline
-          </button>
-        </div>
-
-        {/* Elections list (same rendering as online mode) */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Vote className="text-gray-600" size={20} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-gray-800">Cached Elections</h3>
-                </div>
-                <p className="text-xs text-gray-500">Last fetched while online</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg transition ${
-                filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All ({elections.length})
-            </button>
-            <button
-              onClick={() => setFilter('active')}
-              className={`px-4 py-2 rounded-lg transition ${
-                filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Active Now
-            </button>
-            <button
-              onClick={() => setFilter('upcoming')}
-              className={`px-4 py-2 rounded-lg transition ${
-                filter === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Upcoming
-            </button>
-            <button
-              onClick={() => setFilter('ended')}
-              className={`px-4 py-2 rounded-lg transition ${
-                filter === 'ended' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Ended
-            </button>
-          </div>
-        </div>
-
-        {/* Elections List */}
-        <div className="space-y-4">
-          {filteredElections.map((election) => {
-            /*eslint-disable*/
-            const votingStatus = getElectionVotingStatus(election);
-            const userOwnsElection = isOwner(election);
-            
-            return (
-              <div key={election.id} className="bg-white rounded-lg shadow hover:shadow-xl transition-shadow opacity-90">
-                {/* Same election card rendering */}
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="text-xl font-bold text-gray-800">{election.title}</h3>
-                        {getStatusBadge(election)}
-                        {userOwnsElection && (
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">👤 Your Election</span>
-                        )}
-                      </div>
-                      {election.description && (
-                        <p className="text-gray-600 mb-4">{election.description}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div className="text-sm text-gray-600">
-                      <p className="text-xs text-gray-500 mb-1">Start</p>
-                      <p className="font-medium">{formatDate(election.start_date)}</p>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p className="text-xs text-gray-500 mb-1">End</p>
-                      <p className="font-medium">{formatDate(election.end_date)}</p>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p className="text-xs text-gray-500 mb-1">Votes</p>
-                      <p className="font-medium">{election.vote_count || 0}</p>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p className="text-xs text-gray-500 mb-1">Fee</p>
-                      <p className="font-medium">
-                        {election.is_free ? 'Free' : `$${election.general_participation_fee || '5.00'}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleVoteClick(election)}
-                    disabled
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors bg-gray-300 text-gray-500 cursor-not-allowed"
-                  >
-                    <WifiOff size={20} />
-                    Voting Requires Internet
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // 🆕 Offline with no cached data
   if (!isOnline && elections.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg shadow">
@@ -670,7 +568,7 @@ export default function VoteNow() {
                     </div>
                   )}
 
-                  {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && (
+                  {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && !votingStatus.isLotteryAvailable && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex items-start gap-3">
                       <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                       <div className="flex-1">
@@ -680,40 +578,69 @@ export default function VoteNow() {
                     </div>
                   )}
 
-                  <button
-                    onClick={() => handleVoteClick(election)}
-                    disabled={!votingStatus.canVote}
-                    className={`w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors ${
-                      votingStatus.canVote
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {votingStatus.icon}
-                    {votingStatus.buttonText}
-                    {votingStatus.canVote && <ArrowRight size={20} />}
-                  </button>
+                  {/* ✅ IMPROVED: Equal-width buttons with consistent design */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* View Button */}
+                    <button
+                      onClick={() => handleView(election)}
+                      className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors border border-gray-300"
+                    >
+                      <Eye size={20} />
+                      View Details
+                    </button>
+
+                    {/* Action Button (Vote/Lottery/Ended) */}
+                    <button
+                      onClick={() => handleActionClick(election)}
+                      disabled={!votingStatus.canVote && !votingStatus.canViewLottery}
+                      className={`flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors ${
+                        votingStatus.canVote || votingStatus.canViewLottery
+                          ? votingStatus.isLotteryAvailable
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 cursor-pointer shadow-md'
+                            : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-md'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-400'
+                      }`}
+                    >
+                      {votingStatus.icon}
+                      {votingStatus.buttonText}
+                      {(votingStatus.canVote || votingStatus.canViewLottery) && <ArrowRight size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Real Winner Reveal Modal */}
+      {showSlotMachine && selectedLotteryElection && (
+        <RealWinnerReveal
+          isOpen={showSlotMachine}
+          onClose={() => {
+            setShowSlotMachine(false);
+            setSelectedLotteryElection(null);
+          }}
+          election={selectedLotteryElection}
+        />
+      )}
     </div>
   );
 }
-//last workable successful code just to better handle offline above code
+//last workable code only to improve button design abvoe code
 // // src/components/Dashboard/Tabs/VoteNow.jsx
-// // ✅ UPDATED: With Shaped AI Recommendations Integration
+// // ✅ UPDATED: Added View button for each election
 // import React, { useState, useEffect, useMemo } from 'react';
 // import { useNavigate } from 'react-router-dom';
-// import { Loader, Vote, Calendar, DollarSign, Users, ArrowRight, AlertCircle, Lock, Clock, Sparkles } from 'lucide-react';
+// import { useSelector } from 'react-redux';
+// import { Loader, Vote, AlertCircle, Lock, Clock, WifiOff, Trophy, ArrowRight, Eye } from 'lucide-react';
 // import { toast } from 'react-toastify';
 // import { getAllElections } from '../../../redux/api/election/electionApi';
 
-// // ✅ NEW: Import AI Recommendation Components
+// // Import AI Recommendation Components
 // import RecommendedForYou from '../../recommendations/RecommendedForYou';
 // import { NonAIBadge } from '../../recommendations/AIBadge';
+// import RealWinnerReveal from './lotteryyy/RealWinnerReveal';
 
 // export default function VoteNow() {
 //   const navigate = useNavigate();
@@ -721,21 +648,37 @@ export default function VoteNow() {
 //   const [loading, setLoading] = useState(true);
 //   const [filter, setFilter] = useState('all');
 //   const [error, setError] = useState(null);
+  
+//   // Lottery slot machine state
+//   const [selectedLotteryElection, setSelectedLotteryElection] = useState(null);
+//   const [showSlotMachine, setShowSlotMachine] = useState(false);
+  
+//   // Get offline status from Redux
+//   const { isOnline } = useSelector((state) => state.offline || { isOnline: true });
 
-//   // ✅ Get current user ID from localStorage
 //   const currentUserId = localStorage.getItem('userId');
 
-//   // ✅ Check if the logged-in user owns this election
 //   const isOwner = (election) => {
 //     if (!currentUserId) return false;
 //     return String(election.creator_id) === String(currentUserId);
 //   };
 
-//   // ✅ FIXED: Fetch only once on mount
+//   // ✅ NEW: Handle View button click
+//   const handleView = (election) => {
+//     const electionId = election.id || election.election_id;
+//     navigate(`/election/${electionId}`);
+//   };
+
 //   useEffect(() => {
 //     let isMounted = true;
 
 //     const fetchElections = async () => {
+//       if (!isOnline && elections.length > 0) {
+//         console.log('📡 Offline: Using cached elections');
+//         setLoading(false);
+//         return;
+//       }
+
 //       try {
 //         setLoading(true);
 //         setError(null);
@@ -745,8 +688,6 @@ export default function VoteNow() {
 //         if (!isMounted) return;
         
 //         const allElections = response.data?.elections || response.elections || [];
-        
-//         // ✅ Filter out draft elections - only show published/active elections
 //         const publishedElections = allElections.filter(election => election.status !== 'draft');
         
 //         setElections(publishedElections);
@@ -755,7 +696,17 @@ export default function VoteNow() {
 //         if (!isMounted) return;
         
 //         console.error('Error fetching elections:', error);
-//         setError(error.message || 'Failed to load elections');
+        
+//         if (!isOnline) {
+//           if (elections.length > 0) {
+//             console.log('📡 Using cached elections while offline');
+//             setError(null);
+//           } else {
+//             setError('offline-no-cache');
+//           }
+//         } else {
+//           setError(error.message || 'Failed to load elections');
+//         }
 //       } finally {
 //         if (isMounted) {
 //           setLoading(false);
@@ -768,9 +719,8 @@ export default function VoteNow() {
 //     return () => {
 //       isMounted = false;
 //     };
-//   }, []); // ✅ Empty dependency array - fetch only once
+//   }, [isOnline]);
 
-//   // ✅ FIXED: Use useMemo to filter elections without refetching
 //   const filteredElections = useMemo(() => {
 //     const now = new Date();
     
@@ -816,106 +766,117 @@ export default function VoteNow() {
 //   };
 
 //   const handleRefresh = async () => {
+//     if (!isOnline) {
+//       toast.info('You\'re offline. Cannot refresh elections.');
+//       return;
+//     }
+
 //     try {
 //       setLoading(true);
 //       setError(null);
       
 //       const response = await getAllElections(1, 50, 'all');
 //       const allElections = response.data?.elections || response.elections || [];
-      
-//       // ✅ Filter out draft elections - only show published/active elections
 //       const publishedElections = allElections.filter(election => election.status !== 'draft');
       
 //       setElections(publishedElections);
+//       toast.success('Elections refreshed!');
       
 //     } catch (error) {
 //       console.error('Error fetching elections:', error);
 //       setError(error.message || 'Failed to load elections');
+//       toast.error('Failed to refresh elections');
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
 
-//   const getElectionVotingStatus = (election) => {
-//     const now = new Date();
-//     const startDate = new Date(election.start_date);
-//     const endDate = new Date(election.end_date);
-    
-//     const isPublished = election.status === 'active' || election.status === 'published';
-    
-//     const nowTime = now.getTime();
-//     const startTime = startDate.getTime();
-//     const endTime = endDate.getTime();
-    
-//     const hasStarted = nowTime >= (startTime - 60000);
-//     const hasEnded = nowTime > endTime;
-//     const isActive = hasStarted && !hasEnded;
+// const getElectionVotingStatus = (election) => {
+//   const now = new Date();
+//   const startDate = new Date(election.start_date);
+//   const endDate = new Date(election.end_date);
+  
+//   const isPublished = election.status === 'active' || election.status === 'published';
+  
+//   const nowTime = now.getTime();
+//   const startTime = startDate.getTime();
+//   const endTime = endDate.getTime();
+  
+//   const hasStarted = nowTime >= (startTime - 60000);
+//   const hasEnded = nowTime > endTime;
+//   const isActive = hasStarted && !hasEnded;
+  
+//   console.log('═══════════════════════════════════════════════');
+//   console.log('🔍 LOTTERY DEBUG for:', election.title);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('📋 Election ID:', election.id);
+//   console.log('📋 Has Ended:', hasEnded);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('🎰 lottery_config:', election.lottery_config);
+//   console.log('   - is_lotterized:', election.lottery_config?.is_lotterized);
+//   console.log('   - winner_count:', election.lottery_config?.winner_count);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('🎮 gamification_features:', election.gamification_features);
+//   console.log('   - lottery:', election.gamification_features?.lottery);
+//   console.log('───────────────────────────────────────────────');
+  
+//   const hasLotteryConfig = election.lottery_config?.is_lotterized === true;
+//   const hasGamificationLottery = election.gamification_features?.lottery === true;
+//   const hasWinnerCount = election.lottery_config?.winner_count > 0;
+  
+//   const hasLottery = hasLotteryConfig || hasGamificationLottery || hasWinnerCount;
+  
+//   console.log('✅ LOTTERY CHECK RESULT:');
+//   console.log('   - hasLotteryConfig (is_lotterized):', hasLotteryConfig);
+//   console.log('   - hasGamificationLottery:', hasGamificationLottery);
+//   console.log('   - hasWinnerCount (winner_count > 0):', hasWinnerCount);
+//   console.log('   - hasLottery (FINAL):', hasLottery);
+//   console.log('═══════════════════════════════════════════════');
 
-//     // ✅ Check if user is the creator of this election
-//     if (isOwner(election)) {
-//       return {
-//         canVote: false,
-//         reason: 'You cannot vote on your own election',
-//         buttonText: 'Your Election',
-//         icon: <Lock size={20} />,
-//         isOwnElection: true
-//       };
-//     }
+//   if (isOwner(election)) {
+//     return {
+//       canVote: false,
+//       reason: 'You cannot vote on your own election',
+//       buttonText: 'Your Election',
+//       icon: <Lock size={20} />,
+//       isOwnElection: true
+//     };
+//   }
+  
+//   if (election.status === 'draft') {
+//     return {
+//       canVote: false,
+//       reason: 'This election is still in draft mode',
+//       buttonText: 'Draft - Cannot Vote',
+//       icon: <Lock size={20} />
+//     };
+//   }
+  
+//   if (hasEnded && hasLottery) {
+//     console.log('🎰 ✅ SHOWING LOTTERY BUTTON for:', election.title);
+//     return {
+//       canVote: false,
+//       canViewLottery: true,
+//       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//       buttonText: 'View Lottery Results',
+//       icon: <Trophy size={20} />,
+//       isLotteryAvailable: true
+//     };
+//   }
+  
+//   if (hasEnded) {
+//     return {
+//       canVote: false,
+//       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//       buttonText: 'Election Ended',
+//       icon: <Lock size={20} />
+//     };
+//   }
+  
+//   if (!hasStarted && isPublished) {
+//     const msUntilStart = startTime - nowTime;
     
-//     if (election.status === 'draft') {
-//       return {
-//         canVote: false,
-//         reason: 'This election is still in draft mode',
-//         buttonText: 'Draft - Cannot Vote',
-//         icon: <Lock size={20} />
-//       };
-//     }
-    
-//     if (hasEnded) {
-//       return {
-//         canVote: false,
-//         reason: `Election ended on ${formatDateTime(election.end_date)}`,
-//         buttonText: 'Election Ended',
-//         icon: <Lock size={20} />
-//       };
-//     }
-    
-//     if (!hasStarted && isPublished) {
-//       const msUntilStart = startTime - nowTime;
-      
-//       if (msUntilStart < 60000) {
-//         return {
-//           canVote: true,
-//           reason: null,
-//           buttonText: 'Vote Now ',
-//           icon: <Vote size={20} />
-//         };
-//       }
-      
-//       const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
-//       const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
-//       const daysUntilStart = Math.floor(hoursUntilStart / 24);
-      
-//       let timeText;
-//       if (minutesUntilStart < 60) {
-//         timeText = `in ${minutesUntilStart} minutes`;
-//       } else if (hoursUntilStart < 24) {
-//         timeText = `in ${hoursUntilStart} hours`;
-//       } else if (daysUntilStart === 1) {
-//         timeText = 'tomorrow';
-//       } else {
-//         timeText = `in ${daysUntilStart} days`;
-//       }
-      
-//       return {
-//         canVote: false,
-//         reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
-//         buttonText: `Starts ${timeText}`,
-//         icon: <Clock size={20} />
-//       };
-//     }
-    
-//     if (isActive && isPublished) {
+//     if (msUntilStart < 60000) {
 //       return {
 //         canVote: true,
 //         reason: null,
@@ -924,22 +885,64 @@ export default function VoteNow() {
 //       };
 //     }
     
+//     const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
+//     const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
+//     const daysUntilStart = Math.floor(hoursUntilStart / 24);
+    
+//     let timeText;
+//     if (minutesUntilStart < 60) {
+//       timeText = `in ${minutesUntilStart} minutes`;
+//     } else if (hoursUntilStart < 24) {
+//       timeText = `in ${hoursUntilStart} hours`;
+//     } else if (daysUntilStart === 1) {
+//       timeText = 'tomorrow';
+//     } else {
+//       timeText = `in ${daysUntilStart} days`;
+//     }
+    
 //     return {
 //       canVote: false,
-//       reason: 'Election is not available for voting',
-//       buttonText: 'Cannot Vote',
-//       icon: <Lock size={20} />
+//       reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
+//       buttonText: `Starts ${timeText}`,
+//       icon: <Clock size={20} />
 //     };
+//   }
+  
+//   if (isActive && isPublished) {
+//     return {
+//       canVote: true,
+//       reason: null,
+//       buttonText: 'Vote Now',
+//       icon: <Vote size={20} />
+//     };
+//   }
+  
+//   return {
+//     canVote: false,
+//     reason: 'Election is not available for voting',
+//     buttonText: 'Cannot Vote',
+//     icon: <Lock size={20} />
 //   };
+// };
 
-//   const handleVoteClick = (election) => {
-//     // ✅ Check if user is trying to vote on their own election
+//   const handleActionClick = (election) => {
+//     const votingStatus = getElectionVotingStatus(election);
+    
+//     if (votingStatus.isLotteryAvailable) {
+//       setSelectedLotteryElection(election);
+//       setShowSlotMachine(true);
+//       return;
+//     }
+
+//     if (!isOnline) {
+//       toast.error('You\'re offline. Voting requires an internet connection.');
+//       return;
+//     }
+
 //     if (isOwner(election)) {
 //       toast.error('This is your election. You cannot vote on your own election!');
 //       return;
 //     }
-
-//     const votingStatus = getElectionVotingStatus(election);
     
 //     if (!votingStatus.canVote) {
 //       console.log('❌ Cannot vote:', votingStatus.reason);
@@ -947,8 +950,6 @@ export default function VoteNow() {
 //     }
     
 //     console.log('✅ Voting allowed, navigating to election ID:', election.id);
-    
-//     // ✅ Navigate to new detailed voting view
 //     navigate(`/elections/${election.id}/vote`);
 //   };
 
@@ -968,6 +969,25 @@ export default function VoteNow() {
 //     }
 //   };
 
+//   if (!isOnline && elections.length === 0 && !loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg shadow">
+//         <div className="text-center max-w-md">
+//           <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-6">
+//             <WifiOff className="w-10 h-10 text-yellow-600" />
+//           </div>
+//           <h3 className="text-2xl font-bold text-gray-900 mb-3">You're Offline</h3>
+//           <p className="text-gray-600 mb-4">
+//             Elections are not available offline because you haven't visited this page while connected to the internet yet.
+//           </p>
+//           <p className="text-sm text-gray-500">
+//             Connect to the internet and visit this page to cache elections for offline viewing.
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
 //   if (loading) {
 //     return (
 //       <div className="flex items-center justify-center h-64">
@@ -979,7 +999,7 @@ export default function VoteNow() {
 //     );
 //   }
 
-//   if (error) {
+//   if (error && error !== 'offline-no-cache') {
 //     return (
 //       <div className="flex items-center justify-center h-64">
 //         <div className="text-center">
@@ -1016,18 +1036,11 @@ export default function VoteNow() {
 //         </button>
 //       </div>
 
-//       {/* ═══════════════════════════════════════════════════════════════════
-//           🤖 AI-POWERED: RECOMMENDED FOR YOU SECTION
-//           ═══════════════════════════════════════════════════════════════════ */}
 //       <div className="bg-white rounded-xl shadow-lg p-6">
 //         <RecommendedForYou limit={10} />
 //       </div>
 
-//       {/* ═══════════════════════════════════════════════════════════════════
-//           📋 STANDARD (NON-AI): ALL ELECTIONS SECTION
-//           ═══════════════════════════════════════════════════════════════════ */}
 //       <div className="bg-white rounded-lg shadow p-4">
-//         {/* Section header with Non-AI badge */}
 //         <div className="flex items-center justify-between mb-4">
 //           <div className="flex items-center gap-3">
 //             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -1043,7 +1056,6 @@ export default function VoteNow() {
 //           </div>
 //         </div>
 
-//         {/* Filter buttons */}
 //         <div className="flex gap-2 flex-wrap">
 //           <button
 //             onClick={() => setFilter('all')}
@@ -1080,7 +1092,6 @@ export default function VoteNow() {
 //         </div>
 //       </div>
 
-//       {/* Elections List */}
 //       <div className="space-y-4">
 //         {filteredElections.length === 0 ? (
 //           <div className="bg-white rounded-lg shadow p-12 text-center">
@@ -1106,9 +1117,7 @@ export default function VoteNow() {
 //                       <div className="flex items-center gap-3 mb-2 flex-wrap">
 //                         <h3 className="text-xl font-bold text-gray-800">{election.title}</h3>
 //                         {getStatusBadge(election)}
-//                         {/* ✅ Non-AI badge to show this is standard listing */}
 //                         <NonAIBadge variant="inline" label="Standard" />
-//                         {/* ✅ Show "Your Election" badge if user owns it */}
 //                         {userOwnsElection && (
 //                           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">👤 Your Election</span>
 //                         )}
@@ -1179,7 +1188,6 @@ export default function VoteNow() {
 //                     </div>
 //                   )}
 
-//                   {/* ✅ Show warning for own election */}
 //                   {userOwnsElection && (
 //                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
 //                       <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
@@ -1190,7 +1198,7 @@ export default function VoteNow() {
 //                     </div>
 //                   )}
 
-//                   {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && (
+//                   {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && !votingStatus.isLotteryAvailable && (
 //                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex items-start gap-3">
 //                       <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
 //                       <div className="flex-1">
@@ -1200,42 +1208,70 @@ export default function VoteNow() {
 //                     </div>
 //                   )}
 
-//                   <button
-//                     onClick={() => handleVoteClick(election)}
-//                     disabled={!votingStatus.canVote}
-//                     className={`w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors ${
-//                       votingStatus.canVote
-//                         ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-//                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-//                     }`}
-//                   >
-//                     {votingStatus.icon}
-//                     {votingStatus.buttonText}
-//                     {votingStatus.canVote && <ArrowRight size={20} />}
-//                   </button>
+//                   {/* ✅ NEW: Button container with View and Action buttons */}
+//                   <div className="flex gap-3">
+//                     <button
+//                       onClick={() => handleView(election)}
+//                       className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-semibold transition-colors"
+//                     >
+//                       <Eye size={20} />
+//                       View
+//                     </button>
+
+//                     <button
+//                       onClick={() => handleActionClick(election)}
+//                       disabled={!votingStatus.canVote && !votingStatus.canViewLottery}
+//                       className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors ${
+//                         votingStatus.canVote || votingStatus.canViewLottery
+//                           ? votingStatus.isLotteryAvailable
+//                             ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 cursor-pointer'
+//                             : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+//                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+//                       }`}
+//                     >
+//                       {votingStatus.icon}
+//                       {votingStatus.buttonText}
+//                       {(votingStatus.canVote || votingStatus.canViewLottery) && <ArrowRight size={20} />}
+//                     </button>
+//                   </div>
 //                 </div>
 //               </div>
 //             );
 //           })
 //         )}
 //       </div>
+
+//       {/* Real Winner Reveal Modal */}
+//       {showSlotMachine && selectedLotteryElection && (
+//         <RealWinnerReveal
+//           isOpen={showSlotMachine}
+//           onClose={() => {
+//             setShowSlotMachine(false);
+//             setSelectedLotteryElection(null);
+//           }}
+//           election={selectedLotteryElection}
+//         />
+//       )}
 //     </div>
 //   );
 // }
-
-
-
-
-
-
-
-
-//last working code only to add AI above code
+//last working code only to add view above code.
+// // src/components/Dashboard/Tabs/VoteNow.jsx
+// // ✅ UPDATED: With Offline Support + Lottery Integration
 // import React, { useState, useEffect, useMemo } from 'react';
 // import { useNavigate } from 'react-router-dom';
-// import { Loader, Vote, Calendar, DollarSign, Users, ArrowRight, AlertCircle, Lock, Clock } from 'lucide-react';
+// import { useSelector } from 'react-redux';
+// import { Loader, Vote, AlertCircle, Lock, Clock, WifiOff, Trophy, ArrowRight } from 'lucide-react';
 // import { toast } from 'react-toastify';
 // import { getAllElections } from '../../../redux/api/election/electionApi';
+
+// // Import AI Recommendation Components
+// import RecommendedForYou from '../../recommendations/RecommendedForYou';
+// import { NonAIBadge } from '../../recommendations/AIBadge';
+// import RealWinnerReveal from './lotteryyy/RealWinnerReveal';
+
+// // Import Real Winner Reveal Component
+// //import RealWinnerReveal from './RealWinnerReveal';
 
 // export default function VoteNow() {
 //   const navigate = useNavigate();
@@ -1243,21 +1279,31 @@ export default function VoteNow() {
 //   const [loading, setLoading] = useState(true);
 //   const [filter, setFilter] = useState('all');
 //   const [error, setError] = useState(null);
+  
+//   // Lottery slot machine state
+//   const [selectedLotteryElection, setSelectedLotteryElection] = useState(null);
+//   const [showSlotMachine, setShowSlotMachine] = useState(false);
+  
+//   // Get offline status from Redux
+//   const { isOnline } = useSelector((state) => state.offline || { isOnline: true });
 
-//   // ✅ Get current user ID from localStorage
 //   const currentUserId = localStorage.getItem('userId');
 
-//   // ✅ Check if the logged-in user owns this election
 //   const isOwner = (election) => {
 //     if (!currentUserId) return false;
 //     return String(election.creator_id) === String(currentUserId);
 //   };
 
-//   // ✅ FIXED: Fetch only once on mount
 //   useEffect(() => {
 //     let isMounted = true;
 
 //     const fetchElections = async () => {
+//       if (!isOnline && elections.length > 0) {
+//         console.log('📡 Offline: Using cached elections');
+//         setLoading(false);
+//         return;
+//       }
+
 //       try {
 //         setLoading(true);
 //         setError(null);
@@ -1267,8 +1313,6 @@ export default function VoteNow() {
 //         if (!isMounted) return;
         
 //         const allElections = response.data?.elections || response.elections || [];
-        
-//         // ✅ Filter out draft elections - only show published/active elections
 //         const publishedElections = allElections.filter(election => election.status !== 'draft');
         
 //         setElections(publishedElections);
@@ -1277,7 +1321,17 @@ export default function VoteNow() {
 //         if (!isMounted) return;
         
 //         console.error('Error fetching elections:', error);
-//         setError(error.message || 'Failed to load elections');
+        
+//         if (!isOnline) {
+//           if (elections.length > 0) {
+//             console.log('📡 Using cached elections while offline');
+//             setError(null);
+//           } else {
+//             setError('offline-no-cache');
+//           }
+//         } else {
+//           setError(error.message || 'Failed to load elections');
+//         }
 //       } finally {
 //         if (isMounted) {
 //           setLoading(false);
@@ -1290,9 +1344,8 @@ export default function VoteNow() {
 //     return () => {
 //       isMounted = false;
 //     };
-//   }, []); // ✅ Empty dependency array - fetch only once
+//   }, [isOnline]);
 
-//   // ✅ FIXED: Use useMemo to filter elections without refetching
 //   const filteredElections = useMemo(() => {
 //     const now = new Date();
     
@@ -1338,106 +1391,132 @@ export default function VoteNow() {
 //   };
 
 //   const handleRefresh = async () => {
+//     if (!isOnline) {
+//       toast.info('You\'re offline. Cannot refresh elections.');
+//       return;
+//     }
+
 //     try {
 //       setLoading(true);
 //       setError(null);
       
 //       const response = await getAllElections(1, 50, 'all');
 //       const allElections = response.data?.elections || response.elections || [];
-      
-//       // ✅ Filter out draft elections - only show published/active elections
 //       const publishedElections = allElections.filter(election => election.status !== 'draft');
       
 //       setElections(publishedElections);
+//       toast.success('Elections refreshed!');
       
 //     } catch (error) {
 //       console.error('Error fetching elections:', error);
 //       setError(error.message || 'Failed to load elections');
+//       toast.error('Failed to refresh elections');
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
+// // Complete getElectionVotingStatus function for VoteNow.jsx
+// // Place this in your VoteNow component
 
-//   const getElectionVotingStatus = (election) => {
-//     const now = new Date();
-//     const startDate = new Date(election.start_date);
-//     const endDate = new Date(election.end_date);
-    
-//     const isPublished = election.status === 'active' || election.status === 'published';
-    
-//     const nowTime = now.getTime();
-//     const startTime = startDate.getTime();
-//     const endTime = endDate.getTime();
-    
-//     const hasStarted = nowTime >= (startTime - 60000);
-//     const hasEnded = nowTime > endTime;
-//     const isActive = hasStarted && !hasEnded;
+// // UPDATED LOTTERY CHECK - Works with your actual data structure
+// // Replace the lottery check section in getElectionVotingStatus
 
-//     // ✅ Check if user is the creator of this election
-//     if (isOwner(election)) {
-//       return {
-//         canVote: false,
-//         reason: 'You cannot vote on your own election',
-//         buttonText: 'Your Election',
-//         icon: <Lock size={20} />,
-//         isOwnElection: true
-//       };
-//     }
+// // UPDATED LOTTERY CHECK - Works with your actual data structure
+// // Replace the lottery check section in getElectionVotingStatus
+
+// // UPDATED LOTTERY CHECK - Works with your actual data structure
+// // Replace the lottery check section in getElectionVotingStatus
+
+// const getElectionVotingStatus = (election) => {
+//   const now = new Date();
+//   const startDate = new Date(election.start_date);
+//   const endDate = new Date(election.end_date);
+  
+//   const isPublished = election.status === 'active' || election.status === 'published';
+  
+//   const nowTime = now.getTime();
+//   const startTime = startDate.getTime();
+//   const endTime = endDate.getTime();
+  
+//   const hasStarted = nowTime >= (startTime - 60000);
+//   const hasEnded = nowTime > endTime;
+//   const isActive = hasStarted && !hasEnded;
+  
+//   // 🔍 DEBUG: Check lottery status
+//   console.log('═══════════════════════════════════════════════');
+//   console.log('🔍 LOTTERY DEBUG for:', election.title);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('📋 Election ID:', election.id);
+//   console.log('📋 Has Ended:', hasEnded);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('🎰 lottery_config:', election.lottery_config);
+//   console.log('   - is_lotterized:', election.lottery_config?.is_lotterized);
+//   console.log('   - winner_count:', election.lottery_config?.winner_count);
+//   console.log('───────────────────────────────────────────────');
+//   console.log('🎮 gamification_features:', election.gamification_features);
+//   console.log('   - lottery:', election.gamification_features?.lottery);
+//   console.log('───────────────────────────────────────────────');
+  
+//   // 🆕 UPDATED: Check multiple ways lottery might be enabled
+//   const hasLotteryConfig = election.lottery_config?.is_lotterized === true;
+//   const hasGamificationLottery = election.gamification_features?.lottery === true;
+//   const hasWinnerCount = election.lottery_config?.winner_count > 0; // 🆕 NEW CHECK
+  
+//   // If lottery_config exists with winner_count, lottery is enabled
+//   const hasLottery = hasLotteryConfig || hasGamificationLottery || hasWinnerCount;
+  
+//   console.log('✅ LOTTERY CHECK RESULT:');
+//   console.log('   - hasLotteryConfig (is_lotterized):', hasLotteryConfig);
+//   console.log('   - hasGamificationLottery:', hasGamificationLottery);
+//   console.log('   - hasWinnerCount (winner_count > 0):', hasWinnerCount);
+//   console.log('   - hasLottery (FINAL):', hasLottery);
+//   console.log('═══════════════════════════════════════════════');
+
+//   if (isOwner(election)) {
+//     return {
+//       canVote: false,
+//       reason: 'You cannot vote on your own election',
+//       buttonText: 'Your Election',
+//       icon: <Lock size={20} />,
+//       isOwnElection: true
+//     };
+//   }
+  
+//   if (election.status === 'draft') {
+//     return {
+//       canVote: false,
+//       reason: 'This election is still in draft mode',
+//       buttonText: 'Draft - Cannot Vote',
+//       icon: <Lock size={20} />
+//     };
+//   }
+  
+//   // 🎰 Check for ended election with lottery
+//   if (hasEnded && hasLottery) {
+//     console.log('🎰 ✅ SHOWING LOTTERY BUTTON for:', election.title);
+//     return {
+//       canVote: false,
+//       canViewLottery: true,
+//       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//       buttonText: 'View Lottery Results',
+//       icon: <Trophy size={20} />,
+//       isLotteryAvailable: true
+//     };
+//   }
+  
+//   if (hasEnded) {
+//     return {
+//       canVote: false,
+//       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//       buttonText: 'Election Ended',
+//       icon: <Lock size={20} />
+//     };
+//   }
+  
+//   if (!hasStarted && isPublished) {
+//     const msUntilStart = startTime - nowTime;
     
-//     if (election.status === 'draft') {
-//       return {
-//         canVote: false,
-//         reason: 'This election is still in draft mode',
-//         buttonText: 'Draft - Cannot Vote',
-//         icon: <Lock size={20} />
-//       };
-//     }
-    
-//     if (hasEnded) {
-//       return {
-//         canVote: false,
-//         reason: `Election ended on ${formatDateTime(election.end_date)}`,
-//         buttonText: 'Election Ended',
-//         icon: <Lock size={20} />
-//       };
-//     }
-    
-//     if (!hasStarted && isPublished) {
-//       const msUntilStart = startTime - nowTime;
-      
-//       if (msUntilStart < 60000) {
-//         return {
-//           canVote: true,
-//           reason: null,
-//           buttonText: 'Vote Now ',
-//           icon: <Vote size={20} />
-//         };
-//       }
-      
-//       const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
-//       const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
-//       const daysUntilStart = Math.floor(hoursUntilStart / 24);
-      
-//       let timeText;
-//       if (minutesUntilStart < 60) {
-//         timeText = `in ${minutesUntilStart} minutes`;
-//       } else if (hoursUntilStart < 24) {
-//         timeText = `in ${hoursUntilStart} hours`;
-//       } else if (daysUntilStart === 1) {
-//         timeText = 'tomorrow';
-//       } else {
-//         timeText = `in ${daysUntilStart} days`;
-//       }
-      
-//       return {
-//         canVote: false,
-//         reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
-//         buttonText: `Starts ${timeText}`,
-//         icon: <Clock size={20} />
-//       };
-//     }
-    
-//     if (isActive && isPublished) {
+//     if (msUntilStart < 60000) {
 //       return {
 //         canVote: true,
 //         reason: null,
@@ -1446,22 +1525,177 @@ export default function VoteNow() {
 //       };
 //     }
     
+//     const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
+//     const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
+//     const daysUntilStart = Math.floor(hoursUntilStart / 24);
+    
+//     let timeText;
+//     if (minutesUntilStart < 60) {
+//       timeText = `in ${minutesUntilStart} minutes`;
+//     } else if (hoursUntilStart < 24) {
+//       timeText = `in ${hoursUntilStart} hours`;
+//     } else if (daysUntilStart === 1) {
+//       timeText = 'tomorrow';
+//     } else {
+//       timeText = `in ${daysUntilStart} days`;
+//     }
+    
 //     return {
 //       canVote: false,
-//       reason: 'Election is not available for voting',
-//       buttonText: 'Cannot Vote',
-//       icon: <Lock size={20} />
+//       reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
+//       buttonText: `Starts ${timeText}`,
+//       icon: <Clock size={20} />
 //     };
+//   }
+  
+//   if (isActive && isPublished) {
+//     return {
+//       canVote: true,
+//       reason: null,
+//       buttonText: 'Vote Now',
+//       icon: <Vote size={20} />
+//     };
+//   }
+  
+//   return {
+//     canVote: false,
+//     reason: 'Election is not available for voting',
+//     buttonText: 'Cannot Vote',
+//     icon: <Lock size={20} />
 //   };
+// };
+//   // const getElectionVotingStatus = (election) => {
+//   //   const now = new Date();
+//   //   const startDate = new Date(election.start_date);
+//   //   const endDate = new Date(election.end_date);
+    
+//   //   const isPublished = election.status === 'active' || election.status === 'published';
+    
+//   //   const nowTime = now.getTime();
+//   //   const startTime = startDate.getTime();
+//   //   const endTime = endDate.getTime();
+    
+//   //   const hasStarted = nowTime >= (startTime - 60000);
+//   //   const hasEnded = nowTime > endTime;
+//   //   const isActive = hasStarted && !hasEnded;
+    
+//   //   // Check if lottery is enabled
+//   //   const hasLottery = true;
+//   //   // const hasLottery = election.lottery_config?.is_lotterized || 
+//   //   //                    election.gamification_features?.lottery === true;
 
-//   const handleVoteClick = (election) => {
-//     // ✅ Check if user is trying to vote on their own election
+//   //   if (isOwner(election)) {
+//   //     return {
+//   //       canVote: false,
+//   //       reason: 'You cannot vote on your own election',
+//   //       buttonText: 'Your Election',
+//   //       icon: <Lock size={20} />,
+//   //       isOwnElection: true
+//   //     };
+//   //   }
+    
+//   //   if (election.status === 'draft') {
+//   //     return {
+//   //       canVote: false,
+//   //       reason: 'This election is still in draft mode',
+//   //       buttonText: 'Draft - Cannot Vote',
+//   //       icon: <Lock size={20} />
+//   //     };
+//   //   }
+    
+//   //   // NEW: If election has ended and has lottery, show lottery button
+//   //   if (hasEnded && hasLottery) {
+//   //     return {
+//   //       canVote: false,
+//   //       canViewLottery: true,
+//   //       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//   //       buttonText: 'View Lottery Results',
+//   //       icon: <Trophy size={20} />,
+//   //       isLotteryAvailable: true
+//   //     };
+//   //   }
+    
+//   //   if (hasEnded) {
+//   //     return {
+//   //       canVote: false,
+//   //       reason: `Election ended on ${formatDateTime(election.end_date)}`,
+//   //       buttonText: 'Election Ended',
+//   //       icon: <Lock size={20} />
+//   //     };
+//   //   }
+    
+//   //   if (!hasStarted && isPublished) {
+//   //     const msUntilStart = startTime - nowTime;
+      
+//   //     if (msUntilStart < 60000) {
+//   //       return {
+//   //         canVote: true,
+//   //         reason: null,
+//   //         buttonText: 'Vote Now',
+//   //         icon: <Vote size={20} />
+//   //       };
+//   //     }
+      
+//   //     const minutesUntilStart = Math.floor(msUntilStart / (1000 * 60));
+//   //     const hoursUntilStart = Math.floor(msUntilStart / (1000 * 60 * 60));
+//   //     const daysUntilStart = Math.floor(hoursUntilStart / 24);
+      
+//   //     let timeText;
+//   //     if (minutesUntilStart < 60) {
+//   //       timeText = `in ${minutesUntilStart} minutes`;
+//   //     } else if (hoursUntilStart < 24) {
+//   //       timeText = `in ${hoursUntilStart} hours`;
+//   //     } else if (daysUntilStart === 1) {
+//   //       timeText = 'tomorrow';
+//   //     } else {
+//   //       timeText = `in ${daysUntilStart} days`;
+//   //     }
+      
+//   //     return {
+//   //       canVote: false,
+//   //       reason: `Election starts ${timeText} (${formatDateTime(election.start_date)})`,
+//   //       buttonText: `Starts ${timeText}`,
+//   //       icon: <Clock size={20} />
+//   //     };
+//   //   }
+    
+//   //   if (isActive && isPublished) {
+//   //     return {
+//   //       canVote: true,
+//   //       reason: null,
+//   //       buttonText: 'Vote Now',
+//   //       icon: <Vote size={20} />
+//   //     };
+//   //   }
+    
+//   //   return {
+//   //     canVote: false,
+//   //     reason: 'Election is not available for voting',
+//   //     buttonText: 'Cannot Vote',
+//   //     icon: <Lock size={20} />
+//   //   };
+//   // };
+
+//   const handleActionClick = (election) => {
+//     const votingStatus = getElectionVotingStatus(election);
+    
+//     // Handle lottery view
+//     if (votingStatus.isLotteryAvailable) {
+//       setSelectedLotteryElection(election);
+//       setShowSlotMachine(true);
+//       return;
+//     }
+
+//     // Check if offline
+//     if (!isOnline) {
+//       toast.error('You\'re offline. Voting requires an internet connection.');
+//       return;
+//     }
+
 //     if (isOwner(election)) {
 //       toast.error('This is your election. You cannot vote on your own election!');
 //       return;
 //     }
-
-//     const votingStatus = getElectionVotingStatus(election);
     
 //     if (!votingStatus.canVote) {
 //       console.log('❌ Cannot vote:', votingStatus.reason);
@@ -1469,8 +1703,6 @@ export default function VoteNow() {
 //     }
     
 //     console.log('✅ Voting allowed, navigating to election ID:', election.id);
-    
-//     // ✅ Navigate to new detailed voting view
 //     navigate(`/elections/${election.id}/vote`);
 //   };
 
@@ -1490,6 +1722,26 @@ export default function VoteNow() {
 //     }
 //   };
 
+//   // Offline with no cached data
+//   if (!isOnline && elections.length === 0 && !loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg shadow">
+//         <div className="text-center max-w-md">
+//           <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-6">
+//             <WifiOff className="w-10 h-10 text-yellow-600" />
+//           </div>
+//           <h3 className="text-2xl font-bold text-gray-900 mb-3">You're Offline</h3>
+//           <p className="text-gray-600 mb-4">
+//             Elections are not available offline because you haven't visited this page while connected to the internet yet.
+//           </p>
+//           <p className="text-sm text-gray-500">
+//             Connect to the internet and visit this page to cache elections for offline viewing.
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
 //   if (loading) {
 //     return (
 //       <div className="flex items-center justify-center h-64">
@@ -1501,7 +1753,7 @@ export default function VoteNow() {
 //     );
 //   }
 
-//   if (error) {
+//   if (error && error !== 'offline-no-cache') {
 //     return (
 //       <div className="flex items-center justify-center h-64">
 //         <div className="text-center">
@@ -1538,7 +1790,26 @@ export default function VoteNow() {
 //         </button>
 //       </div>
 
+//       <div className="bg-white rounded-xl shadow-lg p-6">
+//         <RecommendedForYou limit={10} />
+//       </div>
+
 //       <div className="bg-white rounded-lg shadow p-4">
+//         <div className="flex items-center justify-between mb-4">
+//           <div className="flex items-center gap-3">
+//             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+//               <Vote className="text-gray-600" size={20} />
+//             </div>
+//             <div>
+//               <div className="flex items-center gap-2">
+//                 <h3 className="font-bold text-gray-800">All Elections</h3>
+//                 <NonAIBadge variant="inline" label="Standard" />
+//               </div>
+//               <p className="text-xs text-gray-500">Browse all available elections (not AI-curated)</p>
+//             </div>
+//           </div>
+//         </div>
+
 //         <div className="flex gap-2 flex-wrap">
 //           <button
 //             onClick={() => setFilter('all')}
@@ -1600,7 +1871,7 @@ export default function VoteNow() {
 //                       <div className="flex items-center gap-3 mb-2 flex-wrap">
 //                         <h3 className="text-xl font-bold text-gray-800">{election.title}</h3>
 //                         {getStatusBadge(election)}
-//                         {/* ✅ Show "Your Election" badge if user owns it */}
+//                         <NonAIBadge variant="inline" label="Standard" />
 //                         {userOwnsElection && (
 //                           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">👤 Your Election</span>
 //                         )}
@@ -1671,7 +1942,6 @@ export default function VoteNow() {
 //                     </div>
 //                   )}
 
-//                   {/* ✅ Show warning for own election */}
 //                   {userOwnsElection && (
 //                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
 //                       <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
@@ -1682,7 +1952,7 @@ export default function VoteNow() {
 //                     </div>
 //                   )}
 
-//                   {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && (
+//                   {!votingStatus.canVote && votingStatus.reason && !userOwnsElection && !votingStatus.isLotteryAvailable && (
 //                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex items-start gap-3">
 //                       <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
 //                       <div className="flex-1">
@@ -1693,17 +1963,19 @@ export default function VoteNow() {
 //                   )}
 
 //                   <button
-//                     onClick={() => handleVoteClick(election)}
-//                     disabled={!votingStatus.canVote}
+//                     onClick={() => handleActionClick(election)}
+//                     disabled={!votingStatus.canVote && !votingStatus.canViewLottery}
 //                     className={`w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors ${
-//                       votingStatus.canVote
-//                         ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+//                       votingStatus.canVote || votingStatus.canViewLottery
+//                         ? votingStatus.isLotteryAvailable
+//                           ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 cursor-pointer'
+//                           : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
 //                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
 //                     }`}
 //                   >
 //                     {votingStatus.icon}
 //                     {votingStatus.buttonText}
-//                     {votingStatus.canVote && <ArrowRight size={20} />}
+//                     {(votingStatus.canVote || votingStatus.canViewLottery) && <ArrowRight size={20} />}
 //                   </button>
 //                 </div>
 //               </div>
@@ -1711,7 +1983,18 @@ export default function VoteNow() {
 //           })
 //         )}
 //       </div>
+
+//       {/* Real Winner Reveal Modal */}
+//       {showSlotMachine && selectedLotteryElection && (
+//         <RealWinnerReveal
+//           isOpen={showSlotMachine}
+//           onClose={() => {
+//             setShowSlotMachine(false);
+//             setSelectedLotteryElection(null);
+//           }}
+//           election={selectedLotteryElection}
+//         />
+//       )}
 //     </div>
 //   );
 // }
-

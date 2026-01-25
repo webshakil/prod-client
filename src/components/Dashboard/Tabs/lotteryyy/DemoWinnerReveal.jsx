@@ -541,9 +541,7 @@
 
 
 // // src/components/Dashboard/Tabs/lotteryyy/DemoWinnerReveal.jsx
-//Demo modal - Winner reveal with FALLING + BOUNCE effect
-//Numbers fall from their random position to center with slight bounce
-// Sequential: 1st digit falls → 2nd digit falls → 3rd digit falls...
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Play, RotateCcw } from 'lucide-react';
 
