@@ -626,7 +626,7 @@ maxWidth: isLotteryExpanded ? 'calc(100vw - 32px)' : 'auto',
                   <Trophy className="w-8 h-8 text-purple-600" />
                   <div>
                     <p className="font-bold text-purple-900">🎰 Gamification Enabled!</p>
-                    <p className="text-sm text-purple-700">Vote to automatically enter the lottery draw ({luckyVotersCount} winner{luckyVotersCount > 1 ? 's' : ''})</p>
+                    <p className="text-sm text-purple-700">Vote to automatically enter the gamification draw ({luckyVotersCount} winner{luckyVotersCount > 1 ? 's' : ''})</p>
                   </div>
                 </div>
               </div>
