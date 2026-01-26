@@ -490,7 +490,7 @@ export default function LotterySlotMachine({
 
           <div className="flex items-center gap-2">
             <span className={`text-gray-900 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-              Lucky Voters No:
+              Lucky Voters Count:
             </span>
             <div 
               className={`rounded ${compact ? 'px-2 py-0.5' : 'px-3 py-1'}`}
@@ -579,7 +579,7 @@ export default function LotterySlotMachine({
           <div className={`flex items-center gap-1.5 text-gray-900 ${compact ? 'text-xs' : ''}`}>
             <Users className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
             <span className={compact ? 'text-xs' : 'text-sm'}>
-              Total Entries: <strong>{totalEntries}</strong>
+              Total Votes: <strong>{totalEntries}</strong>
             </span>
           </div>
           

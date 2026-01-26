@@ -411,7 +411,9 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
             <div>
               <p className="text-yellow-900 font-semibold mb-2">Google Pay Not Available</p>
               <p className="text-yellow-800 text-sm mb-3">
-                Google Pay is not currently available on this browser/device.
+                Use Chrome or an Android device, sign in to your Google account, and add a supported card to Google Pay to complete your payment.
+
+Google Pay works only on browsers and devices that support Google’s secure payment system. Browsers like Firefox or Brave currently don’t support Google Pay, so the option may not appear there.
               </p>
             </div>
           </div>
