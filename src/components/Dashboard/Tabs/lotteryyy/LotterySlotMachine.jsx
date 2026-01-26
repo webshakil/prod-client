@@ -6,7 +6,7 @@ import { Users, Eye } from 'lucide-react';
 import DemoWinnerReveal from './DemoWinnerReveal';
 
 const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
-
+const ENABLE_DEMO = false;
 // SpinningDigit with 3 phases: spinning, falling (bounce once), stopped (still)
 const SpinningDigit = ({ digit, phase }) => {
   // phase: 'spinning' | 'falling' | 'stopped'
@@ -568,7 +568,7 @@ export default function LotterySlotMachine({
           </div>
           
           <div className="flex items-center gap-3">
-            {!isElectionEnded && displayVoteCount >= 1 && (
+            {ENABLE_DEMO && !isElectionEnded && displayVoteCount >= 1 && (
               <button
                 onClick={() => setShowDemoModal(true)}
                 className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded px-3 py-1.5 text-sm font-medium transition"
