@@ -1,36 +1,49 @@
 // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
-// 4D Slot Machine with GRADUAL SLOWDOWN + PAUSE ANIMATION
-// Flow: Fast spin → Gradually slow down → Stop with bounce → Pause → Repeat
+// 4D Slot Machine - CORRECT ANIMATION FLOW
+// Flow: SPIN FAST → SLOW DOWN → ONE BOUNCE (align) → PAUSE (still) → REPEAT
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Users, Eye } from 'lucide-react';
 import DemoWinnerReveal from './DemoWinnerReveal';
 
 const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
-// SpinningDigit - EXACT copy from RealWinnerReveal.jsx
-const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
+// SpinningDigit with 3 phases: spinning, falling (bounce once), stopped (still)
+const SpinningDigit = ({ digit, phase }) => {
+  // phase: 'spinning' | 'falling' | 'stopped'
   const [currentDigit, setCurrentDigit] = useState(digit || '0');
   const [nextDigit, setNextDigit] = useState('0');
   const [offsetY, setOffsetY] = useState(0);
   const animationRef = useRef(null);
-  const isSpinningRef = useRef(isSpinning);
+  const phaseRef = useRef(phase);
+  const hasBouncedRef = useRef(false);
   const digitHeight = 100;
   const spinSpeed = 35;
   
-  useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
+  // Keep phase ref in sync
+  useEffect(() => { 
+    phaseRef.current = phase;
+    if (phase === 'spinning') {
+      hasBouncedRef.current = false; // Reset bounce flag when spinning starts
+    }
+  }, [phase]);
 
-  // Spinning animation
+  // PHASE 1: Spinning animation
   useEffect(() => {
-    if (isSpinning && !isFalling) {
-      let offset = -Math.floor(Math.random() * digitHeight * 0.7);
+    if (phase === 'spinning') {
+      hasBouncedRef.current = false;
+      let offset = -Math.floor(Math.random() * digitHeight * 0.5);
       let currDigit = Math.floor(Math.random() * 10);
       let nxtDigit = Math.floor(Math.random() * 10);
+      
       setCurrentDigit(String(currDigit));
       setNextDigit(String(nxtDigit));
       setOffsetY(offset);
+      
       const animate = () => {
-        if (!isSpinningRef.current) return;
+        if (phaseRef.current !== 'spinning') return;
+        
         offset -= spinSpeed;
+        
         if (offset <= -digitHeight) {
           offset += digitHeight;
           currDigit = nxtDigit;
@@ -38,54 +51,94 @@ const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
           setCurrentDigit(String(currDigit));
           setNextDigit(String(nxtDigit));
         }
+        
         setOffsetY(offset);
         animationRef.current = requestAnimationFrame(animate);
       };
+      
       animationRef.current = requestAnimationFrame(animate);
-      return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+      
+      return () => { 
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+      };
     }
-  }, [isSpinning, isFalling]);
+  }, [phase]);
 
-  // Falling/bounce animation - EXACT from first file
+  // PHASE 2: Falling with ONE bounce - from first file exactly
   useEffect(() => {
-    if (isFalling && finalDigit !== undefined) {
-      if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
-      setCurrentDigit(String(finalDigit));
-      setNextDigit(String((parseInt(finalDigit) + 1) % 10));
+    if (phase === 'falling' && !hasBouncedRef.current) {
+      hasBouncedRef.current = true; // Mark that we're bouncing - only once!
+      
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      
+      // Set the final digit
+      setCurrentDigit(String(digit));
+      setNextDigit(String((parseInt(digit) + 1) % 10));
+      
       const startOffset = offsetY;
       const fallDuration = 400;
       const bounceDuration = 200;
       const bounceHeight = 15;
       const startTime = Date.now();
+      
       const animateFall = () => {
         const elapsed = Date.now() - startTime;
+        
         if (elapsed < fallDuration) {
+          // Fall phase - ease in to center
           const progress = elapsed / fallDuration;
           const easeIn = progress * progress;
           const newOffset = startOffset + (0 - startOffset) * easeIn;
           setOffsetY(newOffset);
           animationRef.current = requestAnimationFrame(animateFall);
         } else if (elapsed < fallDuration + bounceDuration / 2) {
+          // Bounce up phase
           const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
           const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
           setOffsetY(bounceOffset);
           animationRef.current = requestAnimationFrame(animateFall);
         } else if (elapsed < fallDuration + bounceDuration) {
+          // Settle down phase
           const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
           const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
           setOffsetY(bounceOffset);
           animationRef.current = requestAnimationFrame(animateFall);
-        } else { setOffsetY(0); }
+        } else {
+          // Done bouncing - snap to center and stay
+          setOffsetY(0);
+          // Animation complete - no more frames needed
+        }
       };
+      
       animationRef.current = requestAnimationFrame(animateFall);
-      return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+      
+      return () => {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+      };
     }
-  }, [isFalling, finalDigit]);
+  }, [phase, digit]);
 
-  // Reset when not spinning and not falling
+  // PHASE 3: Stopped - just stay still at center, NO bounce
   useEffect(() => {
-    if (!isSpinning && !isFalling) { setOffsetY(0); setCurrentDigit(digit || '0'); }
-  }, [isSpinning, isFalling, digit]);
+    if (phase === 'stopped') {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      // Just show the digit at center - no animation
+      setCurrentDigit(String(digit));
+      setOffsetY(0);
+    }
+  }, [phase, digit]);
 
   return (
     <div 
@@ -98,7 +151,10 @@ const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
         border: '3px solid #1f2937' 
       }}
     >
-      <div className="absolute w-full" style={{ transform: `translateY(${offsetY}px)` }}>
+      <div 
+        className="absolute w-full" 
+        style={{ transform: `translateY(${offsetY}px)` }}
+      >
         <div className="flex items-center justify-center" style={{ height: '100px' }}>
           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
         </div>
@@ -120,11 +176,13 @@ export default function LotterySlotMachine({
   winners = [],
   isActive = true,
   compact = false,
+  // ✅ NEW: Accept vote count from parent as fallback
+  totalVoteCount = 0,
+  voteCount = 0,
 }) {
   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
-  const [digitSpinning, setDigitSpinning] = useState([false, false, false, false, false, false]);
-  const [digitFalling, setDigitFalling] = useState([false, false, false, false, false, false]);
-  const [finalDigits, setFinalDigits] = useState(['0', '0', '0', '0', '0', '0']);
+  // Phase for each digit: 'spinning' | 'falling' | 'stopped'
+  const [digitPhases, setDigitPhases] = useState(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
   
   const [revealedWinners, setRevealedWinners] = useState([]);
   const [revealingWinner, setRevealingWinner] = useState(false);
@@ -139,8 +197,12 @@ export default function LotterySlotMachine({
   const [currentStatus, setCurrentStatus] = useState('WAITING');
   
   const fetchIntervalRef = useRef(null);
-  const continuousCycleRef = useRef(null);
+  const cycleTimeoutRef = useRef(null);
   const isMountedRef = useRef(true);
+  const isRunningRef = useRef(false);
+
+  // ✅ FIX: Use parent's vote count as fallback
+  const parentVoteCount = totalVoteCount || voteCount || 0;
 
   const fetchBallNumbers = useCallback(async () => {
     if (!electionId) return;
@@ -155,7 +217,6 @@ export default function LotterySlotMachine({
       if (!response.ok) throw new Error(`Failed: ${response.status}`);
       
       const data = await response.json();
-      console.log('🎰 Ball numbers fetched:', data);
       
       const ballNumbers = [];
       const nums = data.ballNumbers || data.ball_numbers || [];
@@ -164,17 +225,29 @@ export default function LotterySlotMachine({
       });
       
       setParticipants(ballNumbers);
-      setTotalEntries(data.totalParticipants || data.total_participants || ballNumbers.length);
+      
+      // ✅ FIX: Use API count, but fallback to parent's count if API returns 0
+      const apiCount = data.totalParticipants || data.total_participants || ballNumbers.length;
+      setTotalEntries(apiCount > 0 ? apiCount : parentVoteCount);
       
       if (data.luckyVotersCount || data.lucky_voters_count) {
         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
       }
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('❌ Error fetching ball numbers:', error);
+      // ✅ FIX: On error, use parent's vote count
+      setTotalEntries(parentVoteCount);
     } finally {
       setIsLoadingParticipants(false);
     }
-  }, [electionId]);
+  }, [electionId, parentVoteCount]);
+
+  // ✅ FIX: Update totalEntries when parent vote count changes
+  useEffect(() => {
+    if (parentVoteCount > 0 && totalEntries === 0) {
+      setTotalEntries(parentVoteCount);
+    }
+  }, [parentVoteCount, totalEntries]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -185,6 +258,7 @@ export default function LotterySlotMachine({
     return () => {
       isMountedRef.current = false;
       if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+      if (cycleTimeoutRef.current) clearTimeout(cycleTimeoutRef.current);
     };
   }, [electionId, isActive, fetchBallNumbers]);
 
@@ -196,90 +270,97 @@ export default function LotterySlotMachine({
     return String(Math.floor(100000 + Math.random() * 900000));
   }, [participants]);
 
-  // Single ballot reveal: Fast spin → Gradual slowdown → Bounce stop → Pause
-  const revealSingleBallot = useCallback(async () => {
-    if (!isMountedRef.current) return;
+  // Simple delay helper
+  const delay = (ms) => new Promise(resolve => {
+    cycleTimeoutRef.current = setTimeout(resolve, ms);
+  });
+
+  // Single cycle: SPIN → SLOW DOWN (stop one by one with bounce) → PAUSE (still) → REPEAT
+  const runSingleCycle = useCallback(async () => {
+    if (!isMountedRef.current || !isRunningRef.current) return;
     
+    // Get the ballot number for this cycle
     const ballotNumber = getRandomVoterId();
     const ballotDigits = ballotNumber.split('');
     
-    // PHASE 1: Fast spinning (1 second)
+    // STEP 1: Start all spinning
     setCurrentStatus('SPINNING');
-    setDigitFalling([false, false, false, false, false, false]);
-    setFinalDigits(ballotDigits);
-    setDigitSpinning([true, true, true, true, true, true]);
+    setDigitPhases(['spinning', 'spinning', 'spinning', 'spinning', 'spinning', 'spinning']);
     
-    await new Promise(r => setTimeout(r, 1000));
-    if (!isMountedRef.current) return;
+    // Spin fast for 1 second
+    await delay(1000);
+    if (!isMountedRef.current || !isRunningRef.current) return;
     
-    // PHASE 2: Gradual slowdown - stop each digit one by one with delay
-    setCurrentStatus('SLOWING');
-    
+    // STEP 2: Stop digits one by one with FALLING (bounce once to align)
     for (let i = 0; i < 6; i++) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || !isRunningRef.current) return;
       
-      // Let this digit spin a bit more while slowing (300ms per digit)
-      await new Promise(r => setTimeout(r, 300));
-      
-      // Stop spinning and start falling animation
-      setDigitSpinning(prev => {
-        const updated = [...prev];
-        updated[i] = false;
-        return updated;
-      });
-      setDigitFalling(prev => {
-        const updated = [...prev];
-        updated[i] = true;
-        return updated;
-      });
-      
-      // Update display digit
+      // Set the final digit value
       setDisplayDigits(prev => {
         const updated = [...prev];
         updated[i] = ballotDigits[i];
         return updated;
       });
+      
+      // Trigger falling phase (will bounce once)
+      setDigitPhases(prev => {
+        const updated = [...prev];
+        updated[i] = 'falling';
+        return updated;
+      });
+      
+      // Wait for bounce animation (600ms) + small gap before next digit
+      await delay(300);
     }
     
-    // Wait for last bounce animation to complete (600ms)
-    await new Promise(r => setTimeout(r, 600));
-    if (!isMountedRef.current) return;
+    // Wait for last digit's bounce to complete
+    await delay(400);
+    if (!isMountedRef.current || !isRunningRef.current) return;
     
-    // PHASE 3: Pause - show the number clearly
-    setDigitFalling([false, false, false, false, false, false]);
+    // STEP 3: All digits now STOPPED (no more bounce, just still)
+    setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
     setCurrentStatus('PAUSED');
     
-    // Pause for 2 seconds to see the number clearly
-    await new Promise(r => setTimeout(r, 2000));
+    // PAUSE - show the number still for 2 seconds
+    await delay(2000);
     
+    // Start next cycle if still running
+    if (isMountedRef.current && isRunningRef.current) {
+      runSingleCycle();
+    }
   }, [getRandomVoterId]);
 
-  // Continuous cycle: spin -> slowdown -> pause -> repeat
-  const startContinuousCycle = useCallback(async () => {
-    continuousCycleRef.current = true;
-    
-    while (continuousCycleRef.current && isMountedRef.current) {
-      await revealSingleBallot();
-    }
-  }, [revealSingleBallot]);
+  // Start the continuous cycle
+  const startCycle = useCallback(() => {
+    if (isRunningRef.current) return;
+    isRunningRef.current = true;
+    runSingleCycle();
+  }, [runSingleCycle]);
 
-  const stopContinuousCycle = useCallback(() => {
-    continuousCycleRef.current = false;
-    setDigitSpinning([false, false, false, false, false, false]);
-    setDigitFalling([false, false, false, false, false, false]);
+  // Stop everything cleanly
+  const stopCycle = useCallback(() => {
+    isRunningRef.current = false;
+    if (cycleTimeoutRef.current) {
+      clearTimeout(cycleTimeoutRef.current);
+      cycleTimeoutRef.current = null;
+    }
+    setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
     setCurrentStatus('WAITING');
   }, []);
 
-  // Start/stop continuous spinning based on conditions
+  // ✅ FIX: Use totalEntries OR parentVoteCount to determine if should spin
+  const effectiveVoteCount = totalEntries > 0 ? totalEntries : parentVoteCount;
+
+  // Control cycle based on conditions
   useEffect(() => {
-    if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
-      startContinuousCycle();
+    if (isActive && effectiveVoteCount >= 1 && !isElectionEnded && !revealingWinner) {
+      startCycle();
     } else {
-      stopContinuousCycle();
+      stopCycle();
     }
     
-    return () => stopContinuousCycle();
-  }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousCycle, stopContinuousCycle]);
+    return () => stopCycle();
+  }, [isActive, effectiveVoteCount, isElectionEnded, revealingWinner, startCycle, stopCycle]);
 
   // Winner reveal at election end
   useEffect(() => {
@@ -290,7 +371,7 @@ export default function LotterySlotMachine({
 
   const revealWinnersSequentially = async () => {
     setRevealingWinner(true);
-    stopContinuousCycle();
+    stopCycle();
     
     for (let i = 0; i < winners.length; i++) {
       const winner = winners[i];
@@ -303,24 +384,28 @@ export default function LotterySlotMachine({
       
       // Spin all
       setCurrentStatus('SPINNING');
-      setDigitFalling([false, false, false, false, false, false]);
-      setDigitSpinning([true, true, true, true, true, true]);
+      setDigitPhases(['spinning', 'spinning', 'spinning', 'spinning', 'spinning', 'spinning']);
       
-      await new Promise(r => setTimeout(r, 1500));
+      await delay(1500);
       
-      setFinalDigits(winnerDigits);
-      setCurrentStatus('SLOWING');
-      
-      // Stop one by one with slowdown effect
+      // Stop one by one with bounce
       for (let j = 0; j < 6; j++) {
-        await new Promise(r => setTimeout(r, 400));
-        setDigitSpinning(prev => { const u = [...prev]; u[j] = false; return u; });
-        setDigitFalling(prev => { const u = [...prev]; u[j] = true; return u; });
-        setDisplayDigits(prev => { const u = [...prev]; u[j] = winnerDigits[j]; return u; });
+        setDisplayDigits(prev => { 
+          const u = [...prev]; 
+          u[j] = winnerDigits[j]; 
+          return u; 
+        });
+        setDigitPhases(prev => { 
+          const u = [...prev]; 
+          u[j] = 'falling'; 
+          return u; 
+        });
+        await delay(400);
       }
       
-      await new Promise(r => setTimeout(r, 500));
-      setDigitFalling([false, false, false, false, false, false]);
+      // All stopped
+      await delay(300);
+      setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
       setCurrentStatus('WINNER');
       
       setRevealedWinners(prev => [...prev, {
@@ -330,7 +415,7 @@ export default function LotterySlotMachine({
       }]);
       
       if (i < winners.length - 1) {
-        await new Promise(r => setTimeout(r, 2500));
+        await delay(2500);
       }
     }
     
@@ -353,14 +438,16 @@ export default function LotterySlotMachine({
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
 
+  // ✅ Display the best available vote count
+  const displayVoteCount = totalEntries > 0 ? totalEntries : parentVoteCount;
+
   return (
     <>
-      {/* FIXED: Minimum width ensures all 6 digits fit properly */}
       <div 
         className="rounded-xl overflow-visible"
         style={{
           background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)',
-          minWidth: '580px', // 6 digits (75px each) + gaps (12px × 5) + padding (48px) = ~530px minimum
+          minWidth: '580px',
           width: '100%'
         }}
       >
@@ -410,7 +497,7 @@ export default function LotterySlotMachine({
           </div>
         </div>
 
-        {/* Main Display - Black box with proper size for 6 digits */}
+        {/* Main Display */}
         <div className="px-5 py-6">
           <div 
             className="flex justify-center items-center gap-3 p-6"
@@ -426,9 +513,7 @@ export default function LotterySlotMachine({
               <SpinningDigit
                 key={`digit-${index}`}
                 digit={digit}
-                isSpinning={digitSpinning[index]}
-                isFalling={digitFalling[index]}
-                finalDigit={finalDigits[index]}
+                phase={digitPhases[index]}
               />
             ))}
           </div>
@@ -478,12 +563,12 @@ export default function LotterySlotMachine({
           <div className="flex items-center gap-1.5 text-gray-900">
             <Users className="w-4 h-4" />
             <span className="text-sm">
-              Total Votes: <strong>{totalEntries}</strong>
+              Total Votes: <strong>{displayVoteCount}</strong>
             </span>
           </div>
           
           <div className="flex items-center gap-3">
-            {!isElectionEnded && totalEntries >= 1 && (
+            {!isElectionEnded && displayVoteCount >= 1 && (
               <button
                 onClick={() => setShowDemoModal(true)}
                 className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded px-3 py-1.5 text-sm font-medium transition"
@@ -496,7 +581,7 @@ export default function LotterySlotMachine({
             <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
               <span 
                 className={`rounded-full flex-shrink-0 ${
-                  currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+                  currentStatus === 'SPINNING' 
                     ? 'bg-green-500 animate-pulse' 
                     : currentStatus === 'PAUSED' 
                     ? 'bg-yellow-500' 
@@ -508,7 +593,7 @@ export default function LotterySlotMachine({
               />
               <span 
                 className={`font-semibold text-sm ${
-                  currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+                  currentStatus === 'SPINNING' 
                     ? 'text-green-700' 
                     : currentStatus === 'PAUSED' 
                     ? 'text-yellow-700' 
@@ -517,7 +602,7 @@ export default function LotterySlotMachine({
                     : 'text-gray-700'
                 }`}
               >
-                {currentStatus === 'SLOWING' ? 'SPINNING' : currentStatus}
+                {currentStatus}
               </span>
             </div>
           </div>
@@ -529,12 +614,1153 @@ export default function LotterySlotMachine({
         onClose={() => setShowDemoModal(false)}
         realBallNumbers={participants}
         realLuckyVotersCount={actualLuckyVotersCount}
-        realTotalEntries={totalEntries}
+        realTotalEntries={displayVoteCount}
         compact={compact}
       />
     </>
   );
 }
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// // 4D Slot Machine - CORRECT ANIMATION FLOW
+// // Flow: SPIN FAST → SLOW DOWN → ONE BOUNCE (align) → PAUSE (still) → REPEAT
+// import React, { useState, useEffect, useRef, useCallback } from 'react';
+// import { Users, Eye } from 'lucide-react';
+// import DemoWinnerReveal from './DemoWinnerReveal';
+
+// const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+
+// // SpinningDigit with 3 phases: spinning, falling (bounce once), stopped (still)
+// const SpinningDigit = ({ digit, phase }) => {
+//   // phase: 'spinning' | 'falling' | 'stopped'
+//   const [currentDigit, setCurrentDigit] = useState(digit || '0');
+//   const [nextDigit, setNextDigit] = useState('0');
+//   const [offsetY, setOffsetY] = useState(0);
+//   const animationRef = useRef(null);
+//   const phaseRef = useRef(phase);
+//   const hasBouncedRef = useRef(false);
+//   const digitHeight = 100;
+//   const spinSpeed = 35;
+  
+//   // Keep phase ref in sync
+//   useEffect(() => { 
+//     phaseRef.current = phase;
+//     if (phase === 'spinning') {
+//       hasBouncedRef.current = false; // Reset bounce flag when spinning starts
+//     }
+//   }, [phase]);
+
+//   // PHASE 1: Spinning animation
+//   useEffect(() => {
+//     if (phase === 'spinning') {
+//       hasBouncedRef.current = false;
+//       let offset = -Math.floor(Math.random() * digitHeight * 0.5);
+//       let currDigit = Math.floor(Math.random() * 10);
+//       let nxtDigit = Math.floor(Math.random() * 10);
+      
+//       setCurrentDigit(String(currDigit));
+//       setNextDigit(String(nxtDigit));
+//       setOffsetY(offset);
+      
+//       const animate = () => {
+//         if (phaseRef.current !== 'spinning') return;
+        
+//         offset -= spinSpeed;
+        
+//         if (offset <= -digitHeight) {
+//           offset += digitHeight;
+//           currDigit = nxtDigit;
+//           nxtDigit = Math.floor(Math.random() * 10);
+//           setCurrentDigit(String(currDigit));
+//           setNextDigit(String(nxtDigit));
+//         }
+        
+//         setOffsetY(offset);
+//         animationRef.current = requestAnimationFrame(animate);
+//       };
+      
+//       animationRef.current = requestAnimationFrame(animate);
+      
+//       return () => { 
+//         if (animationRef.current) {
+//           cancelAnimationFrame(animationRef.current);
+//           animationRef.current = null;
+//         }
+//       };
+//     }
+//   }, [phase]);
+
+//   // PHASE 2: Falling with ONE bounce - from first file exactly
+//   useEffect(() => {
+//     if (phase === 'falling' && !hasBouncedRef.current) {
+//       hasBouncedRef.current = true; // Mark that we're bouncing - only once!
+      
+//       if (animationRef.current) {
+//         cancelAnimationFrame(animationRef.current);
+//         animationRef.current = null;
+//       }
+      
+//       // Set the final digit
+//       setCurrentDigit(String(digit));
+//       setNextDigit(String((parseInt(digit) + 1) % 10));
+      
+//       const startOffset = offsetY;
+//       const fallDuration = 400;
+//       const bounceDuration = 200;
+//       const bounceHeight = 15;
+//       const startTime = Date.now();
+      
+//       const animateFall = () => {
+//         const elapsed = Date.now() - startTime;
+        
+//         if (elapsed < fallDuration) {
+//           // Fall phase - ease in to center
+//           const progress = elapsed / fallDuration;
+//           const easeIn = progress * progress;
+//           const newOffset = startOffset + (0 - startOffset) * easeIn;
+//           setOffsetY(newOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration / 2) {
+//           // Bounce up phase
+//           const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration) {
+//           // Settle down phase
+//           const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else {
+//           // Done bouncing - snap to center and stay
+//           setOffsetY(0);
+//           // Animation complete - no more frames needed
+//         }
+//       };
+      
+//       animationRef.current = requestAnimationFrame(animateFall);
+      
+//       return () => {
+//         if (animationRef.current) {
+//           cancelAnimationFrame(animationRef.current);
+//           animationRef.current = null;
+//         }
+//       };
+//     }
+//   }, [phase, digit]);
+
+//   // PHASE 3: Stopped - just stay still at center, NO bounce
+//   useEffect(() => {
+//     if (phase === 'stopped') {
+//       if (animationRef.current) {
+//         cancelAnimationFrame(animationRef.current);
+//         animationRef.current = null;
+//       }
+//       // Just show the digit at center - no animation
+//       setCurrentDigit(String(digit));
+//       setOffsetY(0);
+//     }
+//   }, [phase, digit]);
+
+//   return (
+//     <div 
+//       className="relative overflow-hidden rounded-xl flex-shrink-0" 
+//       style={{ 
+//         width: '75px', 
+//         height: '100px', 
+//         background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)', 
+//         boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 6px 15px rgba(0,0,0,0.5)', 
+//         border: '3px solid #1f2937' 
+//       }}
+//     >
+//       <div 
+//         className="absolute w-full" 
+//         style={{ transform: `translateY(${offsetY}px)` }}
+//       >
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
+//         </div>
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{nextDigit}</span>
+//         </div>
+//       </div>
+//       <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//     </div>
+//   );
+// };
+
+// export default function LotterySlotMachine({ 
+//   electionId,
+//   electionEndDate,
+//   luckyVotersCount = 1,
+//   isElectionEnded = false,
+//   winners = [],
+//   isActive = true,
+//   compact = false,
+// }) {
+//   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
+//   // Phase for each digit: 'spinning' | 'falling' | 'stopped'
+//   const [digitPhases, setDigitPhases] = useState(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
+  
+//   const [revealedWinners, setRevealedWinners] = useState([]);
+//   const [revealingWinner, setRevealingWinner] = useState(false);
+  
+//   const [participants, setParticipants] = useState([]);
+//   const [totalEntries, setTotalEntries] = useState(0);
+ 
+//   //const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+//   const [actualLuckyVotersCount, setActualLuckyVotersCount] = useState(luckyVotersCount);
+  
+//   const [showDemoModal, setShowDemoModal] = useState(false);
+//   const [currentStatus, setCurrentStatus] = useState('WAITING');
+  
+//   const fetchIntervalRef = useRef(null);
+//   const cycleTimeoutRef = useRef(null);
+//   const isMountedRef = useRef(true);
+//   const isRunningRef = useRef(false);
+
+//   const fetchBallNumbers = useCallback(async () => {
+//     if (!electionId) return;
+    
+//     try {
+//       /*eslint-disable*/
+//       setIsLoadingParticipants(true);
+      
+//       const response = await fetch(
+//         `${LOTTERY_API_URL}/lottery/elections/${electionId}/ball-numbers`
+//       );
+      
+//       if (!response.ok) throw new Error(`Failed: ${response.status}`);
+      
+//       const data = await response.json();
+      
+//       const ballNumbers = [];
+//       const nums = data.ballNumbers || data.ball_numbers || [];
+//       nums.forEach(ballNum => {
+//         if (ballNum) ballNumbers.push(String(ballNum));
+//       });
+      
+//       setParticipants(ballNumbers);
+//       setTotalEntries(data.totalParticipants || data.total_participants || ballNumbers.length);
+      
+//       if (data.luckyVotersCount || data.lucky_voters_count) {
+//         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
+//       }
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//     } finally {
+//       setIsLoadingParticipants(false);
+//     }
+//   }, [electionId]);
+
+//   useEffect(() => {
+//     isMountedRef.current = true;
+//     if (electionId && isActive) {
+//       fetchBallNumbers();
+//       fetchIntervalRef.current = setInterval(fetchBallNumbers, 10000);
+//     }
+//     return () => {
+//       isMountedRef.current = false;
+//       if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+//       if (cycleTimeoutRef.current) clearTimeout(cycleTimeoutRef.current);
+//     };
+//   }, [electionId, isActive, fetchBallNumbers]);
+
+//   const getRandomVoterId = useCallback(() => {
+//     if (participants.length > 0) {
+//       const idx = Math.floor(Math.random() * participants.length);
+//       return participants[idx].padStart(6, '0');
+//     }
+//     return String(Math.floor(100000 + Math.random() * 900000));
+//   }, [participants]);
+
+//   // Simple delay helper
+//   const delay = (ms) => new Promise(resolve => {
+//     cycleTimeoutRef.current = setTimeout(resolve, ms);
+//   });
+
+//   // Single cycle: SPIN → SLOW DOWN (stop one by one with bounce) → PAUSE (still) → REPEAT
+//   const runSingleCycle = useCallback(async () => {
+//     if (!isMountedRef.current || !isRunningRef.current) return;
+    
+//     // Get the ballot number for this cycle
+//     const ballotNumber = getRandomVoterId();
+//     const ballotDigits = ballotNumber.split('');
+    
+//     // STEP 1: Start all spinning
+//     setCurrentStatus('SPINNING');
+//     setDigitPhases(['spinning', 'spinning', 'spinning', 'spinning', 'spinning', 'spinning']);
+    
+//     // Spin fast for 1 second
+//     await delay(1000);
+//     if (!isMountedRef.current || !isRunningRef.current) return;
+    
+//     // STEP 2: Stop digits one by one with FALLING (bounce once to align)
+//     for (let i = 0; i < 6; i++) {
+//       if (!isMountedRef.current || !isRunningRef.current) return;
+      
+//       // Set the final digit value
+//       setDisplayDigits(prev => {
+//         const updated = [...prev];
+//         updated[i] = ballotDigits[i];
+//         return updated;
+//       });
+      
+//       // Trigger falling phase (will bounce once)
+//       setDigitPhases(prev => {
+//         const updated = [...prev];
+//         updated[i] = 'falling';
+//         return updated;
+//       });
+      
+//       // Wait for bounce animation (600ms) + small gap before next digit
+//       await delay(300);
+//     }
+    
+//     // Wait for last digit's bounce to complete
+//     await delay(400);
+//     if (!isMountedRef.current || !isRunningRef.current) return;
+    
+//     // STEP 3: All digits now STOPPED (no more bounce, just still)
+//     setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
+//     setCurrentStatus('PAUSED');
+    
+//     // PAUSE - show the number still for 2 seconds
+//     await delay(2000);
+    
+//     // Start next cycle if still running
+//     if (isMountedRef.current && isRunningRef.current) {
+//       runSingleCycle();
+//     }
+//   }, [getRandomVoterId]);
+
+//   // Start the continuous cycle
+//   const startCycle = useCallback(() => {
+//     if (isRunningRef.current) return;
+//     isRunningRef.current = true;
+//     runSingleCycle();
+//   }, [runSingleCycle]);
+
+//   // Stop everything cleanly
+//   const stopCycle = useCallback(() => {
+//     isRunningRef.current = false;
+//     if (cycleTimeoutRef.current) {
+//       clearTimeout(cycleTimeoutRef.current);
+//       cycleTimeoutRef.current = null;
+//     }
+//     setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
+//     setCurrentStatus('WAITING');
+//   }, []);
+
+//   // Control cycle based on conditions
+//   useEffect(() => {
+//     if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
+//       startCycle();
+//     } else {
+//       stopCycle();
+//     }
+    
+//     return () => stopCycle();
+//   }, [isActive, totalEntries, isElectionEnded, revealingWinner, startCycle, stopCycle]);
+
+//   // Winner reveal at election end
+//   useEffect(() => {
+//     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
+//       revealWinnersSequentially();
+//     }
+//   }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
+
+//   const revealWinnersSequentially = async () => {
+//     setRevealingWinner(true);
+//     stopCycle();
+    
+//     for (let i = 0; i < winners.length; i++) {
+//       const winner = winners[i];
+//       const winnerBallNumber = String(
+//         winner.ball_number || winner.ballNumber || winner.oddjob_voter_id || 
+//         winner.oddjobVoterId || winner.voterId || winner.voter_id || winner.id || '000000'
+//       ).padStart(6, '0');
+      
+//       const winnerDigits = winnerBallNumber.split('');
+      
+//       // Spin all
+//       setCurrentStatus('SPINNING');
+//       setDigitPhases(['spinning', 'spinning', 'spinning', 'spinning', 'spinning', 'spinning']);
+      
+//       await delay(1500);
+      
+//       // Stop one by one with bounce
+//       for (let j = 0; j < 6; j++) {
+//         setDisplayDigits(prev => { 
+//           const u = [...prev]; 
+//           u[j] = winnerDigits[j]; 
+//           return u; 
+//         });
+//         setDigitPhases(prev => { 
+//           const u = [...prev]; 
+//           u[j] = 'falling'; 
+//           return u; 
+//         });
+//         await delay(400);
+//       }
+      
+//       // All stopped
+//       await delay(300);
+//       setDigitPhases(['stopped', 'stopped', 'stopped', 'stopped', 'stopped', 'stopped']);
+//       setCurrentStatus('WINNER');
+      
+//       setRevealedWinners(prev => [...prev, {
+//         ...winner,
+//         ballNumber: winnerBallNumber,
+//         rank: i + 1
+//       }]);
+      
+//       if (i < winners.length - 1) {
+//         await delay(2500);
+//       }
+//     }
+    
+//     setCurrentStatus('COMPLETED');
+//     setRevealingWinner(false);
+//   };
+
+//   const formatCountdown = () => {
+//     if (!electionEndDate) return '--/--/----';
+//     const endDate = new Date(electionEndDate);
+//     const day = String(endDate.getDate()).padStart(2, '0');
+//     const month = String(endDate.getMonth() + 1).padStart(2, '0');
+//     const year = endDate.getFullYear();
+//     return `${day}/${month}/${year}`;
+//   };
+
+//   const getOrdinal = (n) => {
+//     const s = ['th', 'st', 'nd', 'rd'];
+//     const v = n % 100;
+//     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+//   };
+
+//   return (
+//     <>
+//       <div 
+//         className="rounded-xl overflow-visible"
+//         style={{
+//           background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)',
+//           minWidth: '580px',
+//           width: '100%'
+//         }}
+//       >
+//         {/* Header */}
+//         <div 
+//           className="flex justify-between items-center px-5 py-4"
+//           style={{ background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 100%)' }}
+//         >
+//           <div className="flex items-center gap-2">
+//             <span className="text-gray-900 font-semibold text-sm">Date:</span>
+//             <div 
+//               className="rounded px-3 py-1"
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className="font-bold text-lg"
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '1px'
+//                 }}
+//               >
+//                 {formatCountdown()}
+//               </span>
+//             </div>
+//           </div>
+
+//           <div className="flex items-center gap-2">
+//             <span className="text-gray-900 font-semibold text-sm">Lucky Voters Count:</span>
+//             <div 
+//               className="rounded px-3 py-1"
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className="font-bold text-lg"
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '2px'
+//                 }}
+//               >
+//                 {String(actualLuckyVotersCount).padStart(2, '0')}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Main Display */}
+//         <div className="px-5 py-6">
+//           <div 
+//             className="flex justify-center items-center gap-3 p-6"
+//             style={{ 
+//               borderRadius: '12px',
+//               background: '#0a0a0a',
+//               boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.4)',
+//               border: '3px solid #333',
+//               minHeight: '140px',
+//             }}
+//           >
+//             {displayDigits.map((digit, index) => (
+//               <SpinningDigit
+//                 key={`digit-${index}`}
+//                 digit={digit}
+//                 phase={digitPhases[index]}
+//               />
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* Winners */}
+//         {revealedWinners.length > 0 && (
+//           <div 
+//             className="border-t-2 border-yellow-600 px-4 py-4"
+//             style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//           >
+//             <h3 className="text-yellow-900 font-bold mb-2 text-center text-lg">
+//               🏆 LUCKY VOTERS WINNERS 🏆
+//             </h3>
+            
+//             <div className="space-y-1.5">
+//               {revealedWinners.map((winner, index) => (
+//                 <div 
+//                   key={index}
+//                   className="bg-white rounded-lg flex items-center justify-between shadow-md px-4 py-3"
+//                 >
+//                   <div className="flex items-center gap-2">
+//                     <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow w-10 h-10 text-sm">
+//                       {getOrdinal(index + 1)}
+//                     </div>
+//                     <div>
+//                       <p className="font-bold text-gray-900">
+//                         {winner.displayName || winner.username || winner.name || 'Lucky Voter'}
+//                       </p>
+//                       <p className="text-gray-500 font-mono text-sm">
+//                         Ball #: {winner.ballNumber}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <span className="text-3xl">🏆</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Footer */}
+//         <div 
+//           className="border-t border-yellow-700 flex justify-between items-center px-4 py-3"
+//           style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//         >
+//           <div className="flex items-center gap-1.5 text-gray-900">
+//             <Users className="w-4 h-4" />
+//             <span className="text-sm">
+//               Total Votes: <strong>{totalEntries}</strong>
+//             </span>
+//           </div>
+          
+//           <div className="flex items-center gap-3">
+//             {!isElectionEnded && totalEntries >= 1 && (
+//               <button
+//                 onClick={() => setShowDemoModal(true)}
+//                 className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded px-3 py-1.5 text-sm font-medium transition"
+//               >
+//                 <Eye className="w-4 h-4" />
+//                 <span>Demo</span>
+//               </button>
+//             )}
+            
+//             <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
+//               <span 
+//                 className={`rounded-full flex-shrink-0 ${
+//                   currentStatus === 'SPINNING' 
+//                     ? 'bg-green-500 animate-pulse' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'bg-yellow-500' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'bg-blue-500' 
+//                     : 'bg-gray-500'
+//                 }`}
+//                 style={{ width: '10px', height: '10px' }}
+//               />
+//               <span 
+//                 className={`font-semibold text-sm ${
+//                   currentStatus === 'SPINNING' 
+//                     ? 'text-green-700' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'text-yellow-700' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'text-blue-700' 
+//                     : 'text-gray-700'
+//                 }`}
+//               >
+//                 {currentStatus}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <DemoWinnerReveal
+//         isOpen={showDemoModal}
+//         onClose={() => setShowDemoModal(false)}
+//         realBallNumbers={participants}
+//         realLuckyVotersCount={actualLuckyVotersCount}
+//         realTotalEntries={totalEntries}
+//         compact={compact}
+//       />
+//     </>
+//   );
+// }
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// // 4D Slot Machine with GRADUAL SLOWDOWN + PAUSE ANIMATION
+// // Flow: Fast spin → Gradually slow down → Stop with bounce → Pause → Repeat
+// import React, { useState, useEffect, useRef, useCallback } from 'react';
+// import { Users, Eye } from 'lucide-react';
+// import DemoWinnerReveal from './DemoWinnerReveal';
+
+// const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+
+// // SpinningDigit - EXACT copy from RealWinnerReveal.jsx
+// const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
+//   const [currentDigit, setCurrentDigit] = useState(digit || '0');
+//   const [nextDigit, setNextDigit] = useState('0');
+//   const [offsetY, setOffsetY] = useState(0);
+//   const animationRef = useRef(null);
+//   const isSpinningRef = useRef(isSpinning);
+//   const digitHeight = 100;
+//   const spinSpeed = 35;
+  
+//   useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
+
+//   // Spinning animation
+//   useEffect(() => {
+//     if (isSpinning && !isFalling) {
+//       let offset = -Math.floor(Math.random() * digitHeight * 0.7);
+//       let currDigit = Math.floor(Math.random() * 10);
+//       let nxtDigit = Math.floor(Math.random() * 10);
+//       setCurrentDigit(String(currDigit));
+//       setNextDigit(String(nxtDigit));
+//       setOffsetY(offset);
+//       const animate = () => {
+//         if (!isSpinningRef.current) return;
+//         offset -= spinSpeed;
+//         if (offset <= -digitHeight) {
+//           offset += digitHeight;
+//           currDigit = nxtDigit;
+//           nxtDigit = Math.floor(Math.random() * 10);
+//           setCurrentDigit(String(currDigit));
+//           setNextDigit(String(nxtDigit));
+//         }
+//         setOffsetY(offset);
+//         animationRef.current = requestAnimationFrame(animate);
+//       };
+//       animationRef.current = requestAnimationFrame(animate);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+//     }
+//   }, [isSpinning, isFalling]);
+
+//   // Falling/bounce animation - EXACT from first file
+//   useEffect(() => {
+//     if (isFalling && finalDigit !== undefined) {
+//       if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
+//       setCurrentDigit(String(finalDigit));
+//       setNextDigit(String((parseInt(finalDigit) + 1) % 10));
+//       const startOffset = offsetY;
+//       const fallDuration = 400;
+//       const bounceDuration = 200;
+//       const bounceHeight = 15;
+//       const startTime = Date.now();
+//       const animateFall = () => {
+//         const elapsed = Date.now() - startTime;
+//         if (elapsed < fallDuration) {
+//           const progress = elapsed / fallDuration;
+//           const easeIn = progress * progress;
+//           const newOffset = startOffset + (0 - startOffset) * easeIn;
+//           setOffsetY(newOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration / 2) {
+//           const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration) {
+//           const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else { setOffsetY(0); }
+//       };
+//       animationRef.current = requestAnimationFrame(animateFall);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+//     }
+//   }, [isFalling, finalDigit]);
+
+//   // Reset when not spinning and not falling
+//   useEffect(() => {
+//     if (!isSpinning && !isFalling) { setOffsetY(0); setCurrentDigit(digit || '0'); }
+//   }, [isSpinning, isFalling, digit]);
+
+//   return (
+//     <div 
+//       className="relative overflow-hidden rounded-xl flex-shrink-0" 
+//       style={{ 
+//         width: '75px', 
+//         height: '100px', 
+//         background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)', 
+//         boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 6px 15px rgba(0,0,0,0.5)', 
+//         border: '3px solid #1f2937' 
+//       }}
+//     >
+//       <div className="absolute w-full" style={{ transform: `translateY(${offsetY}px)` }}>
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
+//         </div>
+//         <div className="flex items-center justify-center" style={{ height: '100px' }}>
+//           <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{nextDigit}</span>
+//         </div>
+//       </div>
+//       <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//     </div>
+//   );
+// };
+
+// export default function LotterySlotMachine({ 
+//   electionId,
+//   electionEndDate,
+//   luckyVotersCount = 1,
+//   isElectionEnded = false,
+//   winners = [],
+//   isActive = true,
+//   compact = false,
+// }) {
+//   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
+//   const [digitSpinning, setDigitSpinning] = useState([false, false, false, false, false, false]);
+//   const [digitFalling, setDigitFalling] = useState([false, false, false, false, false, false]);
+//   const [finalDigits, setFinalDigits] = useState(['0', '0', '0', '0', '0', '0']);
+  
+//   const [revealedWinners, setRevealedWinners] = useState([]);
+//   const [revealingWinner, setRevealingWinner] = useState(false);
+  
+//   const [participants, setParticipants] = useState([]);
+//   const [totalEntries, setTotalEntries] = useState(0);
+//   /*eslint-disable*/
+//   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+//   const [actualLuckyVotersCount, setActualLuckyVotersCount] = useState(luckyVotersCount);
+  
+//   const [showDemoModal, setShowDemoModal] = useState(false);
+//   const [currentStatus, setCurrentStatus] = useState('WAITING');
+  
+//   const fetchIntervalRef = useRef(null);
+//   const continuousCycleRef = useRef(null);
+//   const isMountedRef = useRef(true);
+
+//   const fetchBallNumbers = useCallback(async () => {
+//     if (!electionId) return;
+    
+//     try {
+//       setIsLoadingParticipants(true);
+      
+//       const response = await fetch(
+//         `${LOTTERY_API_URL}/lottery/elections/${electionId}/ball-numbers`
+//       );
+      
+//       if (!response.ok) throw new Error(`Failed: ${response.status}`);
+      
+//       const data = await response.json();
+//       console.log('🎰 Ball numbers fetched:', data);
+      
+//       const ballNumbers = [];
+//       const nums = data.ballNumbers || data.ball_numbers || [];
+//       nums.forEach(ballNum => {
+//         if (ballNum) ballNumbers.push(String(ballNum));
+//       });
+      
+//       setParticipants(ballNumbers);
+//       setTotalEntries(data.totalParticipants || data.total_participants || ballNumbers.length);
+      
+//       if (data.luckyVotersCount || data.lucky_voters_count) {
+//         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
+//       }
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//     } finally {
+//       setIsLoadingParticipants(false);
+//     }
+//   }, [electionId]);
+
+//   useEffect(() => {
+//     isMountedRef.current = true;
+//     if (electionId && isActive) {
+//       fetchBallNumbers();
+//       fetchIntervalRef.current = setInterval(fetchBallNumbers, 10000);
+//     }
+//     return () => {
+//       isMountedRef.current = false;
+//       if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+//     };
+//   }, [electionId, isActive, fetchBallNumbers]);
+
+//   const getRandomVoterId = useCallback(() => {
+//     if (participants.length > 0) {
+//       const idx = Math.floor(Math.random() * participants.length);
+//       return participants[idx].padStart(6, '0');
+//     }
+//     return String(Math.floor(100000 + Math.random() * 900000));
+//   }, [participants]);
+
+//   // Single ballot reveal: Fast spin → Gradual slowdown → Bounce stop → Pause
+//   const revealSingleBallot = useCallback(async () => {
+//     if (!isMountedRef.current) return;
+    
+//     const ballotNumber = getRandomVoterId();
+//     const ballotDigits = ballotNumber.split('');
+    
+//     // PHASE 1: Fast spinning (1 second)
+//     setCurrentStatus('SPINNING');
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setFinalDigits(ballotDigits);
+//     setDigitSpinning([true, true, true, true, true, true]);
+    
+//     await new Promise(r => setTimeout(r, 1000));
+//     if (!isMountedRef.current) return;
+    
+//     // PHASE 2: Gradual slowdown - stop each digit one by one with delay
+//     setCurrentStatus('SLOWING');
+    
+//     for (let i = 0; i < 6; i++) {
+//       if (!isMountedRef.current) return;
+      
+//       // Let this digit spin a bit more while slowing (300ms per digit)
+//       await new Promise(r => setTimeout(r, 300));
+      
+//       // Stop spinning and start falling animation
+//       setDigitSpinning(prev => {
+//         const updated = [...prev];
+//         updated[i] = false;
+//         return updated;
+//       });
+//       setDigitFalling(prev => {
+//         const updated = [...prev];
+//         updated[i] = true;
+//         return updated;
+//       });
+      
+//       // Update display digit
+//       setDisplayDigits(prev => {
+//         const updated = [...prev];
+//         updated[i] = ballotDigits[i];
+//         return updated;
+//       });
+//     }
+    
+//     // Wait for last bounce animation to complete (600ms)
+//     await new Promise(r => setTimeout(r, 600));
+//     if (!isMountedRef.current) return;
+    
+//     // PHASE 3: Pause - show the number clearly
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setCurrentStatus('PAUSED');
+    
+//     // Pause for 2 seconds to see the number clearly
+//     await new Promise(r => setTimeout(r, 2000));
+    
+//   }, [getRandomVoterId]);
+
+//   // Continuous cycle: spin -> slowdown -> pause -> repeat
+//   const startContinuousCycle = useCallback(async () => {
+//     continuousCycleRef.current = true;
+    
+//     while (continuousCycleRef.current && isMountedRef.current) {
+//       await revealSingleBallot();
+//     }
+//   }, [revealSingleBallot]);
+
+//   const stopContinuousCycle = useCallback(() => {
+//     continuousCycleRef.current = false;
+//     setDigitSpinning([false, false, false, false, false, false]);
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setCurrentStatus('WAITING');
+//   }, []);
+
+//   // Start/stop continuous spinning based on conditions
+//   useEffect(() => {
+//     if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
+//       startContinuousCycle();
+//     } else {
+//       stopContinuousCycle();
+//     }
+    
+//     return () => stopContinuousCycle();
+//   }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousCycle, stopContinuousCycle]);
+
+//   // Winner reveal at election end
+//   useEffect(() => {
+//     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
+//       revealWinnersSequentially();
+//     }
+//   }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
+
+//   const revealWinnersSequentially = async () => {
+//     setRevealingWinner(true);
+//     stopContinuousCycle();
+    
+//     for (let i = 0; i < winners.length; i++) {
+//       const winner = winners[i];
+//       const winnerBallNumber = String(
+//         winner.ball_number || winner.ballNumber || winner.oddjob_voter_id || 
+//         winner.oddjobVoterId || winner.voterId || winner.voter_id || winner.id || '000000'
+//       ).padStart(6, '0');
+      
+//       const winnerDigits = winnerBallNumber.split('');
+      
+//       // Spin all
+//       setCurrentStatus('SPINNING');
+//       setDigitFalling([false, false, false, false, false, false]);
+//       setDigitSpinning([true, true, true, true, true, true]);
+      
+//       await new Promise(r => setTimeout(r, 1500));
+      
+//       setFinalDigits(winnerDigits);
+//       setCurrentStatus('SLOWING');
+      
+//       // Stop one by one with slowdown effect
+//       for (let j = 0; j < 6; j++) {
+//         await new Promise(r => setTimeout(r, 400));
+//         setDigitSpinning(prev => { const u = [...prev]; u[j] = false; return u; });
+//         setDigitFalling(prev => { const u = [...prev]; u[j] = true; return u; });
+//         setDisplayDigits(prev => { const u = [...prev]; u[j] = winnerDigits[j]; return u; });
+//       }
+      
+//       await new Promise(r => setTimeout(r, 500));
+//       setDigitFalling([false, false, false, false, false, false]);
+//       setCurrentStatus('WINNER');
+      
+//       setRevealedWinners(prev => [...prev, {
+//         ...winner,
+//         ballNumber: winnerBallNumber,
+//         rank: i + 1
+//       }]);
+      
+//       if (i < winners.length - 1) {
+//         await new Promise(r => setTimeout(r, 2500));
+//       }
+//     }
+    
+//     setCurrentStatus('COMPLETED');
+//     setRevealingWinner(false);
+//   };
+
+//   const formatCountdown = () => {
+//     if (!electionEndDate) return '--/--/----';
+//     const endDate = new Date(electionEndDate);
+//     const day = String(endDate.getDate()).padStart(2, '0');
+//     const month = String(endDate.getMonth() + 1).padStart(2, '0');
+//     const year = endDate.getFullYear();
+//     return `${day}/${month}/${year}`;
+//   };
+
+//   const getOrdinal = (n) => {
+//     const s = ['th', 'st', 'nd', 'rd'];
+//     const v = n % 100;
+//     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+//   };
+
+//   return (
+//     <>
+//       {/* FIXED: Minimum width ensures all 6 digits fit properly */}
+//       <div 
+//         className="rounded-xl overflow-visible"
+//         style={{
+//           background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)',
+//           minWidth: '580px', // 6 digits (75px each) + gaps (12px × 5) + padding (48px) = ~530px minimum
+//           width: '100%'
+//         }}
+//       >
+//         {/* Header */}
+//         <div 
+//           className="flex justify-between items-center px-5 py-4"
+//           style={{ background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 100%)' }}
+//         >
+//           <div className="flex items-center gap-2">
+//             <span className="text-gray-900 font-semibold text-sm">Date:</span>
+//             <div 
+//               className="rounded px-3 py-1"
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className="font-bold text-lg"
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '1px'
+//                 }}
+//               >
+//                 {formatCountdown()}
+//               </span>
+//             </div>
+//           </div>
+
+//           <div className="flex items-center gap-2">
+//             <span className="text-gray-900 font-semibold text-sm">Lucky Voters Count:</span>
+//             <div 
+//               className="rounded px-3 py-1"
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className="font-bold text-lg"
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '2px'
+//                 }}
+//               >
+//                 {String(actualLuckyVotersCount).padStart(2, '0')}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Main Display - Black box with proper size for 6 digits */}
+//         <div className="px-5 py-6">
+//           <div 
+//             className="flex justify-center items-center gap-3 p-6"
+//             style={{ 
+//               borderRadius: '12px',
+//               background: '#0a0a0a',
+//               boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.4)',
+//               border: '3px solid #333',
+//               minHeight: '140px',
+//             }}
+//           >
+//             {displayDigits.map((digit, index) => (
+//               <SpinningDigit
+//                 key={`digit-${index}`}
+//                 digit={digit}
+//                 isSpinning={digitSpinning[index]}
+//                 isFalling={digitFalling[index]}
+//                 finalDigit={finalDigits[index]}
+//               />
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* Winners */}
+//         {revealedWinners.length > 0 && (
+//           <div 
+//             className="border-t-2 border-yellow-600 px-4 py-4"
+//             style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//           >
+//             <h3 className="text-yellow-900 font-bold mb-2 text-center text-lg">
+//               🏆 LUCKY VOTERS WINNERS 🏆
+//             </h3>
+            
+//             <div className="space-y-1.5">
+//               {revealedWinners.map((winner, index) => (
+//                 <div 
+//                   key={index}
+//                   className="bg-white rounded-lg flex items-center justify-between shadow-md px-4 py-3"
+//                 >
+//                   <div className="flex items-center gap-2">
+//                     <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow w-10 h-10 text-sm">
+//                       {getOrdinal(index + 1)}
+//                     </div>
+//                     <div>
+//                       <p className="font-bold text-gray-900">
+//                         {winner.displayName || winner.username || winner.name || 'Lucky Voter'}
+//                       </p>
+//                       <p className="text-gray-500 font-mono text-sm">
+//                         Ball #: {winner.ballNumber}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <span className="text-3xl">🏆</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Footer */}
+//         <div 
+//           className="border-t border-yellow-700 flex justify-between items-center px-4 py-3"
+//           style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//         >
+//           <div className="flex items-center gap-1.5 text-gray-900">
+//             <Users className="w-4 h-4" />
+//             <span className="text-sm">
+//               Total Votes: <strong>{totalEntries}</strong>
+//             </span>
+//           </div>
+          
+//           <div className="flex items-center gap-3">
+//             {!isElectionEnded && totalEntries >= 1 && (
+//               <button
+//                 onClick={() => setShowDemoModal(true)}
+//                 className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded px-3 py-1.5 text-sm font-medium transition"
+//               >
+//                 <Eye className="w-4 h-4" />
+//                 <span>Demo</span>
+//               </button>
+//             )}
+            
+//             <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
+//               <span 
+//                 className={`rounded-full flex-shrink-0 ${
+//                   currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+//                     ? 'bg-green-500 animate-pulse' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'bg-yellow-500' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'bg-blue-500' 
+//                     : 'bg-gray-500'
+//                 }`}
+//                 style={{ width: '10px', height: '10px' }}
+//               />
+//               <span 
+//                 className={`font-semibold text-sm ${
+//                   currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+//                     ? 'text-green-700' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'text-yellow-700' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'text-blue-700' 
+//                     : 'text-gray-700'
+//                 }`}
+//               >
+//                 {currentStatus === 'SLOWING' ? 'SPINNING' : currentStatus}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <DemoWinnerReveal
+//         isOpen={showDemoModal}
+//         onClose={() => setShowDemoModal(false)}
+//         realBallNumbers={participants}
+//         realLuckyVotersCount={actualLuckyVotersCount}
+//         realTotalEntries={totalEntries}
+//         compact={compact}
+//       />
+//     </>
+//   );
+// }
+
+
+
+
+
 // // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
 // // 4D Slot Machine with GRADUAL SLOWDOWN + PAUSE ANIMATION
 // // Flow: Fast spin → Gradually slow down → Stop with bounce → Pause → Repeat
@@ -1121,6 +2347,16 @@ export default function LotterySlotMachine({
 //     </>
 //   );
 // }
+
+
+
+
+
+
+
+
+
+
 //last working code only to pause and animation above code
 // // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
 // // 4D Slot Machine
