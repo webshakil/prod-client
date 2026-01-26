@@ -1,5 +1,5 @@
 // src/pages/voting/payment/ElectionPaymentPage.jsx
-// ✅ COMPLETE WORKING VERSION with Google Pay
+// ✅ COMPLETE WORKING VERSION with Google Pay and Paddle (Wallet Commented Out)
 
 import React, { useState, useEffect } from 'react';
 /*eslint-disable*/
@@ -64,8 +64,32 @@ function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }
         </div>
       </button>
 
-      {/* Wallet Payment */}
+      {/* Paddle Payment */}
       <button
+        onClick={() => onMethodChange('paddle')}
+        className={`w-full p-4 rounded-lg border-2 transition-all ${
+          selectedMethod === 'paddle'
+            ? 'border-purple-600 bg-purple-50'
+            : 'border-gray-200 hover:border-purple-300'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="24" height="24" rx="4" fill="#7C3AED"/>
+            <path d="M7 17V7h4.5c1.38 0 2.5.56 3.36 1.68.86 1.12 1.29 2.52 1.29 4.2 0 1.68-.43 3.08-1.29 4.2-.86 1.12-1.98 1.68-3.36 1.68H7zm2-2h2.5c.83 0 1.5-.35 2-1.05.5-.7.75-1.58.75-2.63 0-1.05-.25-1.93-.75-2.63-.5-.7-1.17-1.05-2-1.05H9v7.36z" fill="white"/>
+          </svg>
+          <div className="text-left">
+            <p className="font-semibold">Paddle</p>
+            <p className="text-sm text-gray-600">Secure global payments</p>
+          </div>
+          {selectedMethod === 'paddle' && (
+            <CheckCircle className="ml-auto text-purple-600" size={20} />
+          )}
+        </div>
+      </button>
+
+      {/* Wallet Payment - COMMENTED OUT */}
+      {/* <button
         onClick={() => onMethodChange('wallet')}
         className={`w-full p-4 rounded-lg border-2 transition-all ${
           selectedMethod === 'wallet'
@@ -83,7 +107,7 @@ function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }
             <CheckCircle className="ml-auto text-green-600" size={20} />
           )}
         </div>
-      </button>
+      </button> */}
     </div>
   );
 }
@@ -237,8 +261,6 @@ function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) 
   );
 }
 
-
-// ✅ COMPLETE WORKING GOOGLE PAY IMPLEMENTATION
 
 // ✅ COMPLETE WORKING GOOGLE PAY IMPLEMENTATION
 function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
@@ -413,7 +435,7 @@ function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
               <p className="text-yellow-800 text-sm mb-3">
                 Use Chrome or an Android device, sign in to your Google account, and add a supported card to Google Pay to complete your payment.
 
-Google Pay works only on browsers and devices that support Google’s secure payment system. Browsers like Firefox or Brave currently don’t support Google Pay, so the option may not appear there.
+Google Pay works only on browsers and devices that support Google's secure payment system. Browsers like Firefox or Brave currently don't support Google Pay, so the option may not appear there.
               </p>
             </div>
           </div>
@@ -470,6 +492,44 @@ Google Pay works only on browsers and devices that support Google’s secure pay
 }
 
 
+// ✅ PADDLE PAYMENT COMPONENT
+function PaddlePaymentForm({ amount }) {
+  return (
+    <div className="space-y-4">
+      <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <Info className="text-orange-600 flex-shrink-0 mt-0.5" size={24} />
+          <div>
+            <p className="text-orange-900 font-semibold mb-2">Approval Required</p>
+            <p className="text-orange-800 text-sm mb-3">
+              Paddle payment integration requires administrative approval before it can be used. Please contact support or use an alternative payment method.
+            </p>
+            <div className="mt-4 pt-4 border-t border-orange-200">
+              <p className="text-orange-700 text-xs">
+                Payment amount: <span className="font-semibold">${amount.toFixed(2)}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+        <p className="text-blue-900 font-semibold mb-3 text-sm">Available Payment Methods:</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-blue-800 text-sm">
+            <CheckCircle size={16} className="text-blue-600" />
+            <span>Credit/Debit Card (Stripe)</span>
+          </div>
+          <div className="flex items-center gap-2 text-blue-800 text-sm">
+            <CheckCircle size={16} className="text-blue-600" />
+            <span>Google Pay</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
   const [paymentMethod, setPaymentMethod] = useState('stripe');
@@ -482,23 +542,24 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
 
   const [payForElection] = usePayForElectionMutation();
 
-  const handleWalletPayment = async () => {
-    if (walletBalance < amount) {
-      setError('Insufficient wallet balance. Please deposit funds first or use card payment.');
-      return;
-    }
+  // WALLET PAYMENT HANDLER - COMMENTED OUT
+  // const handleWalletPayment = async () => {
+  //   if (walletBalance < amount) {
+  //     setError('Insufficient wallet balance. Please deposit funds first or use card payment.');
+  //     return;
+  //   }
 
-    setProcessing(true);
-    setError(null);
+  //   setProcessing(true);
+  //   setError(null);
 
-    try {
-      setError('Wallet payment coming soon! Please use card payment for now.');
-      setProcessing(false);
-    } catch (err) {
-      setError(err.data?.error || 'Wallet payment failed');
-      setProcessing(false);
-    }
-  };
+  //   try {
+  //     setError('Wallet payment coming soon! Please use card payment for now.');
+  //     setProcessing(false);
+  //   } catch (err) {
+  //     setError(err.data?.error || 'Wallet payment failed');
+  //     setProcessing(false);
+  //   }
+  // };
 
   const handlePaymentSuccess = (paymentIntentId) => {
     console.log('✅ Payment successful! Payment Intent ID:', paymentIntentId);
@@ -595,7 +656,12 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
             </Elements>
           )}
 
-          {paymentMethod === 'wallet' && (
+          {paymentMethod === 'paddle' && (
+            <PaddlePaymentForm amount={amount} />
+          )}
+
+          {/* WALLET PAYMENT SECTION - COMMENTED OUT */}
+          {/* {paymentMethod === 'wallet' && (
             <button
               onClick={handleWalletPayment}
               disabled={processing || walletBalance < amount}
@@ -616,7 +682,7 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
                 `Pay $${amount.toFixed(2)} from Wallet`
               )}
             </button>
-          )}
+          )} */}
 
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -629,6 +695,638 @@ export default function ElectionPaymentPage({ electionId, amount, currency, onPa
     </div>
   );
 }
+//last workable code only to add paddle and eliminate wallet above code
+// // src/pages/voting/payment/ElectionPaymentPage.jsx
+// // ✅ COMPLETE WORKING VERSION with Google Pay
+
+// import React, { useState, useEffect } from 'react';
+// /*eslint-disable*/
+// import { useSelector } from 'react-redux';
+// import { CreditCard, Wallet, DollarSign, Loader, CheckCircle, AlertCircle, Info } from 'lucide-react';
+// import { loadStripe } from '@stripe/stripe-js';
+// import { Elements, CardElement, useStripe, useElements, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
+// import { useConfirmElectionPaymentMutation, useGetWalletQuery, usePayForElectionMutation } from '../../../redux/api/walllet/wallletApi';
+
+// const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLIC_KEY);
+
+
+// function PaymentMethodSelector({ selectedMethod, onMethodChange, walletBalance }) {
+//   return (
+//     <div className="space-y-4 mb-6">
+//       <h3 className="font-semibold text-gray-700 mb-3">Select Payment Method</h3>
+
+//       {/* Stripe Card Payment */}
+//       <button
+//         onClick={() => onMethodChange('stripe')}
+//         className={`w-full p-4 rounded-lg border-2 transition-all ${
+//           selectedMethod === 'stripe'
+//             ? 'border-blue-600 bg-blue-50'
+//             : 'border-gray-200 hover:border-blue-300'
+//         }`}
+//       >
+//         <div className="flex items-center gap-3">
+//           <CreditCard className={selectedMethod === 'stripe' ? 'text-blue-600' : 'text-gray-600'} />
+//           <div className="text-left">
+//             <p className="font-semibold">Credit/Debit Card</p>
+//             <p className="text-sm text-gray-600">Pay securely with Stripe</p>
+//           </div>
+//           {selectedMethod === 'stripe' && (
+//             <CheckCircle className="ml-auto text-blue-600" size={20} />
+//           )}
+//         </div>
+//       </button>
+
+//       {/* Google Pay */}
+//       <button
+//         onClick={() => onMethodChange('google_pay')}
+//         className={`w-full p-4 rounded-lg border-2 transition-all ${
+//           selectedMethod === 'google_pay'
+//             ? 'border-green-600 bg-green-50'
+//             : 'border-gray-200 hover:border-green-300'
+//         }`}
+//       >
+//         <div className="flex items-center gap-3">
+//           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+//             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+//             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+//             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+//             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+//           </svg>
+//           <div className="text-left">
+//             <p className="font-semibold">Google Pay</p>
+//             <p className="text-sm text-gray-600">Fast & secure payment</p>
+//           </div>
+//           {selectedMethod === 'google_pay' && (
+//             <CheckCircle className="ml-auto text-green-600" size={20} />
+//           )}
+//         </div>
+//       </button>
+
+//       {/* Wallet Payment */}
+//       <button
+//         onClick={() => onMethodChange('wallet')}
+//         className={`w-full p-4 rounded-lg border-2 transition-all ${
+//           selectedMethod === 'wallet'
+//             ? 'border-green-600 bg-green-50'
+//             : 'border-gray-200 hover:border-green-300'
+//         }`}
+//       >
+//         <div className="flex items-center gap-3">
+//           <Wallet className={selectedMethod === 'wallet' ? 'text-green-600' : 'text-gray-600'} />
+//           <div className="text-left flex-1">
+//             <p className="font-semibold">Vottery Wallet</p>
+//             <p className="text-sm text-gray-600">Balance: ${walletBalance?.toFixed(2) || '0.00'}</p>
+//           </div>
+//           {selectedMethod === 'wallet' && (
+//             <CheckCircle className="ml-auto text-green-600" size={20} />
+//           )}
+//         </div>
+//       </button>
+//     </div>
+//   );
+// }
+
+
+// function StripeCardForm({ amount, electionId, regionCode, onSuccess, onError }) {
+//   const stripe = useStripe();
+//   const elements = useElements();
+//   const [processing, setProcessing] = useState(false);
+  
+//   const [payForElection] = usePayForElectionMutation();
+//   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
+//   const { refetch: refetchWallet } = useGetWalletQuery();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+    
+//     if (!stripe || !elements) {
+//       onError('Stripe not loaded. Please refresh the page.');
+//       return;
+//     }
+
+//     setProcessing(true);
+
+//     try {
+//       console.log('💳 Step 1: Creating payment intent...');
+      
+//       const result = await payForElection({
+//         electionId,
+//         regionCode: regionCode || 'region_1_us_canada',
+//         paymentGateway: 'stripe'
+//       }).unwrap();
+
+//       console.log('✅ Payment intent created:', result);
+
+//       if (result.alreadyPaid || result.payment?.status === 'succeeded') {
+//         console.log('✅ Payment already completed');
+//         setProcessing(false);
+//         onSuccess(result.payment.payment_intent_id || result.paymentIntentId);
+//         return;
+//       }
+
+//       if (!result.clientSecret) {
+//         console.error('❌ No client secret received:', result);
+//         throw new Error('Payment initialization failed. No client secret received.');
+//       }
+
+//       console.log('🔵 Step 2: Confirming payment with Stripe...');
+
+//       const { error, paymentIntent } = await stripe.confirmCardPayment(result.clientSecret, {
+//         payment_method: {
+//           card: elements.getElement(CardElement),
+//         },
+//       });
+
+//       if (error) {
+//         console.error('❌ Stripe confirmation error:', error);
+//         onError(error.message);
+//         setProcessing(false);
+//         return;
+//       }
+
+//       console.log('✅ Stripe payment intent status:', paymentIntent.status);
+
+//       if (paymentIntent.status === 'succeeded') {
+//         console.log('✅ Payment succeeded! Payment Intent ID:', paymentIntent.id);
+        
+//         try {
+//           console.log('🔵 Step 3: Confirming payment in backend via Redux...');
+          
+//           const confirmResult = await confirmElectionPayment({
+//             paymentIntentId: paymentIntent.id,
+//             electionId: electionId
+//           }).unwrap();
+          
+//           console.log('✅ Backend confirmation successful:', confirmResult);
+          
+//           await refetchWallet();
+//           console.log('✅ Wallet data refreshed');
+          
+//           setProcessing(false);
+//           onSuccess(paymentIntent.id);
+          
+//         } catch (confirmError) {
+//           console.error('❌ Backend confirmation error:', confirmError);
+//           onError('Payment succeeded but wallet update delayed. Please refresh in a moment.');
+//           setProcessing(false);
+//         }
+        
+//       } else if (paymentIntent.status === 'requires_action') {
+//         console.log('⚠️ Payment requires additional action (3D Secure)');
+//         onError('Payment requires additional verification. Please try again.');
+//         setProcessing(false);
+//       } else {
+//         console.error('❌ Unexpected payment status:', paymentIntent.status);
+//         onError(`Payment failed with status: ${paymentIntent.status}`);
+//         setProcessing(false);
+//       }
+//     } catch (err) {
+//       console.error('❌ Payment error:', err);
+//       onError(err.data?.error || err.message || 'Payment failed. Please try again.');
+//       setProcessing(false);
+//     }
+//   };
+
+//   return (
+//     <form onSubmit={handleSubmit} className="space-y-4">
+//       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+//         <CardElement
+//           options={{
+//             style: {
+//               base: {
+//                 fontSize: '16px',
+//                 color: '#424770',
+//                 '::placeholder': {
+//                   color: '#aab7c4',
+//                 },
+//                 fontFamily: 'system-ui, sans-serif',
+//               },
+//               invalid: {
+//                 color: '#9e2146',
+//               },
+//             },
+//           }}
+//         />
+//       </div>
+
+//       <button
+//         type="submit"
+//         disabled={!stripe || processing}
+//         className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+//           processing || !stripe
+//             ? 'bg-gray-400 cursor-not-allowed'
+//             : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+//         }`}
+//       >
+//         {processing ? (
+//           <span className="flex items-center justify-center gap-2">
+//             <Loader className="animate-spin" size={20} />
+//             Processing Payment...
+//           </span>
+//         ) : (
+//           `Pay $${amount.toFixed(2)}`
+//         )}
+//       </button>
+
+//       <p className="text-xs text-center text-gray-500">
+//         Your payment is secured by Stripe. We never store your card details.
+//       </p>
+//     </form>
+//   );
+// }
+
+
+// // ✅ COMPLETE WORKING GOOGLE PAY IMPLEMENTATION
+
+// // ✅ COMPLETE WORKING GOOGLE PAY IMPLEMENTATION
+// function GooglePayForm({ amount, electionId, regionCode, onSuccess, onError }) {
+//   const stripe = useStripe();
+//   const [paymentRequest, setPaymentRequest] = useState(null);
+//   const [canMakePayment, setCanMakePayment] = useState(false);
+//   const [isChecking, setIsChecking] = useState(true);
+//   const [isProcessing, setIsProcessing] = useState(false);
+
+//   const [payForElection] = usePayForElectionMutation();
+//   const [confirmElectionPayment] = useConfirmElectionPaymentMutation();
+//   const { refetch: refetchWallet } = useGetWalletQuery();
+
+//   useEffect(() => {
+//     if (!stripe || !amount) return;
+
+//     console.log('🔵 Initializing Google Pay...');
+
+//     // Create PaymentRequest
+//     const pr = stripe.paymentRequest({
+//       country: 'US',
+//       currency: 'usd',
+//       total: {
+//         label: 'Election Participation Fee',
+//         amount: Math.round(amount * 100), // Convert to cents
+//       },
+//       requestPayerName: true,
+//       requestPayerEmail: true,
+//     });
+
+//     // Check if payment method is available
+//     pr.canMakePayment().then((result) => {
+//       console.log('🔍 Can make payment:', result);
+      
+//       if (result) {
+//         setCanMakePayment(true);
+//         setPaymentRequest(pr);
+//       } else {
+//         setCanMakePayment(false);
+//       }
+//       setIsChecking(false);
+//     });
+
+//     // ✅ CRITICAL: Handle the payment method event
+//     pr.on('paymentmethod', async (ev) => {
+//       console.log('🎉 Payment method received from Google Pay!');
+//       console.log('Payment Method ID:', ev.paymentMethod.id);
+      
+//       setIsProcessing(true);
+
+//       try {
+//         // Step 1: Create payment intent
+//         console.log('💳 Step 1: Creating payment intent...');
+//         const result = await payForElection({
+//           electionId,
+//           regionCode: regionCode || 'region_1_us_canada',
+//           paymentGateway: 'stripe',
+//         }).unwrap();
+
+//         console.log('✅ Payment intent created:', result);
+
+//         if (!result.clientSecret) {
+//           ev.complete('fail');
+//           onError('Failed to create payment intent');
+//           setIsProcessing(false);
+//           return;
+//         }
+
+//         // Step 2: Confirm the payment with the payment method from Google Pay
+//         console.log('🔵 Step 2: Confirming payment with payment method...');
+//         const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+//           result.clientSecret,
+//           {
+//             payment_method: ev.paymentMethod.id, // ✅ Use the payment method from Google Pay
+//           },
+//           {
+//             handleActions: false, // Don't handle 3D Secure yet
+//           }
+//         );
+
+//         if (confirmError) {
+//           console.error('❌ Confirmation error:', confirmError);
+//           ev.complete('fail');
+//           onError(confirmError.message);
+//           setIsProcessing(false);
+//           return;
+//         }
+
+//         console.log('✅ Payment Intent status:', paymentIntent.status);
+
+//         // Handle different payment statuses
+//         if (paymentIntent.status === 'requires_action') {
+//           // Handle 3D Secure
+//           console.log('🔐 Handling 3D Secure...');
+//           const { error: actionError, paymentIntent: confirmedIntent } = 
+//             await stripe.confirmCardPayment(result.clientSecret);
+          
+//           if (actionError) {
+//             ev.complete('fail');
+//             onError(actionError.message);
+//             setIsProcessing(false);
+//             return;
+//           }
+
+//           if (confirmedIntent.status === 'succeeded') {
+//             ev.complete('success');
+//             await handlePaymentSuccess(confirmedIntent.id);
+//           } else {
+//             ev.complete('fail');
+//             onError('Payment failed after verification');
+//             setIsProcessing(false);
+//           }
+//         } else if (paymentIntent.status === 'succeeded') {
+//           ev.complete('success');
+//           await handlePaymentSuccess(paymentIntent.id);
+//         } else {
+//           ev.complete('fail');
+//           onError(`Payment failed: ${paymentIntent.status}`);
+//           setIsProcessing(false);
+//         }
+
+//       } catch (err) {
+//         console.error('❌ Payment error:', err);
+//         ev.complete('fail');
+//         onError(err.data?.error || err.message || 'Payment failed');
+//         setIsProcessing(false);
+//       }
+//     });
+
+//   }, [stripe, amount, electionId, regionCode]);
+
+//   const handlePaymentSuccess = async (paymentIntentId) => {
+//     try {
+//       console.log('🔵 Step 3: Confirming with backend...');
+      
+//       await confirmElectionPayment({
+//         paymentIntentId,
+//         electionId,
+//       }).unwrap();
+      
+//       console.log('✅ Backend confirmation successful');
+//       await refetchWallet();
+      
+//       setIsProcessing(false);
+//       onSuccess(paymentIntentId);
+//     } catch (err) {
+//       console.error('❌ Backend confirmation error:', err);
+//       onError('Payment succeeded but update delayed. Please refresh.');
+//       setIsProcessing(false);
+//     }
+//   };
+
+//   // Loading
+//   if (isChecking) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-8">
+//         <Loader className="animate-spin text-blue-600 mb-4" size={32} />
+//         <p className="text-gray-600">Checking Google Pay availability...</p>
+//       </div>
+//     );
+//   }
+
+//   // Not available
+//   if (!canMakePayment) {
+//     return (
+//       <div className="space-y-4">
+//         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5">
+//           <div className="flex items-start gap-3">
+//             <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
+//             <div>
+//               <p className="text-yellow-900 font-semibold mb-2">Google Pay Not Available</p>
+//               <p className="text-yellow-800 text-sm mb-3">
+//                 Use Chrome or an Android device, sign in to your Google account, and add a supported card to Google Pay to complete your payment.
+
+// Google Pay works only on browsers and devices that support Google’s secure payment system. Browsers like Firefox or Brave currently don’t support Google Pay, so the option may not appear there.
+//               </p>
+//             </div>
+//           </div>
+//         </div>
+        
+//         <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+//           <button
+//             onClick={() => window.location.reload()}
+//             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+//           >
+//             <CreditCard size={18} />
+//             Use Credit/Debit Card Instead
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Processing
+//   if (isProcessing) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-8">
+//         <Loader className="animate-spin text-green-600 mb-4" size={40} />
+//         <p className="text-gray-600 font-medium">Processing Google Pay payment...</p>
+//         <p className="text-gray-500 text-sm mt-2">Please don't close this window</p>
+//       </div>
+//     );
+//   }
+
+//   // Show Google Pay button
+//   return (
+//     <div className="space-y-4">
+//       {paymentRequest && (
+//         <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+//           <PaymentRequestButtonElement
+//             options={{
+//               paymentRequest,
+//               style: {
+//                 paymentRequestButton: {
+//                   type: 'default',
+//                   theme: 'dark',
+//                   height: '48px',
+//                 },
+//               },
+//             }}
+//           />
+//         </div>
+//       )}
+//       <p className="text-xs text-center text-gray-500">
+//         Your payment is secured by Google Pay and Stripe.
+//       </p>
+//     </div>
+//   );
+// }
+
+
+
+// export default function ElectionPaymentPage({ electionId, amount, currency, onPaymentComplete, electionTitle }) {
+//   const [paymentMethod, setPaymentMethod] = useState('stripe');
+//   const [processing, setProcessing] = useState(false);
+//   const [error, setError] = useState(null);
+//   const [success, setSuccess] = useState(false);
+
+//   const { data: walletData } = useGetWalletQuery();
+//   const walletBalance = walletData?.balance ? parseFloat(walletData.balance) : 0;
+
+//   const [payForElection] = usePayForElectionMutation();
+
+//   const handleWalletPayment = async () => {
+//     if (walletBalance < amount) {
+//       setError('Insufficient wallet balance. Please deposit funds first or use card payment.');
+//       return;
+//     }
+
+//     setProcessing(true);
+//     setError(null);
+
+//     try {
+//       setError('Wallet payment coming soon! Please use card payment for now.');
+//       setProcessing(false);
+//     } catch (err) {
+//       setError(err.data?.error || 'Wallet payment failed');
+//       setProcessing(false);
+//     }
+//   };
+
+//   const handlePaymentSuccess = (paymentIntentId) => {
+//     console.log('✅ Payment successful! Payment Intent ID:', paymentIntentId);
+//     setSuccess(true);
+//     setTimeout(() => {
+//       onPaymentComplete(paymentIntentId);
+//     }, 2000);
+//   };
+
+//   if (success) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+//         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+//           <div className="mb-4">
+//             <CheckCircle className="w-20 h-20 text-green-600 mx-auto animate-bounce" />
+//           </div>
+//           <h2 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h2>
+//           <p className="text-gray-600 mb-4">
+//             Your payment of <span className="font-bold">${amount.toFixed(2)}</span> has been processed successfully.
+//           </p>
+//           <p className="text-sm text-gray-500">
+//             Redirecting to voting page...
+//           </p>
+//           <div className="mt-6">
+//             <div className="animate-pulse flex justify-center gap-2">
+//               <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+//               <div className="w-2 h-2 bg-green-600 rounded-full animation-delay-200"></div>
+//               <div className="w-2 h-2 bg-green-600 rounded-full animation-delay-400"></div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+//       <div className="max-w-2xl mx-auto px-4">
+//         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+//           <h1 className="text-2xl font-bold text-gray-900 mb-2">
+//             {electionTitle || 'Election Payment'}
+//           </h1>
+//           <p className="text-gray-600 mb-4">
+//             A participation fee is required to vote in this election
+//           </p>
+
+//           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border-2 border-blue-200">
+//             <p className="text-sm text-gray-600 mb-1">Participation Fee</p>
+//             <p className="text-4xl font-bold text-blue-900">
+//               ${amount?.toFixed(2) || '0.00'}
+//               <span className="text-lg font-normal text-gray-600 ml-2">{currency || 'USD'}</span>
+//             </p>
+//           </div>
+//         </div>
+
+//         <div className="bg-white rounded-2xl shadow-lg p-6">
+//           <PaymentMethodSelector
+//             selectedMethod={paymentMethod}
+//             onMethodChange={setPaymentMethod}
+//             walletBalance={walletBalance}
+//           />
+
+//           {error && (
+//             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+//               <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+//               <div>
+//                 <p className="text-red-800 text-sm font-semibold">Payment Error</p>
+//                 <p className="text-red-700 text-sm mt-1">{error}</p>
+//               </div>
+//             </div>
+//           )}
+
+//           {paymentMethod === 'stripe' && (
+//             <Elements stripe={stripePromise}>
+//               <StripeCardForm
+//                 amount={amount}
+//                 electionId={electionId}
+//                 regionCode="region_1_us_canada"
+//                 onSuccess={handlePaymentSuccess}
+//                 onError={setError}
+//               />
+//             </Elements>
+//           )}
+
+//           {paymentMethod === 'google_pay' && (
+//             <Elements stripe={stripePromise}>
+//               <GooglePayForm
+//                 amount={amount}
+//                 electionId={electionId}
+//                 regionCode="region_1_us_canada"
+//                 onSuccess={handlePaymentSuccess}
+//                 onError={setError}
+//               />
+//             </Elements>
+//           )}
+
+//           {paymentMethod === 'wallet' && (
+//             <button
+//               onClick={handleWalletPayment}
+//               disabled={processing || walletBalance < amount}
+//               className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+//                 processing || walletBalance < amount
+//                   ? 'bg-gray-400 cursor-not-allowed'
+//                   : 'bg-green-600 hover:bg-green-700 active:bg-green-800'
+//               }`}
+//             >
+//               {processing ? (
+//                 <span className="flex items-center justify-center gap-2">
+//                   <Loader className="animate-spin" size={20} />
+//                   Processing...
+//                 </span>
+//               ) : walletBalance < amount ? (
+//                 'Insufficient Balance'
+//               ) : (
+//                 `Pay $${amount.toFixed(2)} from Wallet`
+//               )}
+//             </button>
+//           )}
+
+//           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
+//             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+//               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+//             </svg>
+//             <span>Secure payment powered by Stripe</span>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 //last workable code with successful stripe payment
 // src/pages/voting/payment/ElectionPaymentPage.jsx
 // ✅ Handles payment for election participation fees using WALLET SERVICE
