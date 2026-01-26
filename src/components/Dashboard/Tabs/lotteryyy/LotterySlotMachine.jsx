@@ -1,6 +1,8 @@
-// src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
-// 4D Slot Machine - CORRECT ANIMATION FLOW
-// Flow: SPIN FAST → SLOW DOWN → ONE BOUNCE (align) → PAUSE (still) → REPEAT
+
+//last workable code only to smooth animation used html code
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// // 4D Slot Machine - CORRECT ANIMATION FLOW
+// // Flow: SPIN FAST → SLOW DOWN → ONE BOUNCE (align) → PAUSE (still) → REPEAT
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Users, Eye } from 'lucide-react';
 import DemoWinnerReveal from './DemoWinnerReveal';
@@ -620,6 +622,20 @@ export default function LotterySlotMachine({
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
 // // 4D Slot Machine - CORRECT ANIMATION FLOW
 // // Flow: SPIN FAST → SLOW DOWN → ONE BOUNCE (align) → PAUSE (still) → REPEAT
