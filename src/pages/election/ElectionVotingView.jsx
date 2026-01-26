@@ -372,7 +372,7 @@ export default function ElectionVotingView() {
                   )}
                   {receiptData.ballNumber && (
                     <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4">
-                      <p className="text-sm text-yellow-700 mb-1">🎰 Your Lottery Ball Number:</p>
+                      <p className="text-sm text-yellow-700 mb-1">🎰 Your Gamification Ball Number:</p>
                       <p className="font-mono text-2xl font-bold text-yellow-800">{receiptData.ballNumber}</p>
                     </div>
                   )}
@@ -381,7 +381,7 @@ export default function ElectionVotingView() {
 
               {isLotteryEnabled && (
                 <div className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
-                  <p className="text-purple-800 font-semibold mb-2">🎰 Lottery Entry Confirmed!</p>
+                  <p className="text-purple-800 font-semibold mb-2">🎰 Gamification Entry Confirmed!</p>
                   <p className="text-purple-700 text-sm">Your lottery ticket has been created! Watch the slot machine below.</p>
                 </div>
               )}
@@ -556,7 +556,7 @@ maxWidth: isLotteryExpanded ? 'calc(100vw - 32px)' : 'auto',
             >
               <div className="flex items-center gap-2">
                 <Trophy className="w-6 h-6" />
-                <span className="font-bold text-sm hidden sm:inline">🎰 Lottery</span>
+                <span className="font-bold text-sm hidden sm:inline">🎰 Gamification</span>
               </div>
             </button>
           )}
