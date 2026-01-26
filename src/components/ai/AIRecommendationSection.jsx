@@ -174,7 +174,7 @@ const RecommendationCard = ({
         {(election.lottery_enabled === true || election.lottery_enabled === 'true') && (
           <div className="absolute top-2 right-2">
             <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-400 text-yellow-900 flex items-center gap-1">
-              <FaTrophy className="text-[10px]" /> Lottery
+              <FaTrophy className="text-[10px]" /> Gamify
             </span>
           </div>
         )}

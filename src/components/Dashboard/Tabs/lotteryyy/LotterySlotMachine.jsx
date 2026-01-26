@@ -1,173 +1,113 @@
 // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
-// 4D Slot Machine
-// DURING ELECTION: Continuous spinning showing actual voter IDs
-// AT ELECTION END: For each winner - Fast spin (1 sec) → Gradual slow with haphazard (up/down) → Stop aligned
+// 4D Slot Machine with GRADUAL SLOWDOWN + PAUSE ANIMATION
+// Flow: Fast spin → Gradually slow down → Stop with bounce → Pause → Repeat
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Users, RefreshCw, Eye } from 'lucide-react';
+import { Users, Eye } from 'lucide-react';
 import DemoWinnerReveal from './DemoWinnerReveal';
 
 const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
 
-// Spinning digit - haphazard = different vertical positions, disciplined = aligned center
-const SpinningDigit = ({ 
-  digit,
-  isSpinning,
-  spinPhase, // 'continuous' | 'fast' | 'slowing' | 'stopped'
-  slowdownProgress,
-  randomOffset = 0, // Each digit gets different random offset for haphazard effect
-  compact = false
-}) => {
+// SpinningDigit - EXACT copy from RealWinnerReveal.jsx
+const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit }) => {
   const [currentDigit, setCurrentDigit] = useState(digit || '0');
   const [nextDigit, setNextDigit] = useState('0');
   const [offsetY, setOffsetY] = useState(0);
   const animationRef = useRef(null);
   const isSpinningRef = useRef(isSpinning);
-  const phaseRef = useRef(spinPhase);
-  const progressRef = useRef(slowdownProgress);
+  const digitHeight = 100;
+  const spinSpeed = 35;
   
-  const digitHeight = compact ? 65 : 110;
-  const continuousSpeed = compact ? 12 : 18;
-  const fastSpeed = compact ? 25 : 40;
-  const minSpeed = compact ? 1 : 2;
-  
-  useEffect(() => {
-    isSpinningRef.current = isSpinning;
-    phaseRef.current = spinPhase;
-    progressRef.current = slowdownProgress;
-  }, [isSpinning, spinPhase, slowdownProgress]);
+  useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
 
+  // Spinning animation
   useEffect(() => {
-    if (!isSpinning) {
-      setCurrentDigit(digit || '0');
-      setOffsetY(0);
-    }
-  }, [digit, isSpinning]);
-
-  useEffect(() => {
-    if (isSpinning) {
-      let offset = randomOffset; // Start at random position for haphazard
+    if (isSpinning && !isFalling) {
+      let offset = -Math.floor(Math.random() * digitHeight * 0.7);
       let currDigit = Math.floor(Math.random() * 10);
       let nxtDigit = Math.floor(Math.random() * 10);
-      
       setCurrentDigit(String(currDigit));
       setNextDigit(String(nxtDigit));
-      
+      setOffsetY(offset);
       const animate = () => {
         if (!isSpinningRef.current) return;
-        
-        const phase = phaseRef.current;
-        const progress = progressRef.current;
-        
-        let speed;
-        
-        if (phase === 'continuous') {
-          speed = continuousSpeed;
-        } else if (phase === 'fast') {
-          speed = fastSpeed;
-        } else if (phase === 'slowing') {
-          // Gradually slow down
-          const easeProgress = 1 - Math.pow(1 - progress, 3);
-          speed = fastSpeed - (fastSpeed - minSpeed) * easeProgress;
-          
-          if (speed <= minSpeed && progress >= 0.98) {
-            return;
-          }
-        } else {
-          return;
-        }
-        
-        offset -= speed;
-        
+        offset -= spinSpeed;
         if (offset <= -digitHeight) {
-          offset = 0;
+          offset += digitHeight;
           currDigit = nxtDigit;
           nxtDigit = Math.floor(Math.random() * 10);
           setCurrentDigit(String(currDigit));
           setNextDigit(String(nxtDigit));
         }
-        
         setOffsetY(offset);
         animationRef.current = requestAnimationFrame(animate);
       };
-      
       animationRef.current = requestAnimationFrame(animate);
-      
-      return () => {
-        if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      };
-    } else {
-      // When stopped, align to center (offset = 0)
-      setOffsetY(0);
-      setCurrentDigit(digit || '0');
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
+      return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
     }
-  }, [isSpinning, digit, digitHeight, continuousSpeed, fastSpeed, minSpeed, randomOffset]);
+  }, [isSpinning, isFalling]);
 
-  const fontSize = compact ? 'text-5xl' : 'text-7xl sm:text-8xl';
-  const containerWidth = compact ? 50 : 85;
-  const containerHeightVal = compact ? 65 : 110;
+  // Falling/bounce animation - EXACT from first file
+  useEffect(() => {
+    if (isFalling && finalDigit !== undefined) {
+      if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
+      setCurrentDigit(String(finalDigit));
+      setNextDigit(String((parseInt(finalDigit) + 1) % 10));
+      const startOffset = offsetY;
+      const fallDuration = 400;
+      const bounceDuration = 200;
+      const bounceHeight = 15;
+      const startTime = Date.now();
+      const animateFall = () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < fallDuration) {
+          const progress = elapsed / fallDuration;
+          const easeIn = progress * progress;
+          const newOffset = startOffset + (0 - startOffset) * easeIn;
+          setOffsetY(newOffset);
+          animationRef.current = requestAnimationFrame(animateFall);
+        } else if (elapsed < fallDuration + bounceDuration / 2) {
+          const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
+          const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
+          setOffsetY(bounceOffset);
+          animationRef.current = requestAnimationFrame(animateFall);
+        } else if (elapsed < fallDuration + bounceDuration) {
+          const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
+          const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
+          setOffsetY(bounceOffset);
+          animationRef.current = requestAnimationFrame(animateFall);
+        } else { setOffsetY(0); }
+      };
+      animationRef.current = requestAnimationFrame(animateFall);
+      return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+    }
+  }, [isFalling, finalDigit]);
+
+  // Reset when not spinning and not falling
+  useEffect(() => {
+    if (!isSpinning && !isFalling) { setOffsetY(0); setCurrentDigit(digit || '0'); }
+  }, [isSpinning, isFalling, digit]);
 
   return (
     <div 
-      className="relative overflow-hidden rounded-lg"
-      style={{
-        width: `${containerWidth}px`,
-        height: `${containerHeightVal}px`,
-        background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)',
-        boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.4)',
-        border: '3px solid #1f2937',
-        borderRadius: '8px'
+      className="relative overflow-hidden rounded-xl flex-shrink-0" 
+      style={{ 
+        width: '75px', 
+        height: '100px', 
+        background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)', 
+        boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 6px 15px rgba(0,0,0,0.5)', 
+        border: '3px solid #1f2937' 
       }}
     >
-      <div 
-        className="absolute w-full"
-        style={{ 
-          transform: `translateY(${offsetY}px)`,
-          transition: isSpinning ? 'none' : 'transform 0.4s ease-out'
-        }}
-      >
-        <div className="flex items-center justify-center" style={{ height: `${digitHeight}px` }}>
-          <span 
-            className={`font-black text-white ${fontSize}`}
-            style={{ 
-              fontFamily: 'Impact, "Arial Black", sans-serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-            }}
-          >
-            {currentDigit}
-          </span>
+      <div className="absolute w-full" style={{ transform: `translateY(${offsetY}px)` }}>
+        <div className="flex items-center justify-center" style={{ height: '100px' }}>
+          <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
         </div>
-        <div className="flex items-center justify-center" style={{ height: `${digitHeight}px` }}>
-          <span 
-            className={`font-black text-white ${fontSize}`}
-            style={{ 
-              fontFamily: 'Impact, "Arial Black", sans-serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-            }}
-          >
-            {nextDigit}
-          </span>
+        <div className="flex items-center justify-center" style={{ height: '100px' }}>
+          <span className="font-black text-white text-7xl" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{nextDigit}</span>
         </div>
       </div>
-      
-      <div 
-        className="absolute top-0 left-0 right-0 pointer-events-none z-10"
-        style={{
-          height: '35%',
-          background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, rgba(55,0,0,0.5) 50%, transparent 100%)'
-        }}
-      />
-      
-      <div 
-        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
-        style={{
-          height: '35%',
-          background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, rgba(55,0,0,0.5) 50%, transparent 100%)'
-        }}
-      />
+      <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
     </div>
   );
 };
@@ -182,40 +122,31 @@ export default function LotterySlotMachine({
   compact = false,
 }) {
   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [spinPhase, setSpinPhase] = useState('stopped');
-  const [slowdownProgress, setSlowdownProgress] = useState(0);
-  const [randomOffsets, setRandomOffsets] = useState([0, 0, 0, 0, 0, 0]);
-  /*eslint-disable*/
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [digitSpinning, setDigitSpinning] = useState([false, false, false, false, false, false]);
+  const [digitFalling, setDigitFalling] = useState([false, false, false, false, false, false]);
+  const [finalDigits, setFinalDigits] = useState(['0', '0', '0', '0', '0', '0']);
+  
   const [revealedWinners, setRevealedWinners] = useState([]);
-  const [currentRevealIndex, setCurrentRevealIndex] = useState(-1);
   const [revealingWinner, setRevealingWinner] = useState(false);
   
   const [participants, setParticipants] = useState([]);
   const [totalEntries, setTotalEntries] = useState(0);
+  /*eslint-disable*/
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
   const [actualLuckyVotersCount, setActualLuckyVotersCount] = useState(luckyVotersCount);
   
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState('WAITING');
   
   const fetchIntervalRef = useRef(null);
-  const displayIntervalRef = useRef(null);
-  const slowdownIntervalRef = useRef(null);
-
-  // Generate random offsets for haphazard effect (different Y position for each digit)
-  const generateRandomOffsets = useCallback(() => {
-    const digitHeight = compact ? 65 : 110;
-    return displayDigits.map(() => -Math.floor(Math.random() * (digitHeight * 0.6)));
-  }, [displayDigits.length, compact]);
+  const continuousCycleRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const fetchBallNumbers = useCallback(async () => {
     if (!electionId) return;
     
     try {
       setIsLoadingParticipants(true);
-      setFetchError(null);
       
       const response = await fetch(
         `${LOTTERY_API_URL}/lottery/elections/${electionId}/ball-numbers`
@@ -238,207 +169,176 @@ export default function LotterySlotMachine({
       if (data.luckyVotersCount || data.lucky_voters_count) {
         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
       }
-      
-      if (ballNumbers.length > 0) {
-        const maxDigits = Math.max(...ballNumbers.map(b => b.length));
-        if (maxDigits !== displayDigits.length) {
-          setDisplayDigits(Array(maxDigits).fill('0'));
-          setRandomOffsets(Array(maxDigits).fill(0));
-        }
-      }
     } catch (error) {
       console.error('❌ Error:', error);
-      setFetchError(error.message);
     } finally {
       setIsLoadingParticipants(false);
     }
-  }, [electionId, displayDigits.length]);
+  }, [electionId]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     if (electionId && isActive) {
       fetchBallNumbers();
       fetchIntervalRef.current = setInterval(fetchBallNumbers, 10000);
-      return () => {
-        if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
-      };
     }
+    return () => {
+      isMountedRef.current = false;
+      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+    };
   }, [electionId, isActive, fetchBallNumbers]);
 
   const getRandomVoterId = useCallback(() => {
     if (participants.length > 0) {
       const idx = Math.floor(Math.random() * participants.length);
-      return participants[idx].padStart(displayDigits.length, '0');
+      return participants[idx].padStart(6, '0');
     }
-    const min = Math.pow(10, displayDigits.length - 1);
-    const max = Math.pow(10, displayDigits.length) - 1;
-    return String(Math.floor(min + Math.random() * (max - min)));
-  }, [participants, displayDigits.length]);
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }, [participants]);
 
-  useEffect(() => {
-    if (!electionEndDate) return;
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const end = new Date(electionEndDate).getTime();
-      const diff = Math.max(0, end - now);
-
-      setCountdown({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((diff % (1000 * 60)) / 1000),
-      });
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [electionEndDate]);
-
-  const startContinuousSpinning = useCallback(() => {
-    setIsSpinning(true);
-    setSpinPhase('continuous');
-    setRandomOffsets(generateRandomOffsets());
+  // Single ballot reveal: Fast spin → Gradual slowdown → Bounce stop → Pause
+  const revealSingleBallot = useCallback(async () => {
+    if (!isMountedRef.current) return;
     
-    displayIntervalRef.current = setInterval(() => {
-      const voterId = getRandomVoterId();
-      setDisplayDigits(voterId.split(''));
-    }, 150);
-  }, [getRandomVoterId, generateRandomOffsets]);
-
-  const stopContinuousSpinning = useCallback(() => {
-    if (displayIntervalRef.current) {
-      clearInterval(displayIntervalRef.current);
-      displayIntervalRef.current = null;
+    const ballotNumber = getRandomVoterId();
+    const ballotDigits = ballotNumber.split('');
+    
+    // PHASE 1: Fast spinning (1 second)
+    setCurrentStatus('SPINNING');
+    setDigitFalling([false, false, false, false, false, false]);
+    setFinalDigits(ballotDigits);
+    setDigitSpinning([true, true, true, true, true, true]);
+    
+    await new Promise(r => setTimeout(r, 1000));
+    if (!isMountedRef.current) return;
+    
+    // PHASE 2: Gradual slowdown - stop each digit one by one with delay
+    setCurrentStatus('SLOWING');
+    
+    for (let i = 0; i < 6; i++) {
+      if (!isMountedRef.current) return;
+      
+      // Let this digit spin a bit more while slowing (300ms per digit)
+      await new Promise(r => setTimeout(r, 300));
+      
+      // Stop spinning and start falling animation
+      setDigitSpinning(prev => {
+        const updated = [...prev];
+        updated[i] = false;
+        return updated;
+      });
+      setDigitFalling(prev => {
+        const updated = [...prev];
+        updated[i] = true;
+        return updated;
+      });
+      
+      // Update display digit
+      setDisplayDigits(prev => {
+        const updated = [...prev];
+        updated[i] = ballotDigits[i];
+        return updated;
+      });
     }
-    setIsSpinning(false);
-    setSpinPhase('stopped');
+    
+    // Wait for last bounce animation to complete (600ms)
+    await new Promise(r => setTimeout(r, 600));
+    if (!isMountedRef.current) return;
+    
+    // PHASE 3: Pause - show the number clearly
+    setDigitFalling([false, false, false, false, false, false]);
+    setCurrentStatus('PAUSED');
+    
+    // Pause for 2 seconds to see the number clearly
+    await new Promise(r => setTimeout(r, 2000));
+    
+  }, [getRandomVoterId]);
+
+  // Continuous cycle: spin -> slowdown -> pause -> repeat
+  const startContinuousCycle = useCallback(async () => {
+    continuousCycleRef.current = true;
+    
+    while (continuousCycleRef.current && isMountedRef.current) {
+      await revealSingleBallot();
+    }
+  }, [revealSingleBallot]);
+
+  const stopContinuousCycle = useCallback(() => {
+    continuousCycleRef.current = false;
+    setDigitSpinning([false, false, false, false, false, false]);
+    setDigitFalling([false, false, false, false, false, false]);
+    setCurrentStatus('WAITING');
   }, []);
 
+  // Start/stop continuous spinning based on conditions
   useEffect(() => {
     if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
-      startContinuousSpinning();
-    } else if (isElectionEnded || revealingWinner) {
-      stopContinuousSpinning();
-    } else if (totalEntries < 1) {
-      stopContinuousSpinning();
+      startContinuousCycle();
+    } else {
+      stopContinuousCycle();
     }
     
-    return () => stopContinuousSpinning();
-  }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousSpinning, stopContinuousSpinning]);
+    return () => stopContinuousCycle();
+  }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousCycle, stopContinuousCycle]);
 
+  // Winner reveal at election end
   useEffect(() => {
     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
       revealWinnersSequentially();
     }
   }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
 
-  const revealSingleWinner = async (winnerIndex) => {
-    const FAST_PHASE_DURATION = 1000; // 1 second fast
-    const SLOW_PHASE_DURATION = 2500; // 2.5 seconds to slow down
-    
-    // Generate random offsets for haphazard effect
-    setRandomOffsets(generateRandomOffsets());
-    
-    // Fast phase - same speed, straight numbers
-    setIsSpinning(true);
-    setSpinPhase('fast');
-    setSlowdownProgress(0);
-    
-    const fastInterval = setInterval(() => {
-      const voterId = getRandomVoterId();
-      setDisplayDigits(voterId.split(''));
-      // Update random offsets periodically for haphazard movement
-      setRandomOffsets(generateRandomOffsets());
-    }, 60);
-    
-    await new Promise(resolve => setTimeout(resolve, FAST_PHASE_DURATION));
-    
-    clearInterval(fastInterval);
-    
-    // Slowing phase - digits at different vertical positions (haphazard)
-    setSpinPhase('slowing');
-    
-    const slowdownStartTime = Date.now();
-    
-    await new Promise(resolve => {
-      let lastUpdate = 0;
-      slowdownIntervalRef.current = setInterval(() => {
-        const elapsed = Date.now() - slowdownStartTime;
-        const progress = Math.min(elapsed / SLOW_PHASE_DURATION, 1);
-        setSlowdownProgress(progress);
-        
-        // Update display less frequently as we slow down
-        const updateInterval = 60 + progress * 400;
-        if (elapsed - lastUpdate > updateInterval) {
-          const voterId = getRandomVoterId();
-          setDisplayDigits(voterId.split(''));
-          // Gradually reduce randomness of offsets as we slow down
-          const offsetScale = 1 - progress;
-          setRandomOffsets(prev => prev.map(() => 
-            -Math.floor(Math.random() * ((compact ? 65 : 110) * 0.6 * offsetScale))
-          ));
-          lastUpdate = elapsed;
-        }
-        
-        if (progress >= 1) {
-          clearInterval(slowdownIntervalRef.current);
-          resolve();
-        }
-      }, 16);
-    });
-    
-    // Stop - all digits align to center
-    setIsSpinning(false);
-    setSpinPhase('stopped');
-    setSlowdownProgress(0);
-    setRandomOffsets(displayDigits.map(() => 0)); // All aligned
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Show winner's number
-    const winner = winners[winnerIndex];
-    const winnerBallNumber = String(
-      winner.ball_number ||
-      winner.ballNumber ||
-      winner.oddjob_voter_id || 
-      winner.oddjobVoterId || 
-      winner.voterId ||
-      winner.voter_id ||
-      winner.id || 
-      '000000'
-    ).padStart(displayDigits.length, '0');
-    
-    setDisplayDigits(winnerBallNumber.split(''));
-    
-    return {
-      ...winner,
-      ballNumber: winnerBallNumber,
-      rank: winnerIndex + 1
-    };
-  };
-
   const revealWinnersSequentially = async () => {
     setRevealingWinner(true);
-    stopContinuousSpinning();
+    stopContinuousCycle();
     
     for (let i = 0; i < winners.length; i++) {
-      setCurrentRevealIndex(i);
+      const winner = winners[i];
+      const winnerBallNumber = String(
+        winner.ball_number || winner.ballNumber || winner.oddjob_voter_id || 
+        winner.oddjobVoterId || winner.voterId || winner.voter_id || winner.id || '000000'
+      ).padStart(6, '0');
       
-      const revealedWinner = await revealSingleWinner(i);
-      setRevealedWinners(prev => [...prev, revealedWinner]);
+      const winnerDigits = winnerBallNumber.split('');
+      
+      // Spin all
+      setCurrentStatus('SPINNING');
+      setDigitFalling([false, false, false, false, false, false]);
+      setDigitSpinning([true, true, true, true, true, true]);
+      
+      await new Promise(r => setTimeout(r, 1500));
+      
+      setFinalDigits(winnerDigits);
+      setCurrentStatus('SLOWING');
+      
+      // Stop one by one with slowdown effect
+      for (let j = 0; j < 6; j++) {
+        await new Promise(r => setTimeout(r, 400));
+        setDigitSpinning(prev => { const u = [...prev]; u[j] = false; return u; });
+        setDigitFalling(prev => { const u = [...prev]; u[j] = true; return u; });
+        setDisplayDigits(prev => { const u = [...prev]; u[j] = winnerDigits[j]; return u; });
+      }
+      
+      await new Promise(r => setTimeout(r, 500));
+      setDigitFalling([false, false, false, false, false, false]);
+      setCurrentStatus('WINNER');
+      
+      setRevealedWinners(prev => [...prev, {
+        ...winner,
+        ballNumber: winnerBallNumber,
+        rank: i + 1
+      }]);
       
       if (i < winners.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(r => setTimeout(r, 2500));
       }
     }
     
-    setCurrentRevealIndex(-1);
+    setCurrentStatus('COMPLETED');
     setRevealingWinner(false);
   };
 
   const formatCountdown = () => {
-    // Show the election end date in DD/MM/YYYY format
     if (!electionEndDate) return '--/--/----';
     const endDate = new Date(electionEndDate);
     const day = String(endDate.getDate()).padStart(2, '0');
@@ -455,27 +355,28 @@ export default function LotterySlotMachine({
 
   return (
     <>
+      {/* FIXED: Minimum width ensures all 6 digits fit properly */}
       <div 
-        className={`rounded-xl overflow-hidden ${compact ? 'text-sm' : ''}`}
+        className="rounded-xl overflow-visible"
         style={{
-          background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)'
+          background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)',
+          minWidth: '580px', // 6 digits (75px each) + gaps (12px × 5) + padding (48px) = ~530px minimum
+          width: '100%'
         }}
       >
         {/* Header */}
         <div 
-          className={`flex justify-between items-center ${compact ? 'px-3 py-2' : 'px-5 py-4'}`}
+          className="flex justify-between items-center px-5 py-4"
           style={{ background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 100%)' }}
         >
           <div className="flex items-center gap-2">
-            <span className={`text-gray-900 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-              Date:
-            </span>
+            <span className="text-gray-900 font-semibold text-sm">Date:</span>
             <div 
-              className={`rounded ${compact ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+              className="rounded px-3 py-1"
               style={{ background: '#1a1a1a', border: '2px solid #333' }}
             >
               <span 
-                className={`font-bold ${compact ? 'text-sm' : 'text-lg'}`}
+                className="font-bold text-lg"
                 style={{ 
                   fontFamily: '"Courier New", monospace',
                   color: '#00ff00',
@@ -489,15 +390,13 @@ export default function LotterySlotMachine({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`text-gray-900 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-              Lucky Voters Count:
-            </span>
+            <span className="text-gray-900 font-semibold text-sm">Lucky Voters Count:</span>
             <div 
-              className={`rounded ${compact ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+              className="rounded px-3 py-1"
               style={{ background: '#1a1a1a', border: '2px solid #333' }}
             >
               <span 
-                className={`font-bold ${compact ? 'text-sm' : 'text-lg'}`}
+                className="font-bold text-lg"
                 style={{ 
                   fontFamily: '"Courier New", monospace',
                   color: '#00ff00',
@@ -511,25 +410,25 @@ export default function LotterySlotMachine({
           </div>
         </div>
 
-        {/* Main Display */}
-        <div className={`${compact ? 'px-3 py-3' : 'px-5 py-4'}`}>
+        {/* Main Display - Black box with proper size for 6 digits */}
+        <div className="px-5 py-6">
           <div 
-            className={`flex justify-center items-center ${compact ? 'gap-1.5 p-3' : 'gap-2 p-4'}`}
+            className="flex justify-center items-center gap-3 p-6"
             style={{ 
-              borderRadius: '10px',
-              background: '#1a1a1a',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
+              borderRadius: '12px',
+              background: '#0a0a0a',
+              boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.4)',
+              border: '3px solid #333',
+              minHeight: '140px',
             }}
           >
             {displayDigits.map((digit, index) => (
               <SpinningDigit
                 key={`digit-${index}`}
                 digit={digit}
-                isSpinning={isSpinning}
-                spinPhase={spinPhase}
-                slowdownProgress={slowdownProgress}
-                randomOffset={randomOffsets[index] || 0}
-                compact={compact}
+                isSpinning={digitSpinning[index]}
+                isFalling={digitFalling[index]}
+                finalDigit={finalDigits[index]}
               />
             ))}
           </div>
@@ -538,10 +437,10 @@ export default function LotterySlotMachine({
         {/* Winners */}
         {revealedWinners.length > 0 && (
           <div 
-            className={`border-t-2 border-yellow-600 ${compact ? 'px-2 py-2' : 'px-4 py-4'}`}
+            className="border-t-2 border-yellow-600 px-4 py-4"
             style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
           >
-            <h3 className={`text-yellow-900 font-bold mb-2 text-center ${compact ? 'text-sm' : 'text-lg'}`}>
+            <h3 className="text-yellow-900 font-bold mb-2 text-center text-lg">
               🏆 LUCKY VOTERS WINNERS 🏆
             </h3>
             
@@ -549,22 +448,22 @@ export default function LotterySlotMachine({
               {revealedWinners.map((winner, index) => (
                 <div 
                   key={index}
-                  className={`bg-white rounded-lg flex items-center justify-between shadow-md ${compact ? 'px-2 py-1.5' : 'px-4 py-3'}`}
+                  className="bg-white rounded-lg flex items-center justify-between shadow-md px-4 py-3"
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow ${compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-sm'}`}>
+                    <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow w-10 h-10 text-sm">
                       {getOrdinal(index + 1)}
                     </div>
                     <div>
-                      <p className={`font-bold text-gray-900 ${compact ? 'text-xs' : ''}`}>
+                      <p className="font-bold text-gray-900">
                         {winner.displayName || winner.username || winner.name || 'Lucky Voter'}
                       </p>
-                      <p className={`text-gray-500 font-mono ${compact ? 'text-xs' : 'text-sm'}`}>
+                      <p className="text-gray-500 font-mono text-sm">
                         Ball #: {winner.ballNumber}
                       </p>
                     </div>
                   </div>
-                  <span className={compact ? 'text-xl' : 'text-3xl'}>🏆</span>
+                  <span className="text-3xl">🏆</span>
                 </div>
               ))}
             </div>
@@ -573,35 +472,52 @@ export default function LotterySlotMachine({
 
         {/* Footer */}
         <div 
-          className={`border-t border-yellow-700 flex justify-between items-center ${compact ? 'px-2 py-1.5' : 'px-4 py-2'}`}
+          className="border-t border-yellow-700 flex justify-between items-center px-4 py-3"
           style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
         >
-          <div className={`flex items-center gap-1.5 text-gray-900 ${compact ? 'text-xs' : ''}`}>
-            <Users className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
-            <span className={compact ? 'text-xs' : 'text-sm'}>
+          <div className="flex items-center gap-1.5 text-gray-900">
+            <Users className="w-4 h-4" />
+            <span className="text-sm">
               Total Votes: <strong>{totalEntries}</strong>
             </span>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {!isElectionEnded && totalEntries >= 1 && (
               <button
                 onClick={() => setShowDemoModal(true)}
-                className={`flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded transition ${compact ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'}`}
+                className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded px-3 py-1.5 text-sm font-medium transition"
               >
-                <Eye className="w-3 h-3" />
+                <Eye className="w-4 h-4" />
                 <span>Demo</span>
               </button>
             )}
             
-            <div className={`flex items-center gap-1.5 ${compact ? 'text-xs' : 'text-sm'} ${
-              isSpinning ? 'text-green-700' : isElectionEnded ? 'text-blue-700' : 'text-yellow-800'
-            }`}>
-              <span className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} ${
-                isSpinning ? 'bg-green-500 animate-pulse' : isElectionEnded ? 'bg-blue-500' : 'bg-yellow-600'
-              }`} />
-              <span className="font-semibold">
-                {isSpinning ? 'SPINNING' : isElectionEnded ? 'COMPLETED' : 'WAITING'}
+            <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
+              <span 
+                className={`rounded-full flex-shrink-0 ${
+                  currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+                    ? 'bg-green-500 animate-pulse' 
+                    : currentStatus === 'PAUSED' 
+                    ? 'bg-yellow-500' 
+                    : currentStatus === 'COMPLETED' 
+                    ? 'bg-blue-500' 
+                    : 'bg-gray-500'
+                }`}
+                style={{ width: '10px', height: '10px' }}
+              />
+              <span 
+                className={`font-semibold text-sm ${
+                  currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+                    ? 'text-green-700' 
+                    : currentStatus === 'PAUSED' 
+                    ? 'text-yellow-700' 
+                    : currentStatus === 'COMPLETED' 
+                    ? 'text-blue-700' 
+                    : 'text-gray-700'
+                }`}
+              >
+                {currentStatus === 'SLOWING' ? 'SPINNING' : currentStatus}
               </span>
             </div>
           </div>
@@ -619,6 +535,1214 @@ export default function LotterySlotMachine({
     </>
   );
 }
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// // 4D Slot Machine with GRADUAL SLOWDOWN + PAUSE ANIMATION
+// // Flow: Fast spin → Gradually slow down → Stop with bounce → Pause → Repeat
+// import React, { useState, useEffect, useRef, useCallback } from 'react';
+// import { Users, Eye } from 'lucide-react';
+// import DemoWinnerReveal from './DemoWinnerReveal';
+
+// const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+
+// // SpinningDigit - Responsive size based on container
+// const SpinningDigit = ({ digit, isSpinning, isFalling, finalDigit, size = 'normal' }) => {
+//   const [currentDigit, setCurrentDigit] = useState(digit || '0');
+//   const [nextDigit, setNextDigit] = useState('0');
+//   const [offsetY, setOffsetY] = useState(0);
+//   const animationRef = useRef(null);
+//   const isSpinningRef = useRef(isSpinning);
+  
+//   // Size configurations
+//   const sizes = {
+//     small: { width: 45, height: 60, fontSize: 'text-4xl', digitHeight: 60 },
+//     medium: { width: 55, height: 75, fontSize: 'text-5xl', digitHeight: 75 },
+//     normal: { width: 75, height: 100, fontSize: 'text-7xl', digitHeight: 100 },
+//   };
+  
+//   const config = sizes[size] || sizes.normal;
+//   const digitHeight = config.digitHeight;
+//   const spinSpeed = size === 'small' ? 25 : 35;
+  
+//   useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
+
+//   // Spinning animation
+//   useEffect(() => {
+//     if (isSpinning && !isFalling) {
+//       let offset = -Math.floor(Math.random() * digitHeight * 0.7);
+//       let currDigit = Math.floor(Math.random() * 10);
+//       let nxtDigit = Math.floor(Math.random() * 10);
+//       setCurrentDigit(String(currDigit));
+//       setNextDigit(String(nxtDigit));
+//       setOffsetY(offset);
+//       const animate = () => {
+//         if (!isSpinningRef.current) return;
+//         offset -= spinSpeed;
+//         if (offset <= -digitHeight) {
+//           offset += digitHeight;
+//           currDigit = nxtDigit;
+//           nxtDigit = Math.floor(Math.random() * 10);
+//           setCurrentDigit(String(currDigit));
+//           setNextDigit(String(nxtDigit));
+//         }
+//         setOffsetY(offset);
+//         animationRef.current = requestAnimationFrame(animate);
+//       };
+//       animationRef.current = requestAnimationFrame(animate);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+//     }
+//   }, [isSpinning, isFalling, digitHeight, spinSpeed]);
+
+//   // Falling/bounce animation - EXACT from first file
+//   useEffect(() => {
+//     if (isFalling && finalDigit !== undefined) {
+//       if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
+//       setCurrentDigit(String(finalDigit));
+//       setNextDigit(String((parseInt(finalDigit) + 1) % 10));
+//       const startOffset = offsetY;
+//       const fallDuration = 400;
+//       const bounceDuration = 200;
+//       const bounceHeight = size === 'small' ? 10 : 15;
+//       const startTime = Date.now();
+//       const animateFall = () => {
+//         const elapsed = Date.now() - startTime;
+//         if (elapsed < fallDuration) {
+//           const progress = elapsed / fallDuration;
+//           const easeIn = progress * progress;
+//           const newOffset = startOffset + (0 - startOffset) * easeIn;
+//           setOffsetY(newOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration / 2) {
+//           const bounceProgress = (elapsed - fallDuration) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - bounceProgress * bounceProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else if (elapsed < fallDuration + bounceDuration) {
+//           const settleProgress = (elapsed - fallDuration - bounceDuration / 2) / (bounceDuration / 2);
+//           const bounceOffset = -bounceHeight * (1 - settleProgress) * (1 - settleProgress);
+//           setOffsetY(bounceOffset);
+//           animationRef.current = requestAnimationFrame(animateFall);
+//         } else { setOffsetY(0); }
+//       };
+//       animationRef.current = requestAnimationFrame(animateFall);
+//       return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+//     }
+//   }, [isFalling, finalDigit, size]);
+
+//   // Reset when not spinning and not falling
+//   useEffect(() => {
+//     if (!isSpinning && !isFalling) { setOffsetY(0); setCurrentDigit(digit || '0'); }
+//   }, [isSpinning, isFalling, digit]);
+
+//   return (
+//     <div 
+//       className="relative overflow-hidden rounded-xl flex-shrink-0" 
+//       style={{ 
+//         width: `${config.width}px`, 
+//         height: `${config.height}px`, 
+//         background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)', 
+//         boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 6px 15px rgba(0,0,0,0.5)', 
+//         border: '3px solid #1f2937' 
+//       }}
+//     >
+//       <div className="absolute w-full" style={{ transform: `translateY(${offsetY}px)` }}>
+//         <div className="flex items-center justify-center" style={{ height: `${config.height}px` }}>
+//           <span className={`font-black text-white ${config.fontSize}`} style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{currentDigit}</span>
+//         </div>
+//         <div className="flex items-center justify-center" style={{ height: `${config.height}px` }}>
+//           <span className={`font-black text-white ${config.fontSize}`} style={{ fontFamily: 'Impact, "Arial Black", sans-serif', textShadow: '3px 3px 6px rgba(0,0,0,0.8)', fontWeight: 900 }}>{nextDigit}</span>
+//         </div>
+//       </div>
+//       <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: '30%', background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, transparent 100%)' }} />
+//     </div>
+//   );
+// };
+
+// export default function LotterySlotMachine({ 
+//   electionId,
+//   electionEndDate,
+//   luckyVotersCount = 1,
+//   isElectionEnded = false,
+//   winners = [],
+//   isActive = true,
+//   compact = false,
+// }) {
+//   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
+//   const [digitSpinning, setDigitSpinning] = useState([false, false, false, false, false, false]);
+//   const [digitFalling, setDigitFalling] = useState([false, false, false, false, false, false]);
+//   const [finalDigits, setFinalDigits] = useState(['0', '0', '0', '0', '0', '0']);
+  
+//   const [revealedWinners, setRevealedWinners] = useState([]);
+//   const [revealingWinner, setRevealingWinner] = useState(false);
+  
+//   const [participants, setParticipants] = useState([]);
+//   const [totalEntries, setTotalEntries] = useState(0);
+//   /*eslint-disable*/
+//   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+//   const [actualLuckyVotersCount, setActualLuckyVotersCount] = useState(luckyVotersCount);
+  
+//   const [showDemoModal, setShowDemoModal] = useState(false);
+//   const [currentStatus, setCurrentStatus] = useState('WAITING');
+  
+//   // Responsive: detect container size
+//   const containerRef = useRef(null);
+//   const [digitSize, setDigitSize] = useState('normal');
+  
+//   const fetchIntervalRef = useRef(null);
+//   const continuousCycleRef = useRef(null);
+//   const isMountedRef = useRef(true);
+
+//   // Detect container width and set digit size
+//   useEffect(() => {
+//     const checkSize = () => {
+//       if (containerRef.current) {
+//         const width = containerRef.current.offsetWidth;
+//         if (width < 350) {
+//           setDigitSize('small');
+//         } else if (width < 500) {
+//           setDigitSize('medium');
+//         } else {
+//           setDigitSize('normal');
+//         }
+//       }
+//     };
+    
+//     checkSize();
+//     window.addEventListener('resize', checkSize);
+    
+//     // Also check after a small delay for modal animations
+//     const timeout = setTimeout(checkSize, 100);
+    
+//     return () => {
+//       window.removeEventListener('resize', checkSize);
+//       clearTimeout(timeout);
+//     };
+//   }, []);
+
+//   const fetchBallNumbers = useCallback(async () => {
+//     if (!electionId) return;
+    
+//     try {
+//       setIsLoadingParticipants(true);
+      
+//       const response = await fetch(
+//         `${LOTTERY_API_URL}/lottery/elections/${electionId}/ball-numbers`
+//       );
+      
+//       if (!response.ok) throw new Error(`Failed: ${response.status}`);
+      
+//       const data = await response.json();
+//       console.log('🎰 Ball numbers fetched:', data);
+      
+//       const ballNumbers = [];
+//       const nums = data.ballNumbers || data.ball_numbers || [];
+//       nums.forEach(ballNum => {
+//         if (ballNum) ballNumbers.push(String(ballNum));
+//       });
+      
+//       setParticipants(ballNumbers);
+//       setTotalEntries(data.totalParticipants || data.total_participants || ballNumbers.length);
+      
+//       if (data.luckyVotersCount || data.lucky_voters_count) {
+//         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
+//       }
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//     } finally {
+//       setIsLoadingParticipants(false);
+//     }
+//   }, [electionId]);
+
+//   useEffect(() => {
+//     isMountedRef.current = true;
+//     if (electionId && isActive) {
+//       fetchBallNumbers();
+//       fetchIntervalRef.current = setInterval(fetchBallNumbers, 10000);
+//     }
+//     return () => {
+//       isMountedRef.current = false;
+//       if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+//     };
+//   }, [electionId, isActive, fetchBallNumbers]);
+
+//   const getRandomVoterId = useCallback(() => {
+//     if (participants.length > 0) {
+//       const idx = Math.floor(Math.random() * participants.length);
+//       return participants[idx].padStart(6, '0');
+//     }
+//     return String(Math.floor(100000 + Math.random() * 900000));
+//   }, [participants]);
+
+//   // Single ballot reveal: Fast spin → Gradual slowdown → Bounce stop → Pause
+//   const revealSingleBallot = useCallback(async () => {
+//     if (!isMountedRef.current) return;
+    
+//     const ballotNumber = getRandomVoterId();
+//     const ballotDigits = ballotNumber.split('');
+    
+//     // PHASE 1: Fast spinning (1 second)
+//     setCurrentStatus('SPINNING');
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setFinalDigits(ballotDigits);
+//     setDigitSpinning([true, true, true, true, true, true]);
+    
+//     await new Promise(r => setTimeout(r, 1000));
+//     if (!isMountedRef.current) return;
+    
+//     // PHASE 2: Gradual slowdown - stop each digit one by one with delay
+//     setCurrentStatus('SLOWING');
+    
+//     for (let i = 0; i < 6; i++) {
+//       if (!isMountedRef.current) return;
+      
+//       // Let this digit spin a bit more while slowing (300ms per digit)
+//       await new Promise(r => setTimeout(r, 300));
+      
+//       // Stop spinning and start falling animation
+//       setDigitSpinning(prev => {
+//         const updated = [...prev];
+//         updated[i] = false;
+//         return updated;
+//       });
+//       setDigitFalling(prev => {
+//         const updated = [...prev];
+//         updated[i] = true;
+//         return updated;
+//       });
+      
+//       // Update display digit
+//       setDisplayDigits(prev => {
+//         const updated = [...prev];
+//         updated[i] = ballotDigits[i];
+//         return updated;
+//       });
+//     }
+    
+//     // Wait for last bounce animation to complete (600ms)
+//     await new Promise(r => setTimeout(r, 600));
+//     if (!isMountedRef.current) return;
+    
+//     // PHASE 3: Pause - show the number clearly
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setCurrentStatus('PAUSED');
+    
+//     // Pause for 2 seconds to see the number clearly
+//     await new Promise(r => setTimeout(r, 2000));
+    
+//   }, [getRandomVoterId]);
+
+//   // Continuous cycle: spin -> slowdown -> pause -> repeat
+//   const startContinuousCycle = useCallback(async () => {
+//     continuousCycleRef.current = true;
+    
+//     while (continuousCycleRef.current && isMountedRef.current) {
+//       await revealSingleBallot();
+//     }
+//   }, [revealSingleBallot]);
+
+//   const stopContinuousCycle = useCallback(() => {
+//     continuousCycleRef.current = false;
+//     setDigitSpinning([false, false, false, false, false, false]);
+//     setDigitFalling([false, false, false, false, false, false]);
+//     setCurrentStatus('WAITING');
+//   }, []);
+
+//   // Start/stop continuous spinning based on conditions
+//   useEffect(() => {
+//     if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
+//       startContinuousCycle();
+//     } else {
+//       stopContinuousCycle();
+//     }
+    
+//     return () => stopContinuousCycle();
+//   }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousCycle, stopContinuousCycle]);
+
+//   // Winner reveal at election end
+//   useEffect(() => {
+//     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
+//       revealWinnersSequentially();
+//     }
+//   }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
+
+//   const revealWinnersSequentially = async () => {
+//     setRevealingWinner(true);
+//     stopContinuousCycle();
+    
+//     for (let i = 0; i < winners.length; i++) {
+//       const winner = winners[i];
+//       const winnerBallNumber = String(
+//         winner.ball_number || winner.ballNumber || winner.oddjob_voter_id || 
+//         winner.oddjobVoterId || winner.voterId || winner.voter_id || winner.id || '000000'
+//       ).padStart(6, '0');
+      
+//       const winnerDigits = winnerBallNumber.split('');
+      
+//       // Spin all
+//       setCurrentStatus('SPINNING');
+//       setDigitFalling([false, false, false, false, false, false]);
+//       setDigitSpinning([true, true, true, true, true, true]);
+      
+//       await new Promise(r => setTimeout(r, 1500));
+      
+//       setFinalDigits(winnerDigits);
+//       setCurrentStatus('SLOWING');
+      
+//       // Stop one by one with slowdown effect
+//       for (let j = 0; j < 6; j++) {
+//         await new Promise(r => setTimeout(r, 400));
+//         setDigitSpinning(prev => { const u = [...prev]; u[j] = false; return u; });
+//         setDigitFalling(prev => { const u = [...prev]; u[j] = true; return u; });
+//         setDisplayDigits(prev => { const u = [...prev]; u[j] = winnerDigits[j]; return u; });
+//       }
+      
+//       await new Promise(r => setTimeout(r, 500));
+//       setDigitFalling([false, false, false, false, false, false]);
+//       setCurrentStatus('WINNER');
+      
+//       setRevealedWinners(prev => [...prev, {
+//         ...winner,
+//         ballNumber: winnerBallNumber,
+//         rank: i + 1
+//       }]);
+      
+//       if (i < winners.length - 1) {
+//         await new Promise(r => setTimeout(r, 2500));
+//       }
+//     }
+    
+//     setCurrentStatus('COMPLETED');
+//     setRevealingWinner(false);
+//   };
+
+//   const formatCountdown = () => {
+//     if (!electionEndDate) return '--/--/----';
+//     const endDate = new Date(electionEndDate);
+//     const day = String(endDate.getDate()).padStart(2, '0');
+//     const month = String(endDate.getMonth() + 1).padStart(2, '0');
+//     const year = endDate.getFullYear();
+//     return `${day}/${month}/${year}`;
+//   };
+
+//   const getOrdinal = (n) => {
+//     const s = ['th', 'st', 'nd', 'rd'];
+//     const v = n % 100;
+//     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+//   };
+
+//   // Get gap based on digit size
+//   const getGap = () => {
+//     switch(digitSize) {
+//       case 'small': return 'gap-1';
+//       case 'medium': return 'gap-2';
+//       default: return 'gap-3';
+//     }
+//   };
+
+//   return (
+//     <>
+//       <div 
+//         ref={containerRef}
+//         className="rounded-xl overflow-hidden w-full"
+//         style={{
+//           background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)'
+//         }}
+//       >
+//         {/* Header - Responsive */}
+//         <div 
+//           className={`flex justify-between items-center ${digitSize === 'small' ? 'px-3 py-2' : 'px-5 py-4'}`}
+//           style={{ background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 100%)' }}
+//         >
+//           <div className="flex items-center gap-2">
+//             <span className={`text-gray-900 font-semibold ${digitSize === 'small' ? 'text-xs' : 'text-sm'}`}>Date:</span>
+//             <div 
+//               className={`rounded ${digitSize === 'small' ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className={`font-bold ${digitSize === 'small' ? 'text-sm' : 'text-lg'}`}
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '1px'
+//                 }}
+//               >
+//                 {formatCountdown()}
+//               </span>
+//             </div>
+//           </div>
+
+//           <div className="flex items-center gap-2">
+//             <span className={`text-gray-900 font-semibold ${digitSize === 'small' ? 'text-xs hidden sm:inline' : 'text-sm'}`}>
+//               {digitSize === 'small' ? 'Count:' : 'Lucky Voters Count:'}
+//             </span>
+//             <div 
+//               className={`rounded ${digitSize === 'small' ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className={`font-bold ${digitSize === 'small' ? 'text-sm' : 'text-lg'}`}
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '2px'
+//                 }}
+//               >
+//                 {String(actualLuckyVotersCount).padStart(2, '0')}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Main Display - Responsive digits */}
+//         <div className={`${digitSize === 'small' ? 'px-3 py-3' : 'px-5 py-6'}`}>
+//           <div 
+//             className={`flex justify-center items-center ${getGap()} ${digitSize === 'small' ? 'p-3' : 'p-6'}`}
+//             style={{ 
+//               borderRadius: '12px',
+//               background: '#0a0a0a',
+//               boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.4)',
+//               border: '3px solid #333',
+//             }}
+//           >
+//             {displayDigits.map((digit, index) => (
+//               <SpinningDigit
+//                 key={`digit-${index}`}
+//                 digit={digit}
+//                 isSpinning={digitSpinning[index]}
+//                 isFalling={digitFalling[index]}
+//                 finalDigit={finalDigits[index]}
+//                 size={digitSize}
+//               />
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* Winners */}
+//         {revealedWinners.length > 0 && (
+//           <div 
+//             className={`border-t-2 border-yellow-600 ${digitSize === 'small' ? 'px-2 py-2' : 'px-4 py-4'}`}
+//             style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//           >
+//             <h3 className={`text-yellow-900 font-bold mb-2 text-center ${digitSize === 'small' ? 'text-sm' : 'text-lg'}`}>
+//               🏆 LUCKY VOTERS WINNERS 🏆
+//             </h3>
+            
+//             <div className="space-y-1.5">
+//               {revealedWinners.map((winner, index) => (
+//                 <div 
+//                   key={index}
+//                   className={`bg-white rounded-lg flex items-center justify-between shadow-md ${digitSize === 'small' ? 'px-2 py-2' : 'px-4 py-3'}`}
+//                 >
+//                   <div className="flex items-center gap-2">
+//                     <div className={`bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow ${digitSize === 'small' ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-sm'}`}>
+//                       {getOrdinal(index + 1)}
+//                     </div>
+//                     <div>
+//                       <p className={`font-bold text-gray-900 ${digitSize === 'small' ? 'text-xs' : ''}`}>
+//                         {winner.displayName || winner.username || winner.name || 'Lucky Voter'}
+//                       </p>
+//                       <p className={`text-gray-500 font-mono ${digitSize === 'small' ? 'text-xs' : 'text-sm'}`}>
+//                         Ball #: {winner.ballNumber}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <span className={digitSize === 'small' ? 'text-xl' : 'text-3xl'}>🏆</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Footer - Stable text */}
+//         <div 
+//           className={`border-t border-yellow-700 flex justify-between items-center ${digitSize === 'small' ? 'px-2 py-2' : 'px-4 py-3'}`}
+//           style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//         >
+//           <div className={`flex items-center gap-1.5 text-gray-900 ${digitSize === 'small' ? 'text-xs' : ''}`}>
+//             <Users className={digitSize === 'small' ? 'w-3 h-3' : 'w-4 h-4'} />
+//             <span className={digitSize === 'small' ? 'text-xs' : 'text-sm'}>
+//               Total Votes: <strong>{totalEntries}</strong>
+//             </span>
+//           </div>
+          
+//           <div className="flex items-center gap-2">
+//             {!isElectionEnded && totalEntries >= 1 && (
+//               <button
+//                 onClick={() => setShowDemoModal(true)}
+//                 className={`flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded font-medium transition ${digitSize === 'small' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'}`}
+//               >
+//                 <Eye className={digitSize === 'small' ? 'w-3 h-3' : 'w-4 h-4'} />
+//                 <span>Demo</span>
+//               </button>
+//             )}
+            
+//             <div className={`flex items-center gap-2 ${digitSize === 'small' ? 'min-w-[80px]' : 'min-w-[120px]'}`}>
+//               <span 
+//                 className={`rounded-full flex-shrink-0 ${
+//                   currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+//                     ? 'bg-green-500 animate-pulse' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'bg-yellow-500' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'bg-blue-500' 
+//                     : 'bg-gray-500'
+//                 }`}
+//                 style={{ width: digitSize === 'small' ? '8px' : '10px', height: digitSize === 'small' ? '8px' : '10px' }}
+//               />
+//               <span 
+//                 className={`font-semibold ${digitSize === 'small' ? 'text-xs' : 'text-sm'} ${
+//                   currentStatus === 'SPINNING' || currentStatus === 'SLOWING' 
+//                     ? 'text-green-700' 
+//                     : currentStatus === 'PAUSED' 
+//                     ? 'text-yellow-700' 
+//                     : currentStatus === 'COMPLETED' 
+//                     ? 'text-blue-700' 
+//                     : 'text-gray-700'
+//                 }`}
+//               >
+//                 {currentStatus === 'SLOWING' ? 'SPINNING' : currentStatus}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <DemoWinnerReveal
+//         isOpen={showDemoModal}
+//         onClose={() => setShowDemoModal(false)}
+//         realBallNumbers={participants}
+//         realLuckyVotersCount={actualLuckyVotersCount}
+//         realTotalEntries={totalEntries}
+//         compact={compact}
+//       />
+//     </>
+//   );
+// }
+//last working code only to pause and animation above code
+// // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
+// // 4D Slot Machine
+// // DURING ELECTION: Continuous spinning showing actual voter IDs
+// // AT ELECTION END: For each winner - Fast spin (1 sec) → Gradual slow with haphazard (up/down) → Stop aligned
+// import React, { useState, useEffect, useRef, useCallback } from 'react';
+// import { Users, RefreshCw, Eye } from 'lucide-react';
+// import DemoWinnerReveal from './DemoWinnerReveal';
+
+// const LOTTERY_API_URL = import.meta.env.VITE_VOTING_SERVICE_URL || 'http://localhost:3007/api';
+
+// // Spinning digit - haphazard = different vertical positions, disciplined = aligned center
+// const SpinningDigit = ({ 
+//   digit,
+//   isSpinning,
+//   spinPhase, // 'continuous' | 'fast' | 'slowing' | 'stopped'
+//   slowdownProgress,
+//   randomOffset = 0, // Each digit gets different random offset for haphazard effect
+//   compact = false
+// }) => {
+//   const [currentDigit, setCurrentDigit] = useState(digit || '0');
+//   const [nextDigit, setNextDigit] = useState('0');
+//   const [offsetY, setOffsetY] = useState(0);
+//   const animationRef = useRef(null);
+//   const isSpinningRef = useRef(isSpinning);
+//   const phaseRef = useRef(spinPhase);
+//   const progressRef = useRef(slowdownProgress);
+  
+//   const digitHeight = compact ? 65 : 110;
+//   const continuousSpeed = compact ? 12 : 18;
+//   const fastSpeed = compact ? 25 : 40;
+//   const minSpeed = compact ? 1 : 2;
+  
+//   useEffect(() => {
+//     isSpinningRef.current = isSpinning;
+//     phaseRef.current = spinPhase;
+//     progressRef.current = slowdownProgress;
+//   }, [isSpinning, spinPhase, slowdownProgress]);
+
+//   useEffect(() => {
+//     if (!isSpinning) {
+//       setCurrentDigit(digit || '0');
+//       setOffsetY(0);
+//     }
+//   }, [digit, isSpinning]);
+
+//   useEffect(() => {
+//     if (isSpinning) {
+//       let offset = randomOffset; // Start at random position for haphazard
+//       let currDigit = Math.floor(Math.random() * 10);
+//       let nxtDigit = Math.floor(Math.random() * 10);
+      
+//       setCurrentDigit(String(currDigit));
+//       setNextDigit(String(nxtDigit));
+      
+//       const animate = () => {
+//         if (!isSpinningRef.current) return;
+        
+//         const phase = phaseRef.current;
+//         const progress = progressRef.current;
+        
+//         let speed;
+        
+//         if (phase === 'continuous') {
+//           speed = continuousSpeed;
+//         } else if (phase === 'fast') {
+//           speed = fastSpeed;
+//         } else if (phase === 'slowing') {
+//           // Gradually slow down
+//           const easeProgress = 1 - Math.pow(1 - progress, 3);
+//           speed = fastSpeed - (fastSpeed - minSpeed) * easeProgress;
+          
+//           if (speed <= minSpeed && progress >= 0.98) {
+//             return;
+//           }
+//         } else {
+//           return;
+//         }
+        
+//         offset -= speed;
+        
+//         if (offset <= -digitHeight) {
+//           offset = 0;
+//           currDigit = nxtDigit;
+//           nxtDigit = Math.floor(Math.random() * 10);
+//           setCurrentDigit(String(currDigit));
+//           setNextDigit(String(nxtDigit));
+//         }
+        
+//         setOffsetY(offset);
+//         animationRef.current = requestAnimationFrame(animate);
+//       };
+      
+//       animationRef.current = requestAnimationFrame(animate);
+      
+//       return () => {
+//         if (animationRef.current) cancelAnimationFrame(animationRef.current);
+//       };
+//     } else {
+//       // When stopped, align to center (offset = 0)
+//       setOffsetY(0);
+//       setCurrentDigit(digit || '0');
+//       if (animationRef.current) {
+//         cancelAnimationFrame(animationRef.current);
+//         animationRef.current = null;
+//       }
+//     }
+//   }, [isSpinning, digit, digitHeight, continuousSpeed, fastSpeed, minSpeed, randomOffset]);
+
+//   const fontSize = compact ? 'text-5xl' : 'text-7xl sm:text-8xl';
+//   const containerWidth = compact ? 50 : 85;
+//   const containerHeightVal = compact ? 65 : 110;
+
+//   return (
+//     <div 
+//       className="relative overflow-hidden rounded-lg"
+//       style={{
+//         width: `${containerWidth}px`,
+//         height: `${containerHeightVal}px`,
+//         background: 'linear-gradient(180deg, #7f1d1d 0%, #991b1b 20%, #b91c1c 50%, #991b1b 80%, #7f1d1d 100%)',
+//         boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.7), inset 0 -4px 20px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.4)',
+//         border: '3px solid #1f2937',
+//         borderRadius: '8px'
+//       }}
+//     >
+//       <div 
+//         className="absolute w-full"
+//         style={{ 
+//           transform: `translateY(${offsetY}px)`,
+//           transition: isSpinning ? 'none' : 'transform 0.4s ease-out'
+//         }}
+//       >
+//         <div className="flex items-center justify-center" style={{ height: `${digitHeight}px` }}>
+//           <span 
+//             className={`font-black text-white ${fontSize}`}
+//             style={{ 
+//               fontFamily: 'Impact, "Arial Black", sans-serif',
+//               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+//             }}
+//           >
+//             {currentDigit}
+//           </span>
+//         </div>
+//         <div className="flex items-center justify-center" style={{ height: `${digitHeight}px` }}>
+//           <span 
+//             className={`font-black text-white ${fontSize}`}
+//             style={{ 
+//               fontFamily: 'Impact, "Arial Black", sans-serif',
+//               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+//             }}
+//           >
+//             {nextDigit}
+//           </span>
+//         </div>
+//       </div>
+      
+//       <div 
+//         className="absolute top-0 left-0 right-0 pointer-events-none z-10"
+//         style={{
+//           height: '35%',
+//           background: 'linear-gradient(to bottom, rgba(55,0,0,0.95) 0%, rgba(55,0,0,0.5) 50%, transparent 100%)'
+//         }}
+//       />
+      
+//       <div 
+//         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+//         style={{
+//           height: '35%',
+//           background: 'linear-gradient(to top, rgba(55,0,0,0.95) 0%, rgba(55,0,0,0.5) 50%, transparent 100%)'
+//         }}
+//       />
+//     </div>
+//   );
+// };
+
+// export default function LotterySlotMachine({ 
+//   electionId,
+//   electionEndDate,
+//   luckyVotersCount = 1,
+//   isElectionEnded = false,
+//   winners = [],
+//   isActive = true,
+//   compact = false,
+// }) {
+//   const [displayDigits, setDisplayDigits] = useState(['0', '0', '0', '0', '0', '0']);
+//   const [isSpinning, setIsSpinning] = useState(false);
+//   const [spinPhase, setSpinPhase] = useState('stopped');
+//   const [slowdownProgress, setSlowdownProgress] = useState(0);
+//   const [randomOffsets, setRandomOffsets] = useState([0, 0, 0, 0, 0, 0]);
+//   /*eslint-disable*/
+//   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+//   const [revealedWinners, setRevealedWinners] = useState([]);
+//   const [currentRevealIndex, setCurrentRevealIndex] = useState(-1);
+//   const [revealingWinner, setRevealingWinner] = useState(false);
+  
+//   const [participants, setParticipants] = useState([]);
+//   const [totalEntries, setTotalEntries] = useState(0);
+//   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+//   const [fetchError, setFetchError] = useState(null);
+//   const [actualLuckyVotersCount, setActualLuckyVotersCount] = useState(luckyVotersCount);
+  
+//   const [showDemoModal, setShowDemoModal] = useState(false);
+  
+//   const fetchIntervalRef = useRef(null);
+//   const displayIntervalRef = useRef(null);
+//   const slowdownIntervalRef = useRef(null);
+
+//   // Generate random offsets for haphazard effect (different Y position for each digit)
+//   const generateRandomOffsets = useCallback(() => {
+//     const digitHeight = compact ? 65 : 110;
+//     return displayDigits.map(() => -Math.floor(Math.random() * (digitHeight * 0.6)));
+//   }, [displayDigits.length, compact]);
+
+//   const fetchBallNumbers = useCallback(async () => {
+//     if (!electionId) return;
+    
+//     try {
+//       setIsLoadingParticipants(true);
+//       setFetchError(null);
+      
+//       const response = await fetch(
+//         `${LOTTERY_API_URL}/lottery/elections/${electionId}/ball-numbers`
+//       );
+      
+//       if (!response.ok) throw new Error(`Failed: ${response.status}`);
+      
+//       const data = await response.json();
+//       console.log('🎰 Ball numbers fetched:', data);
+      
+//       const ballNumbers = [];
+//       const nums = data.ballNumbers || data.ball_numbers || [];
+//       nums.forEach(ballNum => {
+//         if (ballNum) ballNumbers.push(String(ballNum));
+//       });
+      
+//       setParticipants(ballNumbers);
+//       setTotalEntries(data.totalParticipants || data.total_participants || ballNumbers.length);
+      
+//       if (data.luckyVotersCount || data.lucky_voters_count) {
+//         setActualLuckyVotersCount(data.luckyVotersCount || data.lucky_voters_count);
+//       }
+      
+//       if (ballNumbers.length > 0) {
+//         const maxDigits = Math.max(...ballNumbers.map(b => b.length));
+//         if (maxDigits !== displayDigits.length) {
+//           setDisplayDigits(Array(maxDigits).fill('0'));
+//           setRandomOffsets(Array(maxDigits).fill(0));
+//         }
+//       }
+//     } catch (error) {
+//       console.error('❌ Error:', error);
+//       setFetchError(error.message);
+//     } finally {
+//       setIsLoadingParticipants(false);
+//     }
+//   }, [electionId, displayDigits.length]);
+
+//   useEffect(() => {
+//     if (electionId && isActive) {
+//       fetchBallNumbers();
+//       fetchIntervalRef.current = setInterval(fetchBallNumbers, 10000);
+//       return () => {
+//         if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+//       };
+//     }
+//   }, [electionId, isActive, fetchBallNumbers]);
+
+//   const getRandomVoterId = useCallback(() => {
+//     if (participants.length > 0) {
+//       const idx = Math.floor(Math.random() * participants.length);
+//       return participants[idx].padStart(displayDigits.length, '0');
+//     }
+//     const min = Math.pow(10, displayDigits.length - 1);
+//     const max = Math.pow(10, displayDigits.length) - 1;
+//     return String(Math.floor(min + Math.random() * (max - min)));
+//   }, [participants, displayDigits.length]);
+
+//   useEffect(() => {
+//     if (!electionEndDate) return;
+
+//     const updateCountdown = () => {
+//       const now = new Date().getTime();
+//       const end = new Date(electionEndDate).getTime();
+//       const diff = Math.max(0, end - now);
+
+//       setCountdown({
+//         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+//         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+//         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+//         seconds: Math.floor((diff % (1000 * 60)) / 1000),
+//       });
+//     };
+
+//     updateCountdown();
+//     const interval = setInterval(updateCountdown, 1000);
+//     return () => clearInterval(interval);
+//   }, [electionEndDate]);
+
+//   const startContinuousSpinning = useCallback(() => {
+//     setIsSpinning(true);
+//     setSpinPhase('continuous');
+//     setRandomOffsets(generateRandomOffsets());
+    
+//     displayIntervalRef.current = setInterval(() => {
+//       const voterId = getRandomVoterId();
+//       setDisplayDigits(voterId.split(''));
+//     }, 150);
+//   }, [getRandomVoterId, generateRandomOffsets]);
+
+//   const stopContinuousSpinning = useCallback(() => {
+//     if (displayIntervalRef.current) {
+//       clearInterval(displayIntervalRef.current);
+//       displayIntervalRef.current = null;
+//     }
+//     setIsSpinning(false);
+//     setSpinPhase('stopped');
+//   }, []);
+
+//   useEffect(() => {
+//     if (isActive && totalEntries >= 1 && !isElectionEnded && !revealingWinner) {
+//       startContinuousSpinning();
+//     } else if (isElectionEnded || revealingWinner) {
+//       stopContinuousSpinning();
+//     } else if (totalEntries < 1) {
+//       stopContinuousSpinning();
+//     }
+    
+//     return () => stopContinuousSpinning();
+//   }, [isActive, totalEntries, isElectionEnded, revealingWinner, startContinuousSpinning, stopContinuousSpinning]);
+
+//   useEffect(() => {
+//     if (isElectionEnded && winners.length > 0 && revealedWinners.length === 0 && !revealingWinner) {
+//       revealWinnersSequentially();
+//     }
+//   }, [isElectionEnded, winners, revealedWinners.length, revealingWinner]);
+
+//   const revealSingleWinner = async (winnerIndex) => {
+//     const FAST_PHASE_DURATION = 1000; // 1 second fast
+//     const SLOW_PHASE_DURATION = 2500; // 2.5 seconds to slow down
+    
+//     // Generate random offsets for haphazard effect
+//     setRandomOffsets(generateRandomOffsets());
+    
+//     // Fast phase - same speed, straight numbers
+//     setIsSpinning(true);
+//     setSpinPhase('fast');
+//     setSlowdownProgress(0);
+    
+//     const fastInterval = setInterval(() => {
+//       const voterId = getRandomVoterId();
+//       setDisplayDigits(voterId.split(''));
+//       // Update random offsets periodically for haphazard movement
+//       setRandomOffsets(generateRandomOffsets());
+//     }, 60);
+    
+//     await new Promise(resolve => setTimeout(resolve, FAST_PHASE_DURATION));
+    
+//     clearInterval(fastInterval);
+    
+//     // Slowing phase - digits at different vertical positions (haphazard)
+//     setSpinPhase('slowing');
+    
+//     const slowdownStartTime = Date.now();
+    
+//     await new Promise(resolve => {
+//       let lastUpdate = 0;
+//       slowdownIntervalRef.current = setInterval(() => {
+//         const elapsed = Date.now() - slowdownStartTime;
+//         const progress = Math.min(elapsed / SLOW_PHASE_DURATION, 1);
+//         setSlowdownProgress(progress);
+        
+//         // Update display less frequently as we slow down
+//         const updateInterval = 60 + progress * 400;
+//         if (elapsed - lastUpdate > updateInterval) {
+//           const voterId = getRandomVoterId();
+//           setDisplayDigits(voterId.split(''));
+//           // Gradually reduce randomness of offsets as we slow down
+//           const offsetScale = 1 - progress;
+//           setRandomOffsets(prev => prev.map(() => 
+//             -Math.floor(Math.random() * ((compact ? 65 : 110) * 0.6 * offsetScale))
+//           ));
+//           lastUpdate = elapsed;
+//         }
+        
+//         if (progress >= 1) {
+//           clearInterval(slowdownIntervalRef.current);
+//           resolve();
+//         }
+//       }, 16);
+//     });
+    
+//     // Stop - all digits align to center
+//     setIsSpinning(false);
+//     setSpinPhase('stopped');
+//     setSlowdownProgress(0);
+//     setRandomOffsets(displayDigits.map(() => 0)); // All aligned
+    
+//     await new Promise(resolve => setTimeout(resolve, 300));
+    
+//     // Show winner's number
+//     const winner = winners[winnerIndex];
+//     const winnerBallNumber = String(
+//       winner.ball_number ||
+//       winner.ballNumber ||
+//       winner.oddjob_voter_id || 
+//       winner.oddjobVoterId || 
+//       winner.voterId ||
+//       winner.voter_id ||
+//       winner.id || 
+//       '000000'
+//     ).padStart(displayDigits.length, '0');
+    
+//     setDisplayDigits(winnerBallNumber.split(''));
+    
+//     return {
+//       ...winner,
+//       ballNumber: winnerBallNumber,
+//       rank: winnerIndex + 1
+//     };
+//   };
+
+//   const revealWinnersSequentially = async () => {
+//     setRevealingWinner(true);
+//     stopContinuousSpinning();
+    
+//     for (let i = 0; i < winners.length; i++) {
+//       setCurrentRevealIndex(i);
+      
+//       const revealedWinner = await revealSingleWinner(i);
+//       setRevealedWinners(prev => [...prev, revealedWinner]);
+      
+//       if (i < winners.length - 1) {
+//         await new Promise(resolve => setTimeout(resolve, 2500));
+//       }
+//     }
+    
+//     setCurrentRevealIndex(-1);
+//     setRevealingWinner(false);
+//   };
+
+//   const formatCountdown = () => {
+//     // Show the election end date in DD/MM/YYYY format
+//     if (!electionEndDate) return '--/--/----';
+//     const endDate = new Date(electionEndDate);
+//     const day = String(endDate.getDate()).padStart(2, '0');
+//     const month = String(endDate.getMonth() + 1).padStart(2, '0');
+//     const year = endDate.getFullYear();
+//     return `${day}/${month}/${year}`;
+//   };
+
+//   const getOrdinal = (n) => {
+//     const s = ['th', 'st', 'nd', 'rd'];
+//     const v = n % 100;
+//     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+//   };
+
+//   return (
+//     <>
+//       <div 
+//         className={`rounded-xl overflow-hidden ${compact ? 'text-sm' : ''}`}
+//         style={{
+//           background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 50%, #b8860b 100%)'
+//         }}
+//       >
+//         {/* Header */}
+//         <div 
+//           className={`flex justify-between items-center ${compact ? 'px-3 py-2' : 'px-5 py-4'}`}
+//           style={{ background: 'linear-gradient(180deg, #d4a418 0%, #c9972a 100%)' }}
+//         >
+//           <div className="flex items-center gap-2">
+//             <span className={`text-gray-900 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
+//               Date:
+//             </span>
+//             <div 
+//               className={`rounded ${compact ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className={`font-bold ${compact ? 'text-sm' : 'text-lg'}`}
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '1px'
+//                 }}
+//               >
+//                 {formatCountdown()}
+//               </span>
+//             </div>
+//           </div>
+
+//           <div className="flex items-center gap-2">
+//             <span className={`text-gray-900 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
+//               Lucky Voters Count:
+//             </span>
+//             <div 
+//               className={`rounded ${compact ? 'px-2 py-0.5' : 'px-3 py-1'}`}
+//               style={{ background: '#1a1a1a', border: '2px solid #333' }}
+//             >
+//               <span 
+//                 className={`font-bold ${compact ? 'text-sm' : 'text-lg'}`}
+//                 style={{ 
+//                   fontFamily: '"Courier New", monospace',
+//                   color: '#00ff00',
+//                   textShadow: '0 0 8px #00ff00, 0 0 12px #00ff00',
+//                   letterSpacing: '2px'
+//                 }}
+//               >
+//                 {String(actualLuckyVotersCount).padStart(2, '0')}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Main Display */}
+//         <div className={`${compact ? 'px-3 py-3' : 'px-5 py-4'}`}>
+//           <div 
+//             className={`flex justify-center items-center ${compact ? 'gap-1.5 p-3' : 'gap-2 p-4'}`}
+//             style={{ 
+//               borderRadius: '10px',
+//               background: '#1a1a1a',
+//               boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
+//             }}
+//           >
+//             {displayDigits.map((digit, index) => (
+//               <SpinningDigit
+//                 key={`digit-${index}`}
+//                 digit={digit}
+//                 isSpinning={isSpinning}
+//                 spinPhase={spinPhase}
+//                 slowdownProgress={slowdownProgress}
+//                 randomOffset={randomOffsets[index] || 0}
+//                 compact={compact}
+//               />
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* Winners */}
+//         {revealedWinners.length > 0 && (
+//           <div 
+//             className={`border-t-2 border-yellow-600 ${compact ? 'px-2 py-2' : 'px-4 py-4'}`}
+//             style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//           >
+//             <h3 className={`text-yellow-900 font-bold mb-2 text-center ${compact ? 'text-sm' : 'text-lg'}`}>
+//               🏆 LUCKY VOTERS WINNERS 🏆
+//             </h3>
+            
+//             <div className="space-y-1.5">
+//               {revealedWinners.map((winner, index) => (
+//                 <div 
+//                   key={index}
+//                   className={`bg-white rounded-lg flex items-center justify-between shadow-md ${compact ? 'px-2 py-1.5' : 'px-4 py-3'}`}
+//                 >
+//                   <div className="flex items-center gap-2">
+//                     <div className={`bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900 font-black rounded-full flex items-center justify-center shadow ${compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-sm'}`}>
+//                       {getOrdinal(index + 1)}
+//                     </div>
+//                     <div>
+//                       <p className={`font-bold text-gray-900 ${compact ? 'text-xs' : ''}`}>
+//                         {winner.displayName || winner.username || winner.name || 'Lucky Voter'}
+//                       </p>
+//                       <p className={`text-gray-500 font-mono ${compact ? 'text-xs' : 'text-sm'}`}>
+//                         Ball #: {winner.ballNumber}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <span className={compact ? 'text-xl' : 'text-3xl'}>🏆</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Footer */}
+//         <div 
+//           className={`border-t border-yellow-700 flex justify-between items-center ${compact ? 'px-2 py-1.5' : 'px-4 py-2'}`}
+//           style={{ background: 'linear-gradient(180deg, #c9972a 0%, #b8860b 100%)' }}
+//         >
+//           <div className={`flex items-center gap-1.5 text-gray-900 ${compact ? 'text-xs' : ''}`}>
+//             <Users className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+//             <span className={compact ? 'text-xs' : 'text-sm'}>
+//               Total Votes: <strong>{totalEntries}</strong>
+//             </span>
+//           </div>
+          
+//           <div className="flex items-center gap-2">
+//             {!isElectionEnded && totalEntries >= 1 && (
+//               <button
+//                 onClick={() => setShowDemoModal(true)}
+//                 className={`flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white rounded transition ${compact ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'}`}
+//               >
+//                 <Eye className="w-3 h-3" />
+//                 <span>Demo</span>
+//               </button>
+//             )}
+            
+//             <div className={`flex items-center gap-1.5 ${compact ? 'text-xs' : 'text-sm'} ${
+//               isSpinning ? 'text-green-700' : isElectionEnded ? 'text-blue-700' : 'text-yellow-800'
+//             }`}>
+//               <span className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} ${
+//                 isSpinning ? 'bg-green-500 animate-pulse' : isElectionEnded ? 'bg-blue-500' : 'bg-yellow-600'
+//               }`} />
+//               <span className="font-semibold">
+//                 {isSpinning ? 'SPINNING' : isElectionEnded ? 'COMPLETED' : 'WAITING'}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <DemoWinnerReveal
+//         isOpen={showDemoModal}
+//         onClose={() => setShowDemoModal(false)}
+//         realBallNumbers={participants}
+//         realLuckyVotersCount={actualLuckyVotersCount}
+//         realTotalEntries={totalEntries}
+//         compact={compact}
+//       />
+//     </>
+//   );
+// }
 // // src/components/Dashboard/Tabs/lotteryyy/LotterySlotMachine.jsx
 // // 4D Slot Machine
 // // DURING ELECTION: Continuous spinning showing actual voter IDs

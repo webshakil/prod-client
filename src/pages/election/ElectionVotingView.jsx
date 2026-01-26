@@ -520,7 +520,8 @@ export default function ElectionVotingView() {
         <div 
           className="fixed bottom-4 right-4 z-40 transition-all duration-300 ease-in-out"
           style={{ 
-            width: isLotteryExpanded ? 'min(380px, calc(100vw - 32px))' : 'auto',
+            width: isLotteryExpanded ? '620px' : 'auto',
+maxWidth: isLotteryExpanded ? 'calc(100vw - 32px)' : 'auto',
           }}
         >
           {isLotteryExpanded ? (
