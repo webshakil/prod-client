@@ -180,7 +180,7 @@ export default function SimilarElections({ electionId }) {
     setError(null);
     try {
       const response = await fetch(
-        `https://prod-recommendation-service.onrender.com/api/recommendations/similar/${electionId}?limit=6`
+        `https://prod-recommendation-service-p24b.onrender.com/api/recommendations/similar/${electionId}?limit=6`
       );
       const data = await response.json();
       
